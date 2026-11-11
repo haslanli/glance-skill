@@ -1,0 +1,50 @@
+<div class="hero">
+<div class="pane">
+<div class="tag">Claude's answer</div>
+<div class="md">
+<h3>Results: image + bundle optimization pass</h3>
+<p><b>Short version:</b> The home page is much faster on mobile (Lighthouse performance went from <b>41 to 88</b>), but two numbers got worse: server response time and build time.</p>
+<h4>Measurements</h4>
+<p>Lab test, Moto G Power profile, 4× CPU slowdown, slow 4G, median of 5 runs.</p>
+<ul>
+<li>Largest Contentful Paint (when the main content shows): <b>4.8 s</b> before, <b>2.1 s</b> after.</li>
+<li>Total Blocking Time: <b>620 ms</b> before, <b>180 ms</b> after.</li>
+<li>Cumulative Layout Shift: <b>0.24</b> before, <b>0.03</b> after.</li>
+<li>Time to First Byte: <b>380 ms</b> before, <b>410 ms</b> after (worse).</li>
+<li>JavaScript shipped: <b>1.42 MB</b> before, <b>610 KB</b> after.</li>
+<li>Image weight on the home page: <b>3.9 MB</b> before, <b>1.1 MB</b> after.</li>
+<li>Lighthouse performance score: <b>41</b> before, <b>88</b> after.</li>
+<li>Production build time: <b>52 s</b> before, <b>74 s</b> after (worse).</li>
+</ul>
+<h4>What changed</h4>
+<ol>
+<li>Converted hero and gallery images to AVIF with a WebP fallback, sized with <code>srcset</code>.</li>
+<li>Lazy-loaded everything below the fold with <code>loading="lazy"</code>.</li>
+<li>Split the <code>admin</code> and <code>editor</code> routes out of the main bundle with dynamic <code>import()</code>.</li>
+<li>Replaced <code>moment</code> with <code>date-fns</code> (−230 KB).</li>
+</ol>
+</div>
+</div>
+<div class="pane">
+<div class="tag">/glance</div>
+<p class="ans">The home page now loads much faster on phones, but the server answers a bit slower and builds take longer.</p>
+<div class="gl">
+<div class="gl-sec gl-tiles">
+<div class="gl-tile"><div class="gl-k">Lighthouse score</div><div class="gl-v">41<span class="gl-arw">→</span>88</div></div>
+<div class="gl-tile"><div class="gl-k">Got worse</div><div class="gl-v bad">2 of 8</div></div>
+</div>
+<div class="gl-sec gl-tbl" style="--c:2">
+<div class="hd">Metric</div><div class="hd num">Before</div><div class="hd num">After</div>
+<div>Largest Contentful Paint</div><div class="num">4.8 s</div><div class="num">2.1 s</div>
+<div>Total Blocking Time</div><div class="num">620 ms</div><div class="num">180 ms</div>
+<div>Cumulative Layout Shift</div><div class="num">0.24</div><div class="num">0.03</div>
+<div>JavaScript shipped</div><div class="num">1.42 MB</div><div class="num">610 KB</div>
+<div>Home page images</div><div class="num">3.9 MB</div><div class="num">1.1 MB</div>
+<div class="x">Time to First Byte · worse</div><div class="num x">380 ms</div><div class="num x">410 ms</div>
+<div class="x">Build time · worse</div><div class="num x">52 s</div><div class="num x">74 s</div>
+</div>
+</div>
+<div class="bl"><b>Why two got worse</b>
+<ul><li>Image resizing runs in the same Node process (+30 ms)</li><li>AVIF encoding of 148 images (+22 s); caching in <code>.image-cache/</code> should bring it near 55 s</li></ul></div>
+</div>
+</div>

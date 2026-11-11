@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: cloud-bill-spike
+expected_outcome: |
+  A glance at the AWS bill report: the answer first in everyday words, the monthly totals or the September to October change by service shown as a chart (when a chart tool is available) or a table, causes and fixes as bullets, every number and open item kept, shorter than the original.
+context:
+  scaffold_script: place-files.sh
