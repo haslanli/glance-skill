@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: memory-limits
+expected_outcome: |
+  A glance at the memory report: the answer first in everyday words, every service's peak against its own limit in one picture with report-worker marked as over its limit, causes and fixes as bullets, every number and open item kept, shorter than the original.
+context:
+  scaffold_script: place-files.sh

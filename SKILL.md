@@ -57,17 +57,23 @@ In this order:
 
 **What.** Whatever makes this data readable at a glance. Pick by what the data is for:
 
-- 2 to 4 figures the answer is about → headline tiles
+- 1 to 4 figures the answer is about → headline tiles (a single number is a tile, never a chart with one bar)
+- one value against its limit or its whole (a disk 92 % full, a budget 80 % spent), or several items each against its own limit → meters
 - one series across periods or categories (up to 12) → columns; more points over time → a line
-- amounts across items, or parts of a whole → bars on one scale
-- before → after, or a few numbers for each of several items → a table with one aligned column per number, where only the rows that got worse turn red
+- amounts across items → bars on one scale, largest first
+- one total split into 2 to 6 parts, when the answer is about the split → a split bar over the list of parts; to compare the parts with each other → bars
+- changes that go up for some items and down for others, all in one unit → diverging bars from a zero line
+- before → after, or a few numbers for each of several items (units can differ by row) → a table with one aligned column per number, where only the rows that got worse turn red
+- a status for each item in each setting (a test matrix) → a table with one column per setting and one word in every cell, where only the failing cells turn red
 - options with the same details → the comparison, with the recommended option marked
 
-One picture of one to three sections (for example tiles, then the main chart, then one list). Not a dashboard. Add interaction only when the data truly doesn't fit at once, and then it only shows the original's data a different way; it never adds what-ifs, projections or numbers the original doesn't have.
+Never a pie or donut, never a second y-axis, never more than two lines on one chart, and no color besides gray, the accent and the alert red. When a form above can't show the data honestly in one scale and one unit, use the table.
+
+One picture of one to three sections (for example tiles, then the main chart, then one list). Not a dashboard. Every value is printed on the picture, so nothing waits behind a hover; a line with many points is the one exception, and the kit gives it a hover readout. Add other interaction only when the data truly doesn't fit at once, and then it only shows the original's data a different way; it never adds what-ifs, projections, trend lines, averages or numbers the original doesn't have.
 
 **How.**
 
-- With a visual tool (in the Claude desktop app, including its /btw side chat, the visualize tool): call `read_me` with the modules `mockup` and `data_viz` (add `chart` only for a line chart). Then read `references/ui-kit.md` in this skill's folder and build the picture from it: paste its CSS block exactly, use only its components, and don't restyle them. Draw with `show_widget`. Write the answer sentence before the call and the bullets after it.
+- With a visual tool (in the Claude desktop app, including its /btw side chat, the visualize tool): call `read_me` with the modules `mockup` and `data_viz` (add `chart` only for a line chart). Then read `references/ui-kit.md` in this skill's folder and build the picture from it: paste its CSS block exactly, start with the one-sentence screen-reader summary, use only its components, and don't restyle them. Where the tool's guide and the kit differ, the kit wins. Draw with `show_widget`. Write the answer sentence before the call and the bullets after it.
 - Without one (a terminal, or /btw in the terminal): a markdown table, reshaped as below, or before → after inside the bullets.
 - Color carries meaning only: good / bad / neutral, or one highlight against gray. Explain it with a short legend or direct labels.
 - Values and labels go on the picture; sentences of explanation stay in the reply.
@@ -128,6 +134,7 @@ Aim for about a third of the original, counting the words on the picture. Never 
 1. **Nothing lost:** tick off every fact of the original against the picture and the bullets.
 2. **Picture correct:** reshaped data matches the original row for row and value for value, and the sort order and marks are right.
 3. **Picture precise:** built only from the kit (its CSS block pasted as is, no restyling), then the "Design it precisely" list: one thing stands out, same order and names, values written the same way, at most one flag per option, one line per row, color only on exceptions, notes next to what they describe, nothing drifting out of line.
-4. **Shorter:** under the original, ideally about a third.
-5. **Made for this answer:** if this layout would fit almost any answer, the picture or the grouping isn't working for this content. Rework it.
+4. **Right form:** the form fits the data's job from the list under The picture; bars, columns, meters and diverging bars start at zero and share one scale and one unit; every value is printed (a line's points are in its canvas text); no pie, donut, second y-axis or third color; widths and heights match the kit's formulas.
+5. **Shorter:** under the original, ideally about a third.
+6. **Made for this answer:** if this layout would fit almost any answer, the picture or the grouping isn't working for this content. Rework it.
 

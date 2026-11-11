@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: ci-test-matrix
+expected_outcome: |
+  A glance at the CI run: the answer first in everyday words, the suite-by-platform results as one grid with the failing cells marked where they are and the flaky one told apart by a word, causes and options as bullets, every number and the open question kept, shorter than the original.
+context:
+  scaffold_script: place-files.sh
