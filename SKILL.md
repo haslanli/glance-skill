@@ -84,11 +84,11 @@ Nothing else. The sentence comes before the picture, the bullets come right afte
 - amounts across items → bars on one scale, largest first
 - one total split into 2 to 6 parts, when the answer is about the split → a split bar over the list of parts; to compare the parts with each other → bars
 - changes that go up for some items and down for others, all in one unit → diverging bars from a zero line
-- before → after, or a few numbers for each of several items (units can differ by row) → a table with one aligned column per number, where only the rows that got worse turn red
+- before → after, or a few numbers for each of several items (units can differ by row) → a table with one aligned column per number, the rows to look at tinted blue, and a bar against the line when the answer gives a target or limit
 - a status for each item in each setting (a test matrix) → a table with one column per setting and one word in every cell, where only the failing cells turn red
 - options with the same details → the comparison, with the recommended option marked
 
-Never a pie or donut, never a second y-axis, never more than two lines on one chart, and no color besides gray, the accent and the alert red. When a form above can't show the data honestly in one scale and one unit, use the table.
+Never a pie or donut, never a second y-axis, never more than two lines on one chart, and no colors besides the kit's three: soft blue, blue and red. When a form above can't show the data honestly in one scale and one unit, use the table.
 
 One picture of one to three sections (for example tiles, then the main chart, then one list). Every value is printed on the picture, so nothing waits behind a hover; the kit names the two exceptions (a line with many points, an inline trend) and gives them a hover readout.
 
@@ -106,7 +106,7 @@ One picture of one to three sections (for example tiles, then the main chart, th
 - With a visual tool (in the Claude desktop app, including its /btw side chat, the visualize tool): call `read_me` with the modules `mockup` and `data_viz` (add `chart` only for a line chart). Then read `references/ui-kit.md` in this skill's folder and build the picture from it: paste its CSS block exactly, start with the one-sentence screen-reader summary, use only its components, and don't restyle them. Where the tool's guide and the kit differ, the kit wins. Draw with `show_widget`. The answer sentence is the first text of your reply, written before you call `show_widget` (calling `read_me` first is fine), so the reader gets the answer before the picture; the bullets come after it.
 - When the answer explains a bill or a change in spend, read `references/bills.md` first: it says what such a reader needs to see and which of the forms above fits.
 - Without one (a terminal, or /btw in the terminal): a markdown table, reshaped as below, or before → after inside the bullets.
-- Color carries meaning only: good / bad / neutral, or one highlight against gray. Explain it with a short legend or direct labels.
+- Color carries meaning only: soft blue for every ordinary mark, blue for what to look at, red for what's negative. Explain it with direct labels or a short legend.
 - Values and labels go on the picture; sentences of explanation stay in the reply.
 
 **Reshape, and get it exactly right.** Don't copy the original's tables as they are when a reshape reads faster: sort by what matters (usually the biggest change or the most important item first), mark the rows that matter, or turn the table into the chart. However you reshape, it must stay correct:
@@ -119,17 +119,17 @@ One picture of one to three sections (for example tiles, then the main chart, th
 
 **Design it precisely.** The kit takes care of spacing, type sizes, alignment, dark mode and narrow panels, so don't override it. What it can't decide for you:
 
-- **One place to start.** The figure or item the answer is about is the one that stands out: in a tile, or marked `hi`, `bad` or `good`. Everything else stays gray and secondary.
+- **One place to start.** The figure, item or rows the answer is about stand out in blue (`hi`, or `at` for table rows). Everything else stays soft blue and secondary.
 - **Same order, same names.** Items appear in the same order and under the same names in the tiles, the chart, the rows and the bullets.
 - **Same unit, number first.** Within one row or series, write every value the same way ("8 vCPU", "4 vCPU"), with the same unit, separators and decimals as the original. Qualifiers like "dedicated" go in the small line under the value, kept to about 20 characters; longer notes belong in the bullets.
 - **Make the deciding cells stand out.** At most one flagged drawback per option, the one the original gives as its reason, with a few words ("tight with Postgres", "over budget"). Mark the recommended option. The reader shouldn't have to scan every cell to see why.
 - **One line per row.** Use the name the original uses, kept short, so every table row stays one line and the same height. If a name needs explaining, explain it in the bullets in plain words.
-- **Color marks the exception, not the rule.** Normal and improved values stay uncolored. Only what's worse, over a limit or failing gets the alert color, judged by what's bad for the reader (slower load time is worse, a lower score is worse). Always with a word, never color alone, and never a column of green. This also keeps it readable for color-blind people.
-- **Proximity and alignment.** A note sits right next to what it describes: under its value, or for a table row, " · worse" after the row's name with the whole row in the alert color. It never goes in a separate column at the edge. Text aligns left, numbers align right in their own columns, headers align like their columns, and rows line up across columns.
+- **Blue says look here; red says negative.** Blue goes on what the answer is about, even when it's bad news: the service that made the bill jump is blue. Red goes only on a value that's past a line the answer gives (a limit, target or budget) or failing: its number, the part of its bar past the line, and a flag (a red dot and the answer's word) after its name. Never a whole row of red text, never red just because a number went up, and never green: an improvement stays soft blue. Always with a word, never color alone, which also keeps it readable for color-blind people.
+- **Proximity and alignment.** A note sits right next to what it describes: under its value, or for a table row, as a flag right after the row's name. It never goes in a separate column at the edge. Text aligns left, numbers align right in their own columns, headers align like their columns, and rows line up across columns.
 - **Honest scales.** Bars start at zero, and things being compared share one scale and one unit. Never mix units on one axis.
-- **Calm, not generated-looking.** It should look like a careful product designer made it: type and whitespace do the work, color sits only on the one or two things that matter, and status is a colored word rather than a badge. No legends when labels already say it, no captions that repeat a header, no boxes or decoration. If it starts to look like a dashboard, take something away.
+- **Calm, not generated-looking.** It should look like a careful product designer made it: type and whitespace do the work, tables get the kit's header band and row tint, strong color sits only on the one or two things that matter, and status is a dot and a word rather than a badge. No legends when labels already say it, no captions that repeat a header, no boxes or decoration. If it starts to look like a dashboard, take something away.
 
-Without a visual tool, the same rules apply to the markdown table: number columns right-aligned (`---:`), and " · worse" after the name only on the exception rows.
+Without a visual tool, the same rules apply to the markdown table: number columns right-aligned (`---:`), and the answer's word after the name (" · over target") only on the rows past a line or failing.
 
 ## Length
 
@@ -186,8 +186,8 @@ Where the words go:
 
 1. **Nothing lost:** tick off every fact of the original (of every source answer, when there are several) against the picture and the bullets.
 2. **Picture correct:** reshaped data matches the original row for row and value for value, and the sort order and marks are right.
-3. **Picture precise:** built only from the kit (its CSS block pasted as is, no restyling), then the "Design it precisely" list: one thing stands out, same order and names, values written the same way, at most one flag per option, one line per row, color only on exceptions, notes next to what they describe, nothing drifting out of line.
-4. **Right form:** the form fits what the answer says about its data, from the list under The picture; bars, columns, meters, diverging bars and a bridge's totals start at zero and share one scale and one unit; a bridge's start plus its steps equals its end; every value is printed (a line's points are in its canvas text); no pie, donut, second y-axis or third color; widths and heights match the kit's formulas.
+3. **Picture precise:** built only from the kit (its CSS block pasted as is, no restyling), then the "Design it precisely" list: one thing stands out, same order and names, values written the same way, at most one flag per option, one line per row, blue only on what the answer is about and red only on values past a line or failing, notes next to what they describe, nothing drifting out of line.
+4. **Right form:** the form fits what the answer says about its data, from the list under The picture; bars, columns, meters, diverging bars and a bridge's totals start at zero and share one scale and one unit; a bridge's start plus its steps equals its end; every value is printed (a line's points are in its canvas text); no pie, donut, second y-axis or color outside soft blue, blue and red; widths and heights match the kit's formulas.
 5. **Shorter:** count the words. The answer sentence plus the bullets come to about a third of the original's prose (more only when the original is nearly all facts), and the whole glance is shorter than the original. If not, cut in this order before touching any fact: anything that restates the answer or the picture, added findings, glosses, words a phrase doesn't need.
 6. **Made for this answer:** if this layout would fit almost any answer, the picture or the grouping isn't working for this content. Rework it.
 
