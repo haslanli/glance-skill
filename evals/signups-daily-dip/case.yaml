@@ -1,6 +1,0 @@
-schema_version: "1.1"
-name: signups-daily-dip
-expected_outcome: |
-  A glance at March signups: the answer first in everyday words, the 31 daily values as a line (more than 12 points) with the 12 to 15 March dip visible and every value still on the picture, cause, fixes and open questions as bullets, every number kept, shorter than the original.
-context:
-  scaffold_script: place-files.sh

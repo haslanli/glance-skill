@@ -1,6 +1,0 @@
-schema_version: "1.1"
-name: vps-choice
-expected_outcome: |
-  A glance at the VPS comparison: the recommendation first in everyday words, the four options compared side by side in one table with the same attributes per option, reasons and open checks as bullets, every number kept, shorter than the original.
-context:
-  scaffold_script: place-files.sh

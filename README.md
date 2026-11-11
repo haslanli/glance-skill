@@ -5,7 +5,9 @@
 
 # glance
 
-**Claude's long answers, readable at a glance.** Type `/glance` after any answer and get it back as one plain sentence, a picture of the data and a few short bullets. Every number, name, path, command, warning and open question stays in.
+**Claude's long answers, readable at a glance.**
+
+glance is a skill for Claude Code. Type `/glance` after a long answer, and Claude tells it again for someone short on time or background. You get the answer in one plain sentence, a picture when the answer has data, and a few short bullets for the rest. It's built to keep every number, name, path, command, warning and open question, and to add nothing. In the Claude desktop app the picture is drawn right in the chat; in a terminal it becomes a markdown table.
 
 ```bash
 git clone https://github.com/haslanli/glance-skill ~/.claude/skills/glance
@@ -13,34 +15,94 @@ git clone https://github.com/haslanli/glance-skill ~/.claude/skills/glance
 
 Claude Code picks up new skills while it runs, so there's no restart. If `~/.claude/skills` didn't exist before, run `/reload-skills` once. To update later, run `git -C ~/.claude/skills/glance pull`.
 
-## A picture for every kind of answer
+## Whatever you're working on
 
-glance reads the answer before it draws. It picks the form that fits the data: meters when values have limits, a split bar when one total breaks into parts, bars that go both ways when some things got better and some got worse, a line for a long series, a grid for a test matrix, a comparison when you're choosing. When an answer is mostly reasoning, it draws nothing.
+Whether you're on call at 2 a.m., shipping a frontend or picking a server, Claude's answer is usually longer than the decision you need to make. glance reads it, finds what's worth seeing and draws that.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/gallery-ops-dark.png">
-  <img alt="Two glance results. Memory against limits: seven services as meters on a shared scale, with report-worker in red at 115 percent, past the limit mark, and api and search marked close. What a bundle is made of: a split bar of main.js with echarts in blue at 47 percent, above a list of every part's size and share." src="docs/images/gallery-ops-light.png" width="100%">
-</picture>
+### On call at 2 a.m.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/gallery-growth-dark.png">
-  <img alt="A dip in a month of data: three headline numbers for March signups, then a line chart of 31 daily values from zero, with 12 to 15 March drawn in red where signups fell to about half." src="docs/images/gallery-growth-light.png" width="100%">
-</picture>
+You don't need a report. You need to know what's about to fall over. glance measures every service against its own limit, and the one already past it turns red.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/gallery-eng-dark.png">
-  <img alt="Two glance results. What an upgrade changed: bars growing left and right from a zero line, with the three slower endpoints in red and labeled, and the four faster ones in gray. Where a test run broke: six test suites across five platforms, with only the two failing Windows cells in red and the flaky macOS cell named flaky." src="docs/images/gallery-eng-light.png" width="100%">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/reader-oncall-dark.png">
+  <img alt="glance's answer about memory: report-worker is over its limit and was killed 14 times in a day, api and search are close. Below it, seven meters on one scale with a limit mark: report-worker in red at 115 percent runs past the mark, api at 91 percent and search at 88 percent are labeled close, and the rest are gray." src="docs/images/reader-oncall-light.png" width="100%">
 </picture>
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/gallery-choice-dark.png">
-  <img alt="Choosing between options: four servers compared on price, CPU, RAM, storage, traffic, location and a trial. The recommended Kestrel KS-8 has a filled column, and each other option has one short red note with the reason to skip it." src="docs/images/gallery-choice-light.png" width="100%">
-</picture>
+### Shipping a frontend
+
+A bundle analysis becomes one bar split into its parts. The part the answer is about turns blue, and every size is listed underneath.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/gallery-money-dark.png">
-  <img alt="Two glance results. Why a bill jumped: monthly totals as columns with October in red, then a table of every service's September and October cost. When there's nothing to chart: a logout bug told in one sentence and three groups of bullets, with every path and URL kept word for word, and no picture." src="docs/images/gallery-money-light.png" width="100%">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/reader-frontend-dark.png">
+  <img alt="glance's answer about a JavaScript bundle: nearly half of the main file is the chart library. Below it, a split bar of main.js with echarts in blue, then a list of all six parts with their minified size and share, from echarts at 860 KB and 47 percent down to 31 other packages at 68 KB." src="docs/images/reader-frontend-light.png" width="100%">
 </picture>
+
+### Upgrading a dependency
+
+Some endpoints got faster and some got slower. The bars grow both ways from zero, and only the changes for the worse turn red.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/reader-upgrade-dark.png">
+  <img alt="glance's answer about a database driver upgrade: four of seven endpoints got faster and three slower, and /search now misses its 300 ms target. Below it, bars from a zero line: /search, /reports/export and /orders grow right in red and are labeled slower, while /products/:id, /cart, /login and /checkout grow left in gray." src="docs/images/reader-upgrade-light.png" width="100%">
+</picture>
+
+### Watching a metric
+
+A month of daily numbers becomes one line that starts at zero, so a drop to half looks like half. The stretch the answer is about turns red, and you can hover over any day to read its value.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/reader-metric-dark.png">
+  <img alt="glance's answer about March signups: they fell to about half on 12 to 15 March when the verification email stopped going out, then bounced back. Below it, three headline numbers and a line chart of 31 daily values from zero, with 12 to 15 March in red." src="docs/images/reader-metric-light.png" width="100%">
+</picture>
+
+### Cutting a release
+
+A test matrix becomes a grid. Only the failing cells turn red, and a flaky suite says it's flaky.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/reader-release-dark.png">
+  <img alt="glance's answer about a CI run: only Windows is broken, with file-watcher failing on Node 20 and 22, so Linux and macOS can ship. Below it, six suites across five platforms, all pass except two red fail cells for file-watcher on Windows and one flaky cell for cli-e2e on macOS." src="docs/images/reader-release-light.png" width="100%">
+</picture>
+
+### Picking a server
+
+Options with the same details line up side by side. The recommended one is filled in, and every other option shows its one reason to skip it.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/reader-server-dark.png">
+  <img alt="glance's answer about choosing a server: get the Kestrel KS-8, the only option under the 40 dollar budget with enough memory and no traffic cap. Below it, four servers compared on price, CPU, RAM, storage, traffic, location and a trial, with Kestrel's column filled and one red note on each of the others: tight with Postgres, over budget, and no capacity." src="docs/images/reader-server-light.png" width="100%">
+</picture>
+
+### Explaining a bill
+
+Six months of totals as columns, with the month that jumped in red. Underneath, every service's change, biggest first.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/reader-bill-dark.png">
+  <img alt="glance's answer about an AWS bill: it more than doubled in October, almost all because of two changes in its first week. Below it, monthly totals from May to October with October in red at 4,760 dollars, then a table of each service's September and October cost, sorted by the change." src="docs/images/reader-bill-light.png" width="100%">
+</picture>
+
+### Chasing a bug
+
+Not every answer needs a chart. When the answer is reasoning, glance leaves it as words: one plain sentence, then bullets grouped around why it happens, the fix and what's still unconfirmed. Every path and URL stays exactly as written.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/reader-bug-dark.png">
+  <img alt="glance's answer about a logout bug, with no picture: one sentence saying the payment page sends people back to www.shop.example.com while the login cookie only works on shop.example.com, then bullets under why it happens, fix and still to confirm, ending with glance mode off." src="docs/images/reader-bug-light.png" width="100%">
+</picture>
+
+## Why not just use dataviz?
+
+Claude Code's built-in dataviz skill teaches Claude how to draw a good chart: which form to pick, how to color it and how heavy the marks should be. It's very good at that, and glance follows its rules. But the two skills do different jobs.
+
+- **dataviz draws the chart you ask for. glance re-tells an answer you already have.** It decides whether anything in the answer is worth a picture, which part that is and which form shows it best. Then it rewrites the words around it.
+- **glance promises to keep every fact and invent nothing.** Every number, name, path, command, warning and open question stays in. It adds no trend lines, averages or projections, shows a missing value as `—`, and keeps commands and error messages word for word.
+- **It's made to be read at a glance.** The answer comes first, in one plain sentence. The picture comes next, then a few bullets. You have the point before you read a single axis.
+- **It only draws when there's data.** Reasoning stays as words, so you never get a chart for the sake of a chart.
+- **Every picture comes from one tested kit.** The same components every time, checked in light mode, dark mode and narrow side panels. The tenth picture looks as considered as the first.
+- **It builds on dataviz instead of replacing it.** glance's thin marks, one-axis rule and color checks come straight from dataviz's rules and its palette validator.
+
+Use dataviz when you want Claude to make a chart. Use glance when Claude has already answered and you want to understand it fast.
 
 ## Readable by everyone
 
@@ -52,17 +114,10 @@ About one man in twelve can't easily tell red from green. Most charts lean on ex
 </picture>
 
 - **Red never sits against green.** An improvement stays gray instead of turning green. Only what's worse, over a limit or failing turns red, and only the item the answer is about turns blue. Blue and red stay far apart for everyone.
-- **There is no amber warning color.** v2 tried one for "tight" meters, and a color validator rejected it. Under red-green color blindness, amber and the alert red differ by only 3.2, where 8 is the minimum. Even with full color vision they score 12.7, below the floor of 15. So "tight" and "close" are words, and the bar stays gray.
+- **There is no amber warning color.** v2 tried one for "tight" meters, and the color validator rejected it. Under red-green color blindness, amber and the alert red differ by only 3.2, where 8 is the minimum. Even with full color vision they score 12.7, below the floor of 15. So "tight" and "close" are words, and the bar stays gray.
 - **Every colored mark also carries a word**: "over limit", "slower", "fail", "Recommended". Color helps you find it, and the word tells you what it means, so nothing depends on color alone.
 - **Every value is printed** on the picture, so nothing hides behind a hover. Line charts add a hover readout on top of that.
 - **Each picture opens with a one-sentence summary** for screen readers. Its colors come from the app's theme, so light and dark mode both work. Comparisons turn into cards in narrow side panels.
-
-## It keeps every fact
-
-- Every number, name, path, command, step, warning and open question from the original stays in.
-- It adds nothing the original didn't say: no trend lines, averages or projections. A value it doesn't have is shown as `—`.
-- Commands, code and error messages stay word for word.
-- Charts are honest: bars and lines start at zero, and things compared share one scale and one unit. There's never a second y-axis.
 
 ## Commands
 
@@ -82,40 +137,20 @@ Modes set inside `/btw` stay there. A side question doesn't change the main conv
 
 ## New in v2
 
-- **Meters** show values against their limits, and a service over its limit visibly runs past the limit mark.
+- **Meters** show values against their limits, and anything over its limit visibly runs past the limit mark.
 - **A split bar** shows how one total breaks into parts.
 - **Bars that go both ways** show changes where some things got better and some got worse.
-- **Status grids** cover test matrices, with the failure marked in its own cell.
+- **Status grids** cover test matrices, with each failure marked in its own cell.
 - **Line charts** start at zero, mark the stretch the answer is about in red, and show a readout on hover.
-- **Accessible colors** checked with a validator, a word on every colored mark, and a summary for screen readers.
-- **Thinner bars and stronger values**, following the design rules of Claude's dataviz skill.
+- **Accessible colors** are checked with a validator. Every colored mark carries a word, and every picture has a summary for screen readers.
 
-## Where the pictures show up
+## What's next
 
-Pictures are drawn with the visualize tool in the Claude desktop app, including `/btw` side chats there. Where that tool isn't available, for example `/btw` in a terminal, glance falls back to markdown tables that follow the same rules.
-
-## Tested on real answers
-
-`evals/` holds ten reports glance is tested against: a cloud bill, a server choice, a site speed pass, memory limits, a latency change, a month of signups, a bundle breakdown, a weather analysis, a CI matrix and a bug explanation that shouldn't get a picture. Each case comes with pass/fail checks, and scripts in `tools/` check kept numbers and length. Before release, v2 ran against v1 on all ten cases in two rounds, each judged blind. Across all 41 runs of both versions, 38 kept every number; the other three dropped only the "78" from a "78 years" heading and kept "1948–2025".
-
-The cases use the folder format that `claude plugin eval` reads:
-
-```bash
-claude plugin eval . --allow-tools Write,Edit,Bash --scaffold
-```
-
-## What's in this repo
-
-| Path | Contents |
-|---|---|
-| `SKILL.md` | The instructions Claude follows |
-| `references/ui-kit.md` | The CSS and components every picture is built from |
-| `evals/` | Ten test reports with pass/fail checks |
-| `tools/` | Scripts that check numbers and length, a renderer for any widget, and the builder for these images (`python3 tools/preview/build.py --png`) |
+glance is actively improving, with more chart types and refinements on the way. Star the repo to follow updates.
 
 ## Credits
 
-glance started from [tldr](https://github.com/generativelabs/g-genlabs-skill-tldr) by [Generative Labs](https://www.generativelabs.com). Pointing at an earlier answer, the on/super/off modes and the rule to cut wording but keep every fact all come from tldr. glance adds the plain-language first line, the pictures and the UI kit. v2's chart rules and color checks follow Claude's dataviz skill. If you only want bullet summaries, tldr does that well.
+glance started from [tldr](https://github.com/generativelabs/g-genlabs-skill-tldr) by [Generative Labs](https://www.generativelabs.com). Pointing at an earlier answer, the on/super/off modes and the rule to cut wording but keep every fact all come from tldr. glance adds the plain-language first line, the pictures and the UI kit. If you only want bullet summaries, tldr does that well.
 
 ## License
 

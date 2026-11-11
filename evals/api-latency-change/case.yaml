@@ -1,6 +1,0 @@
-schema_version: "1.1"
-name: api-latency-change
-expected_outcome: |
-  A glance at the latency comparison: the answer first in everyday words, the seven endpoints' p95 change in one picture with the three slower ones marked and /search's missed 300 ms target visible, causes and next steps as bullets, every number kept, shorter than the original.
-context:
-  scaffold_script: place-files.sh

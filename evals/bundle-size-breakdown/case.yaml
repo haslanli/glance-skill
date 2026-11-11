@@ -1,6 +1,0 @@
-schema_version: "1.1"
-name: bundle-size-breakdown
-expected_outcome: |
-  A glance at the bundle analysis: the answer first in everyday words, the six parts of main.js in one picture, largest first, with echarts as the focus, fixes and warnings as bullets, every number kept, shorter than the original.
-context:
-  scaffold_script: place-files.sh

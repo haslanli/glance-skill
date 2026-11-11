@@ -1,6 +1,0 @@
-schema_version: "1.1"
-name: site-speed-results
-expected_outcome: |
-  A glance at the speed results: the answer first in everyday words, the eight measurements as before → after in a table or chart with the two that got worse clearly marked, changes and caveats as bullets, every number kept, shorter than the original.
-context:
-  scaffold_script: place-files.sh
