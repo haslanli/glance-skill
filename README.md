@@ -7,7 +7,7 @@
 
 **Claude's long answers, readable at a glance.**
 
-glance is a skill for Claude Code. Type `/glance` after a long answer, and Claude tells it again for someone short on time or background. You get the answer in one plain sentence, a picture when the answer has data, and a few short bullets for the rest. It's built to keep every number, name, path, command, warning and open question, and to add nothing. In the Claude desktop app the picture is drawn right in the chat; in a terminal it becomes a markdown table.
+glance is a skill for Claude Code. Type `/glance` after a long answer, and Claude tells it again for someone short on time or background. You get the answer in one plain sentence, a picture when the answer has data, and a few short bullets for the rest. It's built to keep every number, name, path, command, warning and open question, and to add nothing. So it cuts wording, not facts: on real answers the text comes out about half to two-thirds as long, and a table keeps its size, because every value stays. In the Claude desktop app the picture is drawn right in the chat; in a terminal it becomes a markdown table.
 
 ```bash
 git clone https://github.com/haslanli/glance-skill ~/.claude/skills/glance
@@ -116,7 +116,7 @@ About one man in twelve can't easily tell red from green. Most charts lean on ex
 - **Red never sits against green.** An improvement stays gray instead of turning green. Only what's worse, over a limit or failing turns red, and only the item the answer is about turns blue. Blue and red stay far apart for everyone.
 - **There is no amber warning color.** v2 tried one for "tight" meters, and the color validator rejected it. Under red-green color blindness, amber and the alert red differ by only 3.2, where 8 is the minimum. Even with full color vision they score 12.7, below the floor of 15. So "tight" and "close" are words, and the bar stays gray.
 - **Every colored mark also carries a word**: "over limit", "slower", "fail", "Recommended". Color helps you find it, and the word tells you what it means, so nothing depends on color alone.
-- **Every value is printed** on the picture, so nothing hides behind a hover. Line charts add a hover readout on top of that.
+- **Every value is printed** on the picture, so nothing hides behind a hover. The two exceptions are the points of a long line chart and the middle months of an inline trend, which show on hover and are read out to screen readers.
 - **Each picture opens with a one-sentence summary** for screen readers. Its colors come from the app's theme, so light and dark mode both work. Comparisons turn into cards in narrow side panels.
 
 ## Commands
@@ -126,7 +126,7 @@ After a long answer, type `/glance`. To keep the result out of the main conversa
 | Command | What it does |
 |---|---|
 | `/glance` | Re-tells the last answer once |
-| `/glance <what>` | Re-tells one answer or part of one: `your reply about the build`, `only the numbers`, or pasted text |
+| `/glance <what>` | Re-tells one answer, part of one, or several: `your reply about the build`, `only the numbers`, `everything we did today`, `all decisions so far`, or pasted text |
 | `/glance on` | Re-tells the last answer, then answers this way until you turn it off |
 | `/glance super` | Same as `on`, with every bullet cut to a short fragment |
 | `/glance off` | Back to normal replies |
@@ -144,6 +144,13 @@ Modes set inside `/btw` stay there. A side question doesn't change the main conv
 - **Line charts** start at zero, mark the stretch the answer is about in red, and show a readout on hover.
 - **Accessible colors** are checked with a validator. Every colored mark carries a word, and every picture has a summary for screen readers.
 
+## New since v2
+
+- **The picture fits what the answer says.** A bill that grew because of a few changes gets a bridge from one total to the other. One charge that caused almost all of it leads as a tile. Six months per product get small inline trends, teams against budget get before → after rows with the budget underneath, and waste grouped by cause gets a list with a bar per cause.
+- **Long tables can be sorted and filtered.** From about 15 rows, or when the same rows are sliced two ways, the table gets sort buttons, filter chips in the answer's own words and a count ("9 of 40 shown"). Shorter answers stay static.
+- **Several answers at once.** `/glance everything we did today` or `/glance дай итог всего прогресса` re-tells the whole session as one glance. When a later answer changed something, the later one wins and the glance says so.
+- **Any language.** Asking for the gist, the key points, a picture or a recap triggers glance in any language. It's tested in the ten most spoken.
+
 ## What's next
 
 glance is actively improving, with more chart types and refinements on the way. Star the repo to follow updates.
@@ -151,6 +158,8 @@ glance is actively improving, with more chart types and refinements on the way. 
 ## Credits
 
 glance started from [tldr](https://github.com/generativelabs/g-genlabs-skill-tldr) by [Generative Labs](https://www.generativelabs.com). Pointing at an earlier answer, the on/super/off modes and the rule to cut wording but keep every fact all come from tldr. glance adds the plain-language first line, the pictures and the UI kit. If you only want bullet summaries, tldr does that well.
+
+What a bill answer needs to show (`references/bills.md`) adapts ideas from Anthropic's [variance-analysis](https://github.com/anthropics/knowledge-work-plugins/tree/main/finance/skills/variance-analysis) skill, AWS's [billing and cost management](https://github.com/aws/agent-toolkit-for-aws) skill and the [cost-check](https://github.com/aws-samples/sample-claude-code-plugins-for-startups) skill from aws-samples.
 
 ## License
 

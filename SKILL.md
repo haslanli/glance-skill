@@ -1,6 +1,6 @@
 ---
 name: glance
-description: "Make Claude's previous answer (or the answer, part or pasted text the user points to) understandable at a glance: the answer in everyday words first, then a picture of the data when there is data (a rendered or interactive chart, stat tiles, a comparison grid or a reshaped table, built from a tested UI kit), then short bullets for the rest. Keeps every number, name, path, command, step, warning and open question; invents nothing; about a third of the original's length. Use when the user types /glance, /btw /glance, /glance <what>, /glance on, super, off, status or help, or asks to explain that simply, show it visually, dumb it down, or says it's too long or they don't get it."
+description: "Use this skill whenever the user responds to an answer Claude already gave (or to several answers, or to pasted text) by asking for less of it rather than more: the bottom line, the gist, the conclusion, tl;dr, the key points, a shorter version, a simpler explanation, or a visual of it. Also use it when they say the answer is too long or confusing. Requests in any language count (\"покажи кратко\", \"长话短说\", \"要点だけ\", \"一言で\"). Also use it for a recap of everything done or decided so far in the session. The skill re-tells the same content: the answer in plain words first, then a chart, tiles or table of its data, then short bullets. It keeps every number, name, command and warning, invents nothing and cuts wording, not facts: text ends up about half to two-thirds as long; tables keep their size. Commands: /glance, /btw /glance, /glance [what|on|super|off|status|help]. Don't use it for new deliverables such as documents, dashboards, slides, emails, exports or translations, or for new questions about the topic."
 argument-hint: "[what | on | super | off | status | help]"
 license: MIT
 ---
@@ -15,8 +15,9 @@ If the arguments are `help` (or `--help`, `-h`, `?`), print this block exactly a
 
 ```text
 /glance            re-tell the last answer at a glance
-/glance <what>     re-tell one answer or one part of it: "your reply about the build",
-                   "only the numbers", "just the decisions", or pasted text
+/glance <what>     re-tell one answer, part of one, or several: "your reply about the build",
+                   "only the numbers", "everything we did today", "all decisions so far",
+                   or pasted text
 /glance on         re-tell the last answer, then answer this way until /glance off
 /glance super      like on, with every bullet cut to a fragment
 /glance off        back to normal replies
@@ -34,29 +35,49 @@ If the arguments are `help` (or `--help`, `-h`, `?`), print this block exactly a
 
 ## Which answer
 
-- **No arguments, `on` or `super`:** the last answer Claude gave before this command. Not the whole thread, not the user's message, not raw tool output. If that answer was itself a glance, take the one before it. If there's none, say so in one line and stop.
-- **Any other arguments** are an instruction. Read it the way a colleague would: it can point at an answer ("your reply about the migration", "two messages up"), narrow the scope ("only the numbers", "just the decisions"; keep everything inside, drop everything outside), carry pasted text, or combine these. If two answers fit, take the most recent and name it in one short line. If none fits, say so in one line and stop; never re-tell something else instead.
+- **No arguments, `on` or `super`:** the last answer Claude gave before this command. Not the whole thread unless asked, not the user's message, not raw tool output. If that answer was itself a glance, take the one before it. If there's none, say so in one line and stop.
+- **Any other arguments** are an instruction. Read it the way a colleague would: it can point at an answer ("your reply about the migration", "two messages up"), narrow the scope ("only the numbers", "just the decisions"; keep everything inside, drop everything outside), span several answers or the whole session ("everything we did today", "all decisions so far", "итог всего прогресса"), carry pasted text, or combine these. If two answers fit, take the most recent and name it in one short line. If none fits, say so in one line and stop; never re-tell something else instead.
+- **Asked in the user's own words** rather than with `/glance` ("покажи кратко", "too long, just the gist", "where are we with all of this?"): read the request as the instruction, in whatever language it's in, and reply in that language.
+- **Only the answer is a source.** Re-tell what the chosen answer says, nothing from files, tool output or data seen earlier in the conversation, even when it's more detailed: if the answer merged three services into one row, the glance keeps that one row.
 - **Already short and plain** (a few lines a non-expert can follow): return it as it is, with one line saying it's already at a glance.
 - **In a mode:** do the turn's work normally (tools, checks, edits), then give the reply in glance form.
+
+### Several answers or the whole session
+
+When the instruction spans more than one answer (the progress so far, a recap of the session, everything since some point, every decision), re-tell all of them as one glance:
+
+- **Sources:** every answer Claude gave in that span, the decisions the user stated along the way, and the task list Claude kept, if there is one. Skip earlier glances, since they re-tell answers already in the span. Build only from the conversation: don't read git history, files or trackers to fill gaps, because the reader is asking what was found and done here. If part of the span is no longer in the conversation (for example, earlier turns were compacted into a summary), use what's there and say in one line what it covers.
+- **One glance, not one per answer.** The first sentence says where things stand overall. Group the bullets around the reader's questions across the whole span (what's done, what was decided, what's still open, what's next), labeled in this content's own words. Name the step a fact belongs to only where it's needed to make sense of it.
+- **Merge, and keep everything.** A fact that several answers repeat appears once. Every number, name, path, command, warning and open question from every answer stays in.
+- **The later answer wins.** When a later answer updates or contradicts an earlier one (a new measurement, a fix that landed, a decision reversed), use the later version and say so in a few words right next to it: "`/search` 280 ms (350 ms before the cast fix)". An open question that a later answer settled isn't open anymore.
+- **The picture** still has at most three sections. Give them to the data that matters most across the span, usually one section per step that has data; the rest goes in a compact table or the bullets.
+- **Length** is measured against all the source answers together.
 
 ## Shape of a glance
 
 In this order:
 
-1. **The answer, in everyday words.** One or two short sentences, the way you'd say it to a friend: "Your bill more than doubled because of two changes in early October." Not the original's phrasing, no jargon.
+1. **The answer, in everyday words.** One or two short sentences, about 25 words at most, the way you'd say it to a friend: "Your bill more than doubled because of two changes in early October." Not the original's phrasing, no jargon, no metaphors that need unpacking.
 2. **The picture, when there is data.** See below.
 3. **Bullets for what the picture doesn't show:** causes, steps, decisions, caveats, open questions.
    - Group them around the reader's questions (why it happened, what to do, what's still unknown, what's needed from them), and label each group in this content's own words ("Two changes in early October", "Fixes, cheapest first"). Don't reuse the original's headings and don't use a fixed set of labels.
-   - One line per bullet, two at most. Fragments are fine.
-   - The first time a term would stop a non-expert, add a 2–4 word explanation in brackets. Don't explain everyday words.
+   - One line per bullet, two at most, written as short phrases rather than sentences (see Length).
+   - The first time a term would stop a non-expert and they need it to follow the answer, add a 2–4 word explanation in brackets. Don't explain everyday words, and keep it to one or two per glance.
    - Commands, code, paths and error text stay word for word, in code formatting.
+
+Nothing else. The sentence comes before the picture, the bullets come right after it, and no paragraph in between restates the answer or describes the picture.
 
 ## The picture
 
 **When.** Whenever the answer has data: numbers to compare (across items, groups or time), several items with the same details, values that changed, or a status for each of many items. In those cases the picture is the default, not an extra. When the answer is mostly reasoning with a few numbers in it, skip the picture.
 
-**What.** Whatever makes this data readable at a glance. Pick by what the data is for:
+**What.** Whatever makes this data readable at a glance. Pick by what the answer says about its data, not by its topic or by habit: two bills can need two different pictures. Read the answer's first sentence and ask what the reader has to see to believe it.
 
+- the total went from A to B, and the answer gives the changes that make up the gap → a bridge whose steps add up exactly
+- one item made almost all of a change → lead with that item as a tile (its share when that's exact arithmetic), the rest as bars
+- each row has values for several periods, and how each row moved matters → a table with a small inline trend per row
+- items moved from one value to another and are judged against a budget, target or rival the answer gives → before → after rows with the benchmark muted under each value
+- problems, failures, losses or waste grouped by cause → a cause list: each cause with a bar for its count or amount and the affected items under it
 - 1 to 4 figures the answer is about → headline tiles (a single number is a tile, never a chart with one bar)
 - one value against its limit or its whole (a disk 92 % full, a budget 80 % spent), or several items each against its own limit → meters
 - one series across periods or categories (up to 12) → columns; more points over time → a line
@@ -69,11 +90,21 @@ In this order:
 
 Never a pie or donut, never a second y-axis, never more than two lines on one chart, and no color besides gray, the accent and the alert red. When a form above can't show the data honestly in one scale and one unit, use the table.
 
-One picture of one to three sections (for example tiles, then the main chart, then one list). Not a dashboard. Every value is printed on the picture, so nothing waits behind a hover; a line with many points is the one exception, and the kit gives it a hover readout. Add other interaction only when the data truly doesn't fit at once, and then it only shows the original's data a different way; it never adds what-ifs, projections, trend lines, averages or numbers the original doesn't have.
+One picture of one to three sections (for example tiles, then the main chart, then one list). Every value is printed on the picture, so nothing waits behind a hover; the kit names the two exceptions (a line with many points, an inline trend) and gives them a hover readout.
+
+**Interactive only when it earns it.** The picture stays static unless the data has too many rows to take in at once (about 15 or more) or the answer slices the same rows two or more ways (by title and by language, by month and by service). Then use the kit's interactive table (sorting, filter chips, a search box for long lists) or its view switch, and keep to these rules:
+
+- The first view, before anyone clicks, already answers the question: every row shown, sorted and marked the way the static picture would be, or the slice the answer is about.
+- Controls only show the original's data another way. No what-ifs, projections, trend lines, averages or numbers the original doesn't have, and no control that changes or computes a value.
+- Filters use the answer's own categories and words ("Losses only", "Failing"), never a grouping it doesn't make.
+- A filtered view says how many rows it shows ("12 of 40 shown").
+- One table with its controls, never several charts wired together into a dashboard.
+- Without a visual tool there's nothing to click: give the full table, sorted the way the first view would be.
 
 **How.**
 
-- With a visual tool (in the Claude desktop app, including its /btw side chat, the visualize tool): call `read_me` with the modules `mockup` and `data_viz` (add `chart` only for a line chart). Then read `references/ui-kit.md` in this skill's folder and build the picture from it: paste its CSS block exactly, start with the one-sentence screen-reader summary, use only its components, and don't restyle them. Where the tool's guide and the kit differ, the kit wins. Draw with `show_widget`. Write the answer sentence before the call and the bullets after it.
+- With a visual tool (in the Claude desktop app, including its /btw side chat, the visualize tool): call `read_me` with the modules `mockup` and `data_viz` (add `chart` only for a line chart). Then read `references/ui-kit.md` in this skill's folder and build the picture from it: paste its CSS block exactly, start with the one-sentence screen-reader summary, use only its components, and don't restyle them. Where the tool's guide and the kit differ, the kit wins. Draw with `show_widget`. The answer sentence is the first text of your reply, written before you call `show_widget` (calling `read_me` first is fine), so the reader gets the answer before the picture; the bullets come after it.
+- When the answer explains a bill or a change in spend, read `references/bills.md` first: it says what such a reader needs to see and which of the forms above fits.
 - Without one (a terminal, or /btw in the terminal): a markdown table, reshaped as below, or before → after inside the bullets.
 - Color carries meaning only: good / bad / neutral, or one highlight against gray. Explain it with a short legend or direct labels.
 - Values and labels go on the picture; sentences of explanation stay in the reply.
@@ -83,7 +114,7 @@ One picture of one to three sections (for example tiles, then the main chart, th
 - Same rows, same values, same units as the original. Nothing dropped, merged or rounded.
 - Sort on a key that's in the data (such as the change in dollars), then check the order once it's sorted.
 - Mark only what the original supports: "worse" only where it says so or the numbers clearly moved the wrong way; "recommended" only for what it recommends.
-- Add a derived number (a difference, a share) only when it's exact arithmetic on the original's values and helps the reader; label it as calculated. Otherwise add no numbers.
+- Add a derived number (a difference, a share) only on the picture, only when it's exact arithmetic on the original's values and the picture needs it (a bridge step, a lead item's share); label it as calculated. Otherwise add no numbers, and never a new count or comparison in the bullets.
 - If a value in the original is unclear, keep it exactly as written.
 
 **Design it precisely.** The kit takes care of spacing, type sizes, alignment, dark mode and narrow panels, so don't override it. What it can't decide for you:
@@ -102,7 +133,29 @@ Without a visual tool, the same rules apply to the markdown table: number column
 
 ## Length
 
-Aim for about a third of the original, counting the words on the picture. Never longer than the original. Don't pad to reach a length, and never cut a fact to hit one.
+The reader asked for glance to spend less time, so length is a budget you set before writing, not a hope. The prose (the answer sentence plus the bullets) and the picture get separate budgets, because a table of 40 rows can't get shorter without losing numbers, but the sentences around it always can.
+
+- **Prose: aim for a third of the original's prose.** The original's prose is every word outside its tables and code blocks; when the glance covers several answers, count all of them together. A 600-word answer leaves about 200 words for the answer sentence and the bullets. Answers with words to spare (an introduction, a summary that repeats the body, how the work was done, hedges) get there. An answer that is nearly all steps, warnings and numbers can't without losing some: then half to two-thirds is normal, with every phrase as short as its facts allow, because facts win over the budget.
+- **Picture: about the room the original's data took.** Its tables and lists of numbers, plus short labels, captions and notes. Don't print the same value twice.
+- **The whole glance is shorter than the original.** The one exception is an original that is mostly one large table: a picture can't make 40 rows shorter, and the few labels it adds (filter chips, a count, a note on the flagged rows) can take it slightly past. Then keep the prose to its minimum.
+- Don't pad to reach a length.
+
+**Set the budget before writing.** Count the original's prose words, take a third, and keep that number in mind as you write the answer sentence and every bullet; check the total before the picture's call and again at the end.
+
+Where the words go:
+
+- **Bullets are short phrases, not sentences.** Lead with the thing, then its facts, and let punctuation do the joining. This original (46 words):
+
+  > Debug logging left on. `log-shipper` v2.3, deployed Oct 3, runs with `LOG_LEVEL=debug`. Its output leaves the private subnets through the NAT Gateway: about 38 TB in October. The same logs also go to CloudWatch Logs (~760 GB ingested at $0.50/GB ≈ $380).
+
+  becomes this bullet (23 words), with every fact kept:
+
+  > **Debug logs left on:** `log-shipper` v2.3 (Oct 3) runs `LOG_LEVEL=debug`, sending ~38 TB through NAT Gateway and ~760 GB into CloudWatch ($0.50/GB ≈ $380).
+
+  Drop "This means", "It's worth noting", "The person who…", "so that", and every word whose meaning survives without it. Group labels are two to four words; a caveat goes in a bullet, not in a label.
+- **Every bullet carries facts.** None only introduces, explains or rephrases another, and none repeats what the picture shows.
+- **Glosses are short and few:** 2–4 words, only for a term the reader needs to understand what happened or what to do, only the first time, and never for a word the user wrote themselves. Most glances need one or two.
+- **No new findings.** Counts, comparisons, rankings and conclusions that the original doesn't state stay out, even when they follow from its data ("4 of these were under the target before", "14 changes are within the noise"). They add words and they're not the original's.
 
 **Super form:** every bullet becomes a one-line fragment with no articles, filler verbs or lead-ins. Same facts, same groups, about half the words of a normal glance. Names, paths, IDs and numbers stay exact; use only abbreviations the user already uses. Keep a picture only if it's tighter than the bullets it replaces.
 
@@ -119,22 +172,22 @@ Aim for about a third of the original, counting the words on the picture. Never 
 
 ## Never
 
-- Never drop a number, name, path, command, step, warning, caveat or open question.
-- Never invent facts, advice, certainty or data, including inside a chart or an interactive control.
+- Never drop a number, name, path, command, step, warning, caveat or open question, and never trade a number for words: "2.25×" stays "2.25×", not "more than doubled".
+- Never invent facts, advice, certainty or data, including inside a chart or an interactive control, and never add findings of your own (new counts, comparisons or conclusions drawn from the original's data).
 - Never paraphrase commands, code or error messages.
 - Never say a fact twice, such as on the picture and again in the bullets.
 - Never copy the original's headings, or its tables as they are, when regrouping or reshaping would read faster.
 - Never draw box-drawing or ASCII diagrams, and never use emoji as decoration or labels.
-- Never fetch new data or run commands to improve a one-off glance. Reading the visual tool's guide to draw the picture is fine.
+- Never fetch new data or run commands to improve a one-off glance, including one about the whole session. Reading the visual tool's guide to draw the picture is fine.
 - Never open with "Here's a summary", restate the question, or add a closing line other than the mode line.
 - Never be longer than the original.
 
 ## Before sending
 
-1. **Nothing lost:** tick off every fact of the original against the picture and the bullets.
+1. **Nothing lost:** tick off every fact of the original (of every source answer, when there are several) against the picture and the bullets.
 2. **Picture correct:** reshaped data matches the original row for row and value for value, and the sort order and marks are right.
 3. **Picture precise:** built only from the kit (its CSS block pasted as is, no restyling), then the "Design it precisely" list: one thing stands out, same order and names, values written the same way, at most one flag per option, one line per row, color only on exceptions, notes next to what they describe, nothing drifting out of line.
-4. **Right form:** the form fits the data's job from the list under The picture; bars, columns, meters and diverging bars start at zero and share one scale and one unit; every value is printed (a line's points are in its canvas text); no pie, donut, second y-axis or third color; widths and heights match the kit's formulas.
-5. **Shorter:** under the original, ideally about a third.
+4. **Right form:** the form fits what the answer says about its data, from the list under The picture; bars, columns, meters, diverging bars and a bridge's totals start at zero and share one scale and one unit; a bridge's start plus its steps equals its end; every value is printed (a line's points are in its canvas text); no pie, donut, second y-axis or third color; widths and heights match the kit's formulas.
+5. **Shorter:** count the words. The answer sentence plus the bullets come to about a third of the original's prose (more only when the original is nearly all facts), and the whole glance is shorter than the original. If not, cut in this order before touching any fact: anything that restates the answer or the picture, added findings, glosses, words a phrase doesn't need.
 6. **Made for this answer:** if this layout would fit almost any answer, the picture or the grouping isn't working for this content. Rework it.
 
