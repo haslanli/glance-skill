@@ -123,6 +123,33 @@ def gallery_page(tiles, mode):
     return page(body, mode, GALLERY_CSS, width=1040)
 
 
+# ---------------------------------------------------------------- one picture per reader
+
+READER_CSS = GALLERY_CSS + """
+.one{box-sizing:border-box;width:760px;border-radius:24px;padding:36px 40px 40px;background:var(--tile);display:flex;flex-direction:column}
+.one .ans{font-size:16px;line-height:1.55;margin:0 0 26px;color:var(--text-primary)}
+.one code{font-family:var(--font-mono);font-size:14px}
+.one .bl{font-size:15px}.one .bl code{font-size:13.5px}.one .ans+.bl{margin-top:0}
+"""
+
+BILL = re.sub(r'<div class="gl-sec gl-tiles">.*?</div>\n</div>\n', '', demo("bill"), count=1, flags=re.S)
+
+READERS = {
+    "reader-oncall": ("<code>report-worker</code> is already over its memory limit and was killed 14 times in a day. <code>api</code> and <code>search</code> are close.", demo("memory")),
+    "reader-frontend": ("Nearly half of the dashboard's main file is the chart library, and every page downloads it.", demo("bundle")),
+    "reader-upgrade": ("The new database driver sped up four of seven endpoints and slowed three; <code>/search</code> now misses its 300 ms target.", demo("latency")),
+    "reader-metric": ("Signups fell to about half on 12–15 March because the verification email stopped going out. They bounced back right after, and March still ended 4 % up.", demo("signups")),
+    "reader-release": ("Only Windows is really broken: the file-watcher tests fail there on Node 20 and 22. Linux and macOS can ship.", demo("ci")),
+    "reader-server": ("Get the Kestrel KS-8: it's the only option under your $40 budget with enough memory for Postgres plus two transcodes, and its traffic has no cap.", demo("vps")),
+    "reader-bill": ("Your AWS bill more than doubled in October, almost all because of two changes in its first week.", BILL),
+    "reader-bug": ("People get logged out after paying by card because the payment page sends them back to <code>www.shop.example.com</code>, and the login cookie only works on <code>shop.example.com</code>.", TEXT_ONLY),
+}
+
+
+def reader_page(ans, body, mode):
+    return page(f'<div class="one"><p class="ans">{ans}</p>{body}</div>', mode, READER_CSS, width=760)
+
+
 # ---------------------------------------------------------------- color figure
 
 def deutan(h):
@@ -237,8 +264,8 @@ def pages():
     for mode in MODES:
         out[f"hero-{mode}"] = (hero_page(mode), 1280, 720)
         out[f"color-{mode}"] = (cvd_page(mode), 1040, None)
-        for name, tiles in GALLERY.items():
-            out[f"{name}-{mode}"] = (gallery_page(tiles, mode), 1040, None)
+        for name, (ans, body) in READERS.items():
+            out[f"{name}-{mode}"] = (reader_page(ans, body, mode), 760, None)
     return out
 
 
