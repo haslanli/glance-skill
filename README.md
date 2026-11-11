@@ -136,16 +136,7 @@ After a long answer, type `/glance`. To keep the result out of the main conversa
 
 Modes set inside `/btw` stay there. A side question doesn't change the main conversation.
 
-## New in v2
-
-- **Meters** show values against their limits, and anything over its limit visibly runs past the limit mark.
-- **A split bar** shows how one total breaks into parts.
-- **Bars that go both ways** show changes where some things got better and some got worse.
-- **Status grids** cover test matrices, with each failure marked in its own cell.
-- **Line charts** start at zero, mark a stretch that went wrong (an outage, a dip below target) in red, and show a readout on hover.
-- **Accessible colors** are checked with a validator. Every colored mark carries a word, and every picture has a summary for screen readers.
-
-## New since v2
+## New in v3
 
 - **The picture fits what the answer says.** A bill that grew because of a few changes gets a bridge from one total to the other. One charge that caused almost all of it leads as a tile. Six months per product get small inline trends, teams against budget get before → after rows with the budget underneath, and waste grouped by cause gets a list with a bar per cause.
 - **Long tables can be sorted and filtered.** From about 15 rows, or when the same rows are sliced two ways, the table gets sort buttons, filter chips in the answer's own words and a count ("9 of 40 shown"). Shorter answers stay static.
