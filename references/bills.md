@@ -18,10 +18,10 @@ Read this when the answer explains a bill or a change in spend: a cloud or SaaS 
 | The answer says | Picture (in `ui-kit.md`) |
 |---|---|
 | The total went from A to B because of these changes, and the changes add up to the gap | **Bridge**: start, one step per change, end |
-| One item made almost all of the change | **Lead item**: that item's change as the headline, the rest as a short bar list |
+| One item made almost all of the change | **Lead item**: that item's change as the headline figure, the rest as a table or bars |
 | Several months for each item, and the trend per item matters | **Table with an inline trend** in each row |
-| Each item against its budget or a benchmark | **Before → after rows** with the benchmark muted underneath |
-| Only the monthly totals, with one month that jumped | **Columns**, the month that jumped marked |
+| Each item against its budget or a benchmark | **Table with a gauge per row**: both values, the budget as the gauge's tick |
+| Only the monthly totals, with one month that jumped | **Columns** (the jump cut to fit when it dwarfs the rest) or a **line** with a scale break, the month that jumped marked |
 
 When two of these fit, pick the one closest to the answer's own first sentence: if it says "almost all of it is NAT Gateway", lead with that item; if it says "two changes added $2,510", draw the bridge.
 

@@ -1,491 +1,473 @@
 # glance UI kit
 
-Build every glance picture from this kit. It handles spacing, type sizes, alignment, light and dark mode, and narrow side panels, so every picture comes out at the same quality.
+Build every glance picture from this kit. It handles spacing, type, alignment, light and dark mode, and narrow panels, so every picture comes out at the same quality.
 
-Contents: The look · How to use it · CSS · Components: section caption, headline figures, notes, table, columns, bars, meters, split bar, diverging bars, comparison, bridge, lead item, table with an inline trend, before → after against a benchmark, causes with counts, interactive table, view switch, the script for interactive pieces, lines with many points.
+Contents: The look · How to use it · CSS · Components: card, headline figures, table, gauge, bars, split bar, columns, bridge, inline trend, diverging bars, comparison, status grid, interactive table, view switch, line · The script.
 
 ## The look
 
-Calm and product-like, the way a careful designer builds a report or a settings page. Type, alignment and whitespace do the work: hairline dividers, a soft band behind table headers, a light blue tint on the rows to look at, no boxes, no badges or pills.
+Calm and built with care, like a well-made report. Each part of the answer sits on its own grey card; size does the ranking (one big figure, everything else smaller); type, alignment and space do the rest. No boxes inside cards, no badges, no decoration.
 
-It follows long-established design rules:
-
-- **Three colors, three jobs.** Soft blue is every ordinary mark: bars, columns, meters, totals, the parts of a split. Blue (`hi`) says where to look: the item, row or stretch the answer is about, and the control in use. Red (`bad`, `x`) says something is negative: a value past a limit, target or budget the answer gives, or something failing. Red goes on that value only (its number, the part of its bar past the line, a dot and a word after its name), never on a whole row of text, and never just because a number went up: a cost that grew is blue when it's what the answer is about. There's no green, so an improvement stays soft blue and red never sits next to green, the pair red-green color-blind readers confuse. There's no amber either, since next to red it nearly vanishes for them: "tight" or "borderline" is a word, never a colored mark (the word may take the warning text color). Blue and red stay far apart for everyone.
-- **Proximity.** A note sits right next to the thing it describes: under its value, or, for a table row, as a flag (a red dot and a word) right after the row's name. It never goes in a separate column at the far edge.
-- **Alignment.** Text aligns left and numbers align right, each in its own column, with the header aligned the same way as its column. Rows line up across columns.
-- **Thin marks.** Bars and columns are at most 24 px thick, rounded only at the value end and square at the baseline. Lines are 2 px. Touching parts are separated by a 2 px gap, never by a drawn border.
-- **Every value is printed.** Each bar, column, meter and cell shows its value as text, so nothing waits behind a hover and the picture reads the same in a screenshot. There are two exceptions. A line with many points prints its last value, and a hover readout plus the canvas's text carry every point. An inline trend in a table row prints its first and last values, and each of its columns carries its own value on hover and in the row's screen-reader text.
-- **Less ink.** Anything that carries no information goes: legends the labels already cover, repeated captions, decoration. If a picture starts to look like a generated dashboard, take something away.
+- **Three colors, three jobs.** Soft blue for every ordinary mark. Blue for the one thing to look at: the figure, row, bar or option the answer is about. Red only for a value past a line the answer gives (a limit, budget, target) or failing, and only on that value: its number, the part of its bar past the line, its word. No green, no amber marks; "tight" or "borderline" is a word in the warning text color.
+- **Data in ink, grey only for labels.** Every value is in the primary text color; grey is for labels, units, notes and axis text. Nothing smaller than 12 px, and labels and notes are 13 px.
+- **Units once.** The unit goes in the column header, the row label or the card's subtitle ("Dollars a month", "RAM (GB)"), and cells hold plain numbers. Write every value in full the same way within a column (no "61k" next to "48,000").
+- **Qualifiers are marks.** "About" is `~`, "at least" is `>`, "at most" is `<`, right before the number, with no legend: `~1,750`, `>3,360`, `~$50.4k`.
+- **Notes go in the subtitle.** What the reader needs to read a card (a unit, a scale break, a cut bar, a magnification, what a tick means) goes in the card's subtitle, never as text inside the plot.
+- **No flag after a name.** A row that's past a line shows it with its value (red), its gauge (the overshoot red) and, when the answer says by how much, a short line under its name ("8,900 over"). Never a dot-and-word tag after the name.
+- **Differences you can see.** When compared values would draw less than about 4 px apart, or a mark would be under 4 px, change the form honestly and say so in the subtitle: give a line a fitted scale, break the scale, cut the outlier, or give the small values their own panel with an exact factor. Bars and columns always start at zero.
+- **Every value is printed** on the picture. The one exception is a line with more than 12 points: it labels the points the answer names plus the last one, and the hover readout carries the rest.
+- **Narrow panels.** At 520 px and below, table rows become two aligned lines (the name, then the values in the same columns as the header), comparisons stack with the pick first, and nothing scrolls sideways.
 
 ## How to use it
 
 1. Put the CSS block below at the top of the widget, exactly as written.
 2. Right after it, one `<h2 class="sr-only">` with one sentence on what the picture shows, for screen readers.
-3. Wrap the whole picture in one `<div class="gl">`.
-4. Stack at most three sections, each a `<div class="gl-sec">`, usually headline figures, then the main chart, table or comparison, then one secondary table.
-5. Use only these components. Don't restyle them and don't add inline styles, except the documented `--n`, `--r`, `--c`, `--v`, `--lim`, `--a`, `--w`, `--k`, `--h`, bar `height` and bar or meter `width`.
-6. A value the original doesn't give is `—`, never a guess.
+3. Wrap the whole picture in one `<div class="gl">`. Each part of the answer is one `<section class="gl-card">`, at most three cards (headline figures count as one).
+4. Use only these components. Don't restyle them and don't add inline styles other than the documented ones: `--c`, `--nc`, `--cols`, `--lw`, `--v`, `--a`, `--w`, `--n`, `--nw`, `flex`, `width`, `height`, `left`, `top`.
+5. A value the answer doesn't give is `—`, never a guess.
 
 ## CSS
 
 ```html
 <style>
-.gl{--gl-a:#378ADD;--gl-r:#E24B4A;--gl-s:color-mix(in srgb,#378ADD 42%,transparent);--gl-s2:color-mix(in srgb,#378ADD 62%,transparent);--gl-band:color-mix(in srgb,var(--text-primary) 5%,transparent);--gl-t:color-mix(in srgb,#378ADD 14%,transparent);--gl-at:color-mix(in srgb,#378ADD 8%,transparent);--gl-rt:color-mix(in srgb,#E24B4A 12%,transparent);--gl-track:color-mix(in srgb,#888780 14%,transparent);font-size:14px;line-height:1.45;color:var(--text-primary);font-variant-numeric:tabular-nums;container-type:inline-size}
-.gl *{box-sizing:border-box}
-.gl-sec+.gl-sec{margin-top:28px}
-.gl-cap{font-size:12px;font-weight:500;color:var(--text-secondary);margin:0 0 8px}
-.gl-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
-.gl-tile{background:var(--surface-1);border-radius:var(--radius);padding:12px 16px;min-width:0;container-type:inline-size}
-.gl-k{font-size:12px;color:var(--text-secondary)}
-.gl-v{font-size:clamp(18px,19cqi,24px);font-weight:500;line-height:1.25;letter-spacing:-.01em;white-space:nowrap;display:flex;flex-wrap:wrap;align-items:baseline}.gl-v.hi{color:var(--text-accent)}.gl-v.bad{color:var(--text-danger)}
-.gl-note{font-size:12px;line-height:1.35;color:var(--text-muted);overflow-wrap:break-word}
-.gl-note.bad{color:var(--text-danger)}.gl-note.warn{color:var(--text-warning)}.gl-note.pick{color:var(--text-accent)}.gl-note.good{color:var(--text-success)}
-.gl-flag{font-size:12px;font-weight:400;color:var(--text-danger);margin-left:8px;white-space:nowrap}.gl-flag::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gl-r);margin-right:5px;vertical-align:1px}
-.gl-flag.warn{color:var(--text-warning)}.gl-flag.warn::before{background:currentColor}.gl-flag.hi{color:var(--text-secondary)}.gl-flag.hi::before{background:var(--gl-a)}
-.gl-arw{color:var(--text-muted);font-weight:400;margin:0 .15em}
-.gl .nw{white-space:nowrap}
-.gl-tbl{display:grid;grid-template-columns:minmax(min-content,1fr) repeat(var(--c,2),max-content);overflow-x:auto}
-.gl-tbl>div{padding:10px 12px;border-bottom:0.5px solid var(--border);min-width:0;overflow-wrap:break-word}
-.gl-tbl>.num{text-align:right;padding-left:20px;white-space:nowrap;overflow-wrap:normal}
-.gl-tbl>.hd{font-size:12px;font-weight:500;color:var(--text-secondary);background:var(--gl-band);border-bottom:0;padding-top:8px;padding-bottom:8px}
-.gl-tbl>.hd:first-child{border-radius:var(--radius) 0 0 var(--radius)}.gl-tbl>.hd:not(:has(+.hd)){border-radius:0 var(--radius) var(--radius) 0}
-.gl-tbl>.mut{color:var(--text-secondary)}
-.gl-tbl>.at{background:var(--gl-at)}.gl-tbl>.at:not(.num,.sp,.bbc){box-shadow:inset 3px 0 0 var(--gl-a)}
-.gl-tbl>.x{color:var(--text-danger);font-weight:500}.gl-tbl>.w{color:var(--text-warning)}.gl-tbl.st>.x{background:var(--gl-rt)}
-.gl-tbl>.bbc{display:flex;align-items:flex-start;justify-content:flex-end;padding-top:17px;padding-left:20px;overflow:visible}
-.gl-name{font-size:14px}.gl-tech{font-size:12px;color:var(--text-muted)}
-.gl-bars{display:grid;grid-template-columns:fit-content(45%) minmax(48px,1fr) max-content;gap:10px 12px;align-items:center}
-.gl-bars .n{font-size:13px;color:var(--text-secondary);overflow-wrap:anywhere}
-.gl-bars .v{font-size:14px;text-align:right;color:var(--text-primary);white-space:nowrap}
-.gl-track{height:8px}
-.gl-fill{height:100%;min-width:2px;border-radius:0 4px 4px 0;background:var(--gl-s)}
-.gl-bars .gl-track:has(.hi,.bad)+.v{font-weight:500}.gl-bars .n:has(+.gl-track .hi,+.gl-track .bad){color:var(--text-primary);font-weight:500}
-.gl-fill.hi{background:var(--gl-a)}.gl-fill.bad{background:var(--gl-r)}
-.gl-cols{display:flex;align-items:flex-end;gap:8px;height:150px}
-.gl-col{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
-.gl-col .lv{font-size:12px;color:var(--text-secondary);margin-bottom:4px;max-width:100%;text-align:center;overflow-wrap:anywhere}
-.gl-col:has(.b.hi,.b.bad) .lv{color:var(--text-primary);font-weight:500}
-.gl-col .b{width:100%;max-width:24px;border-radius:4px 4px 0 0;background:var(--gl-s)}
-.gl-col .b.hi{background:var(--gl-a)}.gl-col .b.bad{background:var(--gl-r)}
-.gl-col .lx{font-size:12px;line-height:16px;min-height:32px;color:var(--text-muted);margin-top:6px;max-width:100%;text-align:center;overflow-wrap:anywhere}
-.gl-mtr{display:grid;grid-template-columns:fit-content(40%) minmax(64px,1fr) max-content max-content;gap:10px 12px;align-items:center}
-.gl-mtr .n{font-size:13px;color:var(--text-secondary);overflow-wrap:anywhere}
-.gl-mtr .v{font-size:14px;color:var(--text-primary);text-align:right;white-space:nowrap}
-.gl-mtr .d{font-size:12px;color:var(--text-muted);text-align:right;white-space:nowrap}
-.gl-mtr .x{color:var(--text-danger)}
-.gl-m{position:relative;height:8px;border-radius:4px;background:var(--gl-t)}
-.gl-m>i{display:block;height:100%;max-width:100%;border-radius:4px;background:var(--gl-s2)}
-.gl-m[style*="--lim"]::after{content:"";position:absolute;left:calc(var(--lim) - 1px);top:-4px;bottom:-4px;width:2px;border-radius:1px;background:var(--text-secondary)}
-.gl-m.hi>i{background:var(--gl-a)}
-.gl-m.bad{background:var(--gl-rt)}.gl-m.bad>i{background:var(--gl-r)}
-.gl-dv{display:grid;grid-template-columns:fit-content(40%) minmax(40px,1fr) minmax(40px,1fr) max-content}
-.gl-dv>div{min-height:28px;display:flex;align-items:center;min-width:0}
-.gl-dv .n{font-size:13px;color:var(--text-secondary);overflow-wrap:anywhere}.gl-dv .v{font-size:14px;color:var(--text-primary);white-space:nowrap}
-.gl-dv .n{padding-right:12px}.gl-dv .v{justify-content:flex-end;padding-left:12px}.gl-dv .x{color:var(--text-danger)}.gl-dv .foc{color:var(--text-primary);font-weight:500}
-.gl-dv .l{justify-content:flex-end;border-right:1px solid var(--border-strong)}
-.gl-dv i{display:block;height:8px;min-width:2px;background:var(--gl-s)}
-.gl-dv .l i{border-radius:4px 0 0 4px}.gl-dv .r i{border-radius:0 4px 4px 0}
-.gl-dv i.hi{background:var(--gl-a)}.gl-dv i.bad{background:var(--gl-r)}
-.gl-split{display:flex;gap:2px;height:8px;border-radius:4px;overflow:hidden;margin-bottom:6px}
-.gl-split>i{flex:var(--v) 1 0;min-width:2px}
-.gl-sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px;vertical-align:-1px}
-.gl-g1{background:color-mix(in srgb,#378ADD 52%,transparent)}.gl-g2{background:color-mix(in srgb,#378ADD 40%,transparent)}.gl-g3{background:color-mix(in srgb,#378ADD 30%,transparent)}.gl-g4{background:color-mix(in srgb,#378ADD 22%,transparent)}.gl-g5{background:color-mix(in srgb,#378ADD 15%,transparent)}
-.gl-split>.hi,.gl-sw.hi{background:var(--gl-a)}.gl-split>.bad,.gl-sw.bad{background:var(--gl-r)}
-.gl-key{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;color:var(--text-secondary);margin:0 0 8px}
-.gl-key i{display:inline-block;width:14px;height:2px;border-radius:1px;background:var(--gl-s);vertical-align:middle;margin-right:6px}.gl-key i.hi{background:var(--gl-a)}
-.gl-line{position:relative;height:180px}
-.gl-cmp{display:grid;grid-template-columns:max-content repeat(var(--n),minmax(0,1fr));grid-template-rows:repeat(var(--r),auto)}
-.gl-cmp>.col{display:grid;grid-template-rows:subgrid;grid-row:span var(--r);min-width:0}
-.gl-cmp>.col>div{padding:9px 12px;border-top:0.5px solid var(--border);min-width:0;line-height:20px}
-.gl-cmp>.col>.hd{border-top:0;padding-top:6px;padding-bottom:8px;font-weight:500;font-size:13px}
-.gl-cmp>.labels>div{font-size:12px;color:var(--text-secondary);padding-left:0;padding-right:16px}
-.gl-cmp>.col.pk{background:var(--bg-accent);border-radius:var(--radius);box-shadow:inset 0 3px 0 var(--gl-a)}
-.gl-cmp>.col.pk>div{border-top-color:color-mix(in srgb,var(--text-accent) 18%,transparent)}
-.gl-cmp>.col.pk .gl-q{color:var(--text-secondary)}
-.gl-val{display:block;font-size:14px;font-weight:500;overflow-wrap:anywhere}.gl-q{display:block;font-size:12px;line-height:16px;color:var(--text-muted);overflow-wrap:anywhere}
-.gl-cmp .flag .gl-q{color:var(--text-danger)}
-.gl-cmp .none{color:var(--text-muted)}
-.gl-br{display:grid;grid-template-columns:fit-content(45%) minmax(64px,1fr) max-content;gap:10px 12px;align-items:center}.gl-br.d{grid-template-columns:fit-content(40%) minmax(64px,1fr) max-content max-content}
-.gl-br .d{font-size:12px;color:var(--text-muted);text-align:right;white-space:nowrap}
-.gl-br .n{font-size:13px;color:var(--text-secondary);overflow-wrap:anywhere}.gl-br .v{font-size:14px;text-align:right;white-space:nowrap}
-.gl-br .n.tot,.gl-br .v.tot,.gl-br .n.foc{color:var(--text-primary);font-weight:500}.gl-br .n .why{color:var(--text-secondary);font-weight:400}.gl-br .x{color:var(--text-danger)}
-.gl-br .t{position:relative;height:8px}
-.gl-br .t>i{position:absolute;top:0;bottom:0;left:min(var(--a),calc(100% - 2px));width:var(--w);min-width:2px;border-radius:2px;background:var(--gl-s)}
-.gl-br .t>i.tot{background:var(--gl-s2)}.gl-br .t>i.hi{background:var(--gl-a)}.gl-br .t>i.bad{background:var(--gl-r)}
-.gl-tbl.tr{grid-template-columns:minmax(min-content,1fr) max-content repeat(var(--c,2),max-content)}
-.gl-tbl>.sp{display:flex;align-items:center;padding-left:20px;overflow:visible}
-.gl-spk{display:flex;align-items:flex-end;gap:2px;height:16px;width:calc(var(--k,6)*10px - 2px)}
-.gl-spk>i{flex:1;height:var(--h);min-height:1px;border-radius:1px 1px 0 0;background:var(--gl-s)}
-.gl-spk>i.hi{background:var(--gl-a)}.gl-spk>i.bad{background:var(--gl-r)}
-.gl-ba{display:grid;grid-template-columns:minmax(0,1fr) max-content}
-.gl-ba>div{padding:9px 12px;border-bottom:0.5px solid var(--border);min-width:0}
-.gl-ba>.hd{font-size:12px;font-weight:500;color:var(--text-secondary);background:var(--gl-band);border-bottom:0;padding-top:8px;padding-bottom:8px}
-.gl-ba>.hd:first-child{border-radius:var(--radius) 0 0 var(--radius)}.gl-ba>.hd+.hd{border-radius:0 var(--radius) var(--radius) 0}
-.gl-ba>.v{text-align:right;padding-left:20px;white-space:nowrap}.gl-ba .x{color:var(--text-danger);font-weight:500}
-.gl-ba>.at{background:var(--gl-at)}.gl-ba>.at:not(.v){box-shadow:inset 3px 0 0 var(--gl-a)}
-.gl-cz{display:grid;grid-template-columns:minmax(0,1fr) minmax(60px,28%) max-content}
-.gl-cz>.n,.gl-cz>.b,.gl-cz>.v{border-top:0.5px solid var(--border);padding-top:10px;min-width:0}
-.gl-cz>.b,.gl-cz>.v{display:flex;align-items:center;padding-left:12px}.gl-cz>.b>.gl-track{flex:1}
-.gl-cz>.v{justify-content:flex-end}.gl-cz>.x{color:var(--text-danger)}
-.gl-cz>.it{grid-column:1/-1;font-size:12px;line-height:16px;color:var(--text-muted);padding:3px 0 10px}
-.gl-bb{position:relative;height:6px;width:96px;border-radius:3px;background:var(--gl-track)}
-.gl-bb>i{position:absolute;left:0;top:0;bottom:0;width:var(--w);border-radius:3px;background:var(--gl-s)}.gl-bb>i.hi{background:var(--gl-a)}
-.gl-bb>b{position:absolute;left:var(--t);top:0;bottom:0;width:var(--o);border-radius:0 3px 3px 0;background:var(--gl-r)}
-.gl-bb::after{content:"";position:absolute;left:calc(var(--t) - 1px);top:-4px;bottom:-4px;width:2px;border-radius:1px;background:var(--text-secondary)}
-.gl-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px}
-.gl-chip,.gl-seg>button{font:inherit;font-size:13px;line-height:20px;padding:3px 10px;border-radius:var(--radius);border:0.5px solid var(--border-strong);background:transparent;color:var(--text-secondary);cursor:pointer}
-.gl-chip[aria-pressed=true],.gl-seg>button[aria-pressed=true]{background:var(--bg-accent);border-color:color-mix(in srgb,#378ADD 45%,transparent);color:var(--text-accent);font-weight:500}
-.gl-seg{display:flex;flex-wrap:wrap;gap:6px}
-.gl-find{font:inherit;font-size:13px;height:28px;padding:0 10px;border-radius:var(--radius);border:0.5px solid var(--border-strong);background:transparent;color:var(--text-primary);flex:0 1 200px;min-width:0}
-.gl-count{font-size:12px;color:var(--text-muted);margin-left:auto;white-space:nowrap}
+.gl{--gl-a:#378ADD;--gl-r:#E24B4A;--gl-s:color-mix(in srgb,#378ADD 55%,transparent);--gl-use:color-mix(in srgb,var(--text-primary) 38%,transparent);--gl-track:color-mix(in srgb,var(--text-primary) 10%,transparent);--gl-panel:color-mix(in srgb,var(--text-primary) 4%,transparent);--gl-ring:color-mix(in srgb,var(--text-primary) 4%,var(--surface-0));--gl-rule:color-mix(in srgb,var(--text-primary) 12%,transparent);--gl-rule2:color-mix(in srgb,var(--text-primary) 72%,transparent);--gl-lane:color-mix(in srgb,#378ADD 10%,transparent);--gl-pick:color-mix(in srgb,#378ADD 12%,transparent);font-size:14px;line-height:20px;color:var(--text-primary);font-variant-numeric:tabular-nums;container-type:inline-size}
+.gl *{box-sizing:border-box;margin:0}
+.gl [hidden]{display:none!important}
 .gl :focus-visible{outline:2px solid var(--border-accent);outline-offset:2px}
-.gl-dt{width:100%;border-collapse:separate;border-spacing:0}
-.gl-dt th,.gl-dt td{padding:10px 12px;border-bottom:0.5px solid var(--border);text-align:left;font-weight:400;white-space:nowrap}
-.gl-dt th{font-size:12px;font-weight:500;color:var(--text-secondary);background:var(--gl-band);border-bottom:0;padding-top:8px;padding-bottom:8px;vertical-align:bottom}
-.gl-dt th:first-child{border-radius:var(--radius) 0 0 var(--radius)}.gl-dt th:last-child{border-radius:0 var(--radius) var(--radius) 0}
-.gl-dt td{vertical-align:top}.gl-dt .num{text-align:right;padding-left:20px}.gl-dt td.mut{color:var(--text-secondary)}.gl-dt .bbc{padding-left:20px}.gl-dt td.bbc{padding-top:17px}
-.gl-dt td:first-child{width:100%;max-width:0;white-space:normal;overflow-wrap:anywhere}
-.gl-dt th button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
-.gl-dt th[aria-sort]{color:var(--text-accent)}.gl-dt th[aria-sort=ascending] button::after{content:" ↑"}.gl-dt th[aria-sort=descending] button::after{content:" ↓"}
-.gl-dt tr.at td{background:var(--gl-at)}.gl-dt tr.at td:first-child{box-shadow:inset 3px 0 0 var(--gl-a)}
-.gl-dt td.x{color:var(--text-danger);font-weight:500}.gl-dt td.w{color:var(--text-warning)}.gl-dt.st td.x{background:var(--gl-rt)}
-.gl-dt tr[hidden],.gl-pane[hidden]{display:none}
-@container (max-width:520px){.gl-tbl .gl-flag,.gl-dt .gl-flag{display:block;margin:2px 0 0;white-space:normal}.gl-dt .bbc{display:none}.gl-bb{width:56px}.gl-count{margin-left:0;flex-basis:100%}.gl-br.d{grid-template-columns:minmax(0,1fr) minmax(48px,32%) max-content;row-gap:4px}.gl-br.d .n{white-space:normal;padding-top:6px}.gl-br.d .t,.gl-br.d .v{padding-top:6px}.gl-br.d .d{grid-column:1/-1;text-align:left}.gl-br.d .d:empty{display:none}.gl-cmp{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.gl-cmp>.labels{display:none}.gl-cmp>.col{border:0.5px solid var(--border);border-radius:var(--radius)}.gl-cmp>.col>div[data-l]{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:0 10px;padding:7px 12px}.gl-cmp>.col>div[data-l]::before{content:attr(data-l);font-size:12px;color:var(--text-secondary);flex:none}.gl-cmp>.col>div[data-l]>*{text-align:right;margin-left:auto;max-width:100%;overflow-wrap:anywhere}.gl-cmp>.col>div[data-l]>.gl-q{flex-basis:100%}}
-@container (max-width:640px){.gl-tbl>div,.gl-dt th,.gl-dt td,.gl-ba>div{padding-left:8px;padding-right:8px}.gl-tbl>.num,.gl-dt .num,.gl-tbl>.bbc,.gl-tbl>.sp{padding-left:max(8px,calc(20px - var(--c,2)*3px))}.gl-tbl>.hd.num{white-space:normal}}
+.gl-card{background:var(--gl-panel);border-radius:16px;padding:24px}
+.gl-card+.gl-card,.gl-card+.gl-bento,.gl-bento+.gl-card{margin-top:12px}
+.gl-hd{margin-bottom:16px}
+.gl-t{font-size:15px;line-height:20px;font-weight:600}
+.gl-sub{font-size:13px;line-height:18px;color:var(--text-secondary);margin-top:2px}
+.gl-mk{margin-right:1px}
+.gl .x{color:var(--text-danger);font-weight:600}.gl .w{color:var(--text-warning);font-weight:600}
+.gl-figs{display:flex;align-items:stretch;justify-content:space-between;gap:24px 40px}
+.gl-fig .gl-k{font-size:13px;line-height:18px;color:var(--text-secondary)}
+.gl-fig .gl-v{font-size:24px;line-height:32px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;margin-top:4px}
+.gl-fig .gl-n{font-size:13px;line-height:18px;color:var(--text-secondary);margin-top:4px}
+.gl-fig.hero .gl-v{font-size:48px;line-height:52px;letter-spacing:-.02em;color:var(--text-accent)}
+.gl-fig.hero .gl-v.bad{color:var(--text-danger)}
+.gl-fig .gl-v .gl-mk{font-size:.78em;font-weight:500}
+.gl-fig .gl-ga{width:240px;margin-top:12px}
+.gl-sup{display:flex;flex-direction:column;justify-content:center;gap:20px;padding-left:32px;border-left:1px solid var(--gl-rule);min-width:12em}
+.gl-sup.row{flex-direction:row;align-items:flex-start;gap:32px;min-width:0}
+.gl-tb{position:relative;--c:2;display:grid;grid-template-columns:var(--cols,minmax(0,1fr) repeat(var(--c),max-content));column-gap:20px}
+.gl-tb.lane::before{content:"";position:absolute;top:-10px;bottom:-6px;right:-12px;width:calc(var(--lw) + 24px);border-radius:8px;background:var(--gl-lane)}
+.gl-tb>*{position:relative;grid-column:1/-1}
+.gl-row{display:grid;grid-template-columns:subgrid;align-items:center;padding:10px 0 12px;border-top:1px solid var(--gl-rule)}
+.gl-row.h{border-top:0;border-bottom:1px solid var(--gl-rule2);padding:0 0 8px;align-items:end}
+.gl-row.h>*{font-size:13px;line-height:18px;color:var(--text-secondary);font-weight:500}
+.gl-row.h+.gl-row,.gl-gh+.gl-row{border-top:0}
+.gl-row.tot{border-top:1px solid var(--gl-rule2);font-weight:600}
+.gl-row .num{text-align:right;white-space:nowrap}
+.gl-row .gc{width:96px}
+.gl-row button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
+.gl-row [aria-sort] button{color:var(--text-accent)}.gl-row [aria-sort=ascending] button::after{content:" ↑"}.gl-row [aria-sort=descending] button::after{content:" ↓"}
+.gl-nm{min-width:0;overflow-wrap:break-word}
+.gl-nm small{display:block;font-size:13px;line-height:18px;color:var(--text-secondary);font-weight:400}
+.gl-nm small.x{color:var(--text-danger);font-weight:500}.gl-nm small.w{color:var(--text-warning);font-weight:500}
+.gl-gh{display:flex;justify-content:space-between;align-items:baseline;padding:24px 0 8px;border-bottom:1px solid var(--gl-rule)}
+.gl-gh:first-child,.gl-row.h+.gl-gh{padding-top:12px}
+.gl-gh b{font-weight:600}.gl-gh span{font-size:13px;color:var(--text-secondary)}
+.gl-ga{display:flex;align-items:center;gap:2px;height:10px;width:100%}
+.gl-ga>i{display:block;height:10px;min-width:2px;background:var(--gl-s)}
+.gl-ga>i:first-child{border-radius:3px 0 0 3px}.gl-ga>i:last-child{border-radius:0 3px 3px 0}.gl-ga>i:only-child{border-radius:3px}
+.gl-ga>.use{background:var(--gl-use)}.gl-ga>.hi{background:var(--gl-a)}.gl-ga>.rest{background:var(--gl-track)}.gl-ga>.bad{background:var(--gl-r)}
+.gl-ga.lim{gap:0;--v:0}
+.gl-ga.lim>i{border-radius:0}
+.gl-ga.lim>.f{flex:none;width:calc(min(var(--v),1)*80%);border-radius:3px 0 0 3px}
+.gl-ga.lim>.rest{flex:none;width:calc((1 - min(var(--v),1))*80%)}
+.gl-ga.lim>.tick{flex:none;width:2px;min-width:2px;height:18px;border-radius:1px;background:var(--text-primary)}
+.gl-ga.lim>.bad{flex:none;width:calc(clamp(0,var(--v) - 1,.25)*80%);min-width:0;border-radius:0 3px 3px 0}
+.gl-ga.lim.hi>.f{background:var(--gl-a)}.gl-ga.lim>.f.use{background:var(--gl-use)}
+.gl-bars{display:grid;grid-template-columns:var(--nw,fit-content(40%)) minmax(0,1fr) 4.8em;gap:8px 16px;align-items:center}
+.gl-bars>.gl-b{display:contents}
+.gl-bars .n{color:var(--text-secondary);min-width:0;overflow-wrap:break-word}
+.gl-bars .gl-b.hi .n{color:var(--text-primary);font-weight:600}
+.gl-bars .t{display:flex;align-items:center;min-height:24px}
+.gl-bars .t>i{position:relative;display:block;height:16px;min-width:3px;border-radius:0 4px 4px 0;background:var(--gl-s)}
+.gl-bars .gl-b.hi .t>i{background:var(--gl-a)}.gl-bars .gl-b.bad .t>i{background:var(--gl-r)}
+.gl-bars .v{text-align:right;white-space:nowrap}
+.gl-bars .gl-b.hi .v{font-weight:600}
+.gl-zoom{grid-column:1/-1;margin-top:10px;padding-top:12px;border-top:1px dashed color-mix(in srgb,var(--text-primary) 22%,transparent);font-size:13px;line-height:18px;color:var(--text-secondary)}
+.gl-cut{position:absolute;top:-3px;bottom:-3px;left:82%;width:7px;background:var(--gl-ring);transform:skewX(-20deg)}
+.gl-split{display:flex;gap:2px;height:16px;margin-bottom:16px}
+.gl-split>i{display:block;min-width:3px;background:var(--gl-s)}
+.gl-split>i:first-child{border-radius:4px 0 0 4px}.gl-split>i:last-child{border-radius:0 4px 4px 0}
+.gl-split>i.hi{background:var(--gl-a)}.gl-split>i.bad{background:var(--gl-r)}
+.gl-cols{position:relative;height:180px;display:grid;grid-template-columns:repeat(var(--n),1fr);align-items:end;border-bottom:1px solid color-mix(in srgb,var(--text-primary) 40%,transparent)}
+.gl-col{position:relative;height:100%;display:flex;align-items:flex-end;justify-content:center}
+.gl-col>i{position:relative;display:block;width:28px;border-radius:6px 6px 0 0;background:var(--gl-s)}
+.gl-col.hi>i{background:var(--gl-a)}.gl-col.bad>i{background:var(--gl-r)}
+.gl-col .gl-cut{left:-4px;right:-4px;width:auto;height:7px;top:14px;bottom:auto;transform:skewY(-12deg)}
+.gl-axis{display:grid;grid-template-columns:repeat(var(--n),1fr);margin-top:10px;text-align:center;font-size:13px;line-height:18px}
+.gl-axis span{display:block;color:var(--text-secondary)}.gl-axis b{display:block;font-weight:400}
+.gl-axis .hi span,.gl-axis .hi b{color:var(--text-primary);font-weight:600}
+.gl-br{display:grid;grid-template-columns:var(--nw,fit-content(40%)) minmax(0,1fr) 4.8em;gap:8px 16px;align-items:center}
+.gl-br>.gl-s{display:contents}
+.gl-br .n{color:var(--text-secondary);min-width:0}.gl-br .gl-s.tot .n,.gl-br .gl-s.tot .v,.gl-br .gl-s.hi .n{color:var(--text-primary);font-weight:600}
+.gl-br .t{position:relative;height:16px}
+.gl-br .t>i{position:absolute;top:0;bottom:0;left:var(--a);width:var(--w);min-width:3px;border-radius:2px;background:var(--gl-s)}
+.gl-br .gl-s.tot .t>i{background:var(--gl-use)}.gl-br .gl-s.hi .t>i{background:var(--gl-a)}.gl-br .gl-s.bad .t>i{background:var(--gl-r)}
+.gl-br .v{text-align:right;white-space:nowrap}
+.gl-spk{display:flex;align-items:flex-end;gap:2px;height:22px;width:66px}
+.gl-spk>i{flex:1;min-height:1px;border-radius:1px 1px 0 0;background:var(--gl-s)}
+.gl-spk>i.hi{background:var(--gl-a)}.gl-spk>i.bad{background:var(--gl-r)}
+.gl-dv{display:grid;grid-template-columns:var(--nw,fit-content(38%)) minmax(0,1fr) minmax(0,1fr) 4.8em;align-items:center;row-gap:8px}
+.gl-dv>.gl-s{display:contents}
+.gl-dv .n{color:var(--text-secondary);padding-right:16px;min-width:0}.gl-dv .gl-s.hi .n{color:var(--text-primary);font-weight:600}
+.gl-dv .l,.gl-dv .r{height:24px;display:flex;align-items:center}
+.gl-dv .l{justify-content:flex-end;border-right:1px solid color-mix(in srgb,var(--text-primary) 45%,transparent)}
+.gl-dv i{display:block;height:16px;min-width:3px;background:var(--gl-s)}
+.gl-dv .l i{border-radius:4px 0 0 4px}.gl-dv .r i{border-radius:0 4px 4px 0}
+.gl-dv .gl-s.hi i{background:var(--gl-a)}.gl-dv .gl-s.bad i{background:var(--gl-r)}
+.gl-dv .v{text-align:right;padding-left:16px;white-space:nowrap}.gl-dv .gl-s.hi .v{font-weight:600}
+.gl-bento{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:12px}
+.gl-pick,.gl-alt{background:var(--gl-panel);border-radius:16px;padding:20px}
+.gl-pick{background:var(--gl-pick)}
+.gl-alts{display:grid;gap:12px}
+.gl-vd{font-size:13px;line-height:18px;font-weight:600}
+.gl-vd.pick{color:var(--text-accent)}.gl-vd.bad{color:var(--text-danger)}.gl-vd.warn{color:var(--text-warning)}
+.gl-alt .gl-vd{font-size:16px;line-height:22px}
+.gl-pick h4{font-size:22px;line-height:28px;font-weight:600;margin-top:6px}
+.gl-price{margin-top:6px;font-size:14px;color:var(--text-secondary)}
+.gl-price b{font-size:40px;line-height:44px;font-weight:600;letter-spacing:-.02em;color:var(--text-primary);margin-right:4px}
+.gl-price.x b{color:var(--text-danger)}
+.gl-specs{margin-top:18px}
+.gl-kv{display:grid;grid-template-columns:7.5em minmax(0,1fr);gap:12px;padding:8px 0;border-top:1px solid var(--gl-rule)}
+.gl-kv dt,.gl-mini dt{font-size:13px;line-height:20px;color:var(--text-secondary)}
+.gl-kv dd,.gl-mini dd{margin:0;min-width:0}
+.gl-kv dd small{font-size:13px;color:var(--text-secondary);margin-left:6px;font-weight:400}
+.gl-kv.x dd,.gl-mini .x dd{color:var(--text-danger);font-weight:600}.gl-kv.w dd,.gl-mini .w dd{color:var(--text-warning);font-weight:600}
+.gl-nmrow{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:4px}
+.gl-nmrow b{font-weight:600}
+.gl-pr2{font-size:13px;color:var(--text-secondary);white-space:nowrap}.gl-pr2 b{font-size:18px;color:var(--text-primary);font-weight:600}
+.gl-pr2.x b{color:var(--text-danger)}
+.gl-mini{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--gl-rule)}
+.gl-mini dt{font-size:12px;line-height:16px}
+.gl-mini dd{font-size:13px;line-height:18px}
+.gl-mini dd small{display:block;font-size:12px;line-height:16px;color:var(--text-secondary);font-weight:400}
+.gl-cell{text-align:center;font-size:13px;color:var(--text-secondary);border-radius:6px;padding:2px 0}
+.gl-cell.fail{color:var(--text-danger);font-weight:600;background:color-mix(in srgb,#E24B4A 12%,transparent)}
+.gl-cell.warn{color:var(--text-warning);font-weight:500}
+.gl-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px}
+.gl-chip{font:inherit;font-size:13px;line-height:20px;padding:4px 12px;border-radius:8px;border:0;background:var(--gl-panel);color:var(--text-primary);cursor:pointer}
+.gl-chip[aria-pressed=true]{background:var(--bg-accent);color:var(--text-accent);font-weight:600}
+.gl-find{font:inherit;font-size:13px;height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--gl-rule);background:transparent;color:var(--text-primary);flex:0 1 200px;min-width:0}
+.gl-count{margin-left:auto;font-size:13px;color:var(--text-secondary);white-space:nowrap}
+.gl-more{margin-top:12px;font:inherit;font-size:13px;border:0;background:var(--gl-panel);border-radius:8px;padding:6px 12px;color:var(--text-primary);cursor:pointer}
+.gl-seg{display:inline-flex;flex-wrap:wrap;background:var(--gl-panel);border-radius:10px;padding:3px;gap:2px;margin-bottom:16px}
+.gl-seg button{font:inherit;font-size:13px;border:0;background:transparent;border-radius:8px;padding:4px 12px;color:var(--text-primary);cursor:pointer}
+.gl-seg button[aria-pressed=true]{background:var(--surface-0);font-weight:600;box-shadow:0 0 0 .5px var(--gl-rule)}
+.gl-line{position:relative}
+.gl-plot{position:relative;height:200px}
+.gl-plot svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.gl-ln{fill:none;stroke:var(--gl-s);stroke-width:2;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
+.gl-ln.hi{stroke:var(--gl-a);stroke-width:3}.gl-ln.bad{stroke:var(--gl-r);stroke-width:3}.gl-ln.skip{stroke-dasharray:2 5;stroke-linecap:butt}
+.gl-g{position:absolute;left:0;right:0;border-top:1px solid var(--gl-rule)}
+.gl-g.z{border-top-color:color-mix(in srgb,var(--text-primary) 40%,transparent)}
+.gl-g span{position:absolute;left:0;bottom:3px;font-size:12px;line-height:16px;color:var(--text-secondary)}
+.gl-pt{position:absolute;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:var(--gl-s);box-shadow:0 0 0 2px var(--gl-ring);z-index:2}
+.gl-pt.hi{width:12px;height:12px;margin:-6px 0 0 -6px;background:var(--gl-a)}.gl-pt.bad{width:12px;height:12px;margin:-6px 0 0 -6px;background:var(--gl-r)}
+.gl-lab{position:absolute;font-size:13px;line-height:18px;font-weight:600;white-space:nowrap;z-index:2;transform:translate(-50%,calc(-100% - 10px))}
+.gl-lab.below{transform:translate(-50%,12px)}.gl-lab.end{transform:translate(calc(-100% - 12px),-50%)}
+.gl-head{position:absolute;top:0;right:0;display:flex;flex-direction:column;align-items:flex-end}
+.gl-head b{font-size:26px;line-height:30px;font-weight:600;letter-spacing:-.015em}
+.gl-head span{font-size:13px;line-height:18px;color:var(--text-secondary)}
+.gl-line:has(.gl-head){padding-top:64px}
+.gl-xax{position:relative;height:18px;margin-top:8px;font-size:13px;line-height:18px;color:var(--text-secondary)}
+.gl-xax span{position:absolute;transform:translateX(-50%);white-space:nowrap}.gl-xax span:first-child{transform:none}.gl-xax span:last-child{transform:translateX(-100%)}
+.gl-guide{position:absolute;top:0;bottom:0;width:1px;background:var(--text-secondary);pointer-events:none}
+.gl-read{position:absolute;top:-8px;transform:translate(-50%,-100%);background:var(--surface-0);border-radius:6px;padding:2px 8px;font-size:13px;white-space:nowrap;box-shadow:0 0 0 .5px var(--gl-rule);pointer-events:none;z-index:3}
+@container (max-width:520px){
+.gl-card{padding:16px}
+.gl-figs{flex-wrap:wrap}.gl-fig.hero{flex-basis:100%}.gl-fig.hero .gl-v{font-size:40px;line-height:44px}.gl-fig .gl-v{font-size:20px;line-height:28px}
+.gl-sup{flex-direction:row;flex-wrap:wrap;justify-content:flex-start;padding:16px 0 0;border-left:0;border-top:1px solid var(--gl-rule);gap:16px 24px;flex:1 1 100%;min-width:0}
+.gl-tb{column-gap:12px}
+.gl-tb.stack,.gl-tb:has(>.gl-row>:nth-child(5)){grid-template-columns:repeat(var(--nc,var(--c)),1fr)}
+.gl-tb.stack>.gl-row,.gl-row:has(>:nth-child(5)){row-gap:4px}
+.gl-tb.stack>.gl-row>:first-child,.gl-row:has(>:nth-child(5))>:first-child{grid-column:1/-1}
+.gl-tb.stack>.gl-row:has(>.top)>:first-child,.gl-row:has(>:nth-child(5)):has(>.top)>:first-child{grid-column:1/-2}
+.gl-tb.stack>.gl-row>.top,.gl-row:has(>:nth-child(5))>.top{grid-row:1;grid-column:-2/-1}
+.gl-tb.stack .gc,.gl-row:has(>:nth-child(5)) .gc{width:auto}
+.gl-tb.lane::before{display:none}
+.gl-bars,.gl-br{grid-template-columns:fit-content(36%) minmax(0,1fr) 4.2em;column-gap:12px}
+.gl-dv{grid-template-columns:fit-content(34%) minmax(0,1fr) minmax(0,1fr) 4.2em}
+.gl-col>i{width:20px}.gl-axis{font-size:12px}
+.gl-bento{grid-template-columns:1fr}.gl-mini{grid-template-columns:repeat(2,minmax(0,1fr))}.gl-price b{font-size:36px}.gl-kv{grid-template-columns:6.5em minmax(0,1fr)}
+.gl-count{margin-left:0;flex-basis:100%}
+.gl-head b{font-size:22px;line-height:26px}
+}
 </style>
 ```
 
 ## Components
 
-### Section caption
+### Card: one part of the answer
 
 ```html
-<div class="gl-sec"><div class="gl-cap">Monthly total</div> … </div>
+<section class="gl-card">
+  <header class="gl-hd"><h3 class="gl-t">Monthly AWS bill</h3><p class="gl-sub">Dollars, May to October</p></header>
+  … one component …
+</section>
 ```
 
-A few words in sentence case. Skip it when headers already say it.
+The title says what the card shows in the answer's words. The subtitle carries the unit and anything the reader needs to read the card: "The scale jumps from 2,200 to 4,600.", "NAT Gateway's bar is cut to fit.", "The tick on each bar is the team's budget." Two subtitles at most. Headline figures need no title.
 
 ### Headline figures: 1 to 4 numbers the answer is about
 
 ```html
-<div class="gl-sec gl-tiles">
-  <div class="gl-tile"><div class="gl-k">Lighthouse score</div><div class="gl-v">41<span class="gl-arw">→</span>88</div></div>
-  <div class="gl-tile"><div class="gl-k">Got worse</div><div class="gl-v bad">2 of 8</div></div>
-</div>
+<section class="gl-card"><div class="gl-figs">
+  <div class="gl-fig hero"><div class="gl-k">Total a year</div><div class="gl-v"><span class="gl-mk">~</span>$50.4k</div><div class="gl-n">24% of the $205k you spend</div></div>
+  <div class="gl-sup">
+    <div class="gl-fig"><div class="gl-k">Cancel or shrink 6 tools</div><div class="gl-v"><span class="gl-mk">~</span>$46.6k</div></div>
+    <div class="gl-fig"><div class="gl-k">Drop unused seats on 5 tools</div><div class="gl-v"><span class="gl-mk">~</span>$3.8k</div></div>
+  </div>
+</div></section>
 ```
 
-Equal tiles with a soft fill. Add `hi` to the value of the figure the answer is about when the other tiles are context, or `bad` when that figure is itself negative (over a limit or budget, failing); one colored value at most. An optional neutral `.gl-note` line can go under the value. A single number is a tile, never a chart with one bar.
+- One `hero`: the figure the answer is about, large and blue. When that figure is itself past a line (over budget, failing), `gl-v bad` makes it red. Everything else is in `gl-sup`, smaller, stacked beside it (`gl-sup row` puts three side by side).
+- The label (`gl-k`) above, a short note (`gl-n`) below when the answer gives one. A hero measured against a limit can carry a gauge under it (`<span class="gl-ga lim" style="--v:1.019">…</span>`, see Gauge).
+- A single number is a figure, never a chart with one bar.
 
-### Notes: a status in a word or a short phrase
+### Table: items with a few values each
 
 ```html
-<span class="gl-note bad">over limit</span>  <span class="gl-note warn">tight</span>  <span class="gl-note pick">Recommended</span>  <span class="gl-note">at peak</span>  <span class="gl-flag">over target</span>
+<section class="gl-card">
+  <header class="gl-hd"><h3 class="gl-t">Every line item</h3><p class="gl-sub">Dollars a month</p></header>
+  <div class="gl-tb" style="--c:3">
+    <div class="gl-row h"><div>Line item</div><div class="num">Sep</div><div class="num">Oct</div><div class="num">Change</div></div>
+    <div class="gl-row"><div class="gl-nm"><b>Fast Data Transfer</b></div><div class="num">40</div><div class="num">1,620</div><div class="num"><b>+1,580</b></div></div>
+    <div class="gl-row"><div class="gl-nm">Function invocations<small>One note</small></div><div class="num">120</div><div class="num">145</div><div class="num">+25</div></div>
+    <div class="gl-row tot"><div class="gl-nm">Total</div><div class="num">310</div><div class="num">1,920</div><div class="num">+1,610</div></div>
+  </div>
+</section>
 ```
 
-Plain small text, never a badge. `bad` is for what's past a limit or target, or failing, `warn` for borderline, and `pick` for the recommended item. A plain note is neutral. `good` exists, but use it only when the improvement is itself the one exception; normally an improvement stays uncolored. Put the note directly under or beside the value it's about. A row's status in a table or list is a `gl-flag` right after the row's name: a red dot and the answer's word when it's negative, `gl-flag warn` for borderline, `gl-flag hi` (a blue dot, plain text) for the reason a row deserves a look ("up every month").
+- `--c` is the number of cells after the name. Columns are as wide as their contents; `--cols` sets them when a column needs a fixed width (a gauge, a mini bar): `style="--c:4;--cols:minmax(0,1fr) 4.2em 96px 4.6em 6.4em"`.
+- The name cell is `gl-nm`, with a `<small>` line under it for the answer's note about that row ("Only the Reports page uses it", "Up every month"). A row past a line gets its number as `<small class="x">` there ("8,900 over"), and its value cell `num x`. "Tight" is `w`. The row the answer is about has its name and key value in `<b>`.
+- Values are plain numbers, the unit in the header or subtitle; text left, numbers right (`num`). A value with a qualifier that won't fit on one line breaks with `<br>` ("~61,000<br>of 48,000").
+- **Groups:** when the answer sorts rows into groups (what to do, over / close / the rest), a `<div class="gl-gh"><b>Cancel</b><span>2 tools</span></div>` goes before each group's rows. The group label is the answer's own word.
+- **Lane:** `class="gl-tb lane" style="--lw:6.4em"` puts a faint blue lane behind the last column, the one the table is about (the saving, the result). `--lw` is that column's width, so give it in `--cols` too.
+- **Narrow panels:** a row with four or more values turns into two lines on its own: the name, then every value in the same columns as the header. Rows with up to three values stay on one line; add `stack` to the table (`class="gl-tb stack"`) when they still don't fit, such as when a gauge column is among them. `--nc` sets how many cells go on the second line (default `--c`). A cell with `class="num top"` stays on the name's line instead, at the right: use it for the one value the table is about, and set `--nc` to the rest.
+- A cell can hold a gauge, a mini bar or an inline trend; give its column a width in `--cols` (64–100 px) and the cell `class="gc"`.
 
-### Table: items with a few numbers each, such as before and after, or month against month
+### Gauge: a value against what it could be, or against a limit
 
 ```html
-<div class="gl-sec gl-tbl" style="--c:3">
-  <div class="hd">Endpoint</div><div class="hd num">Before</div><div class="hd num">After</div><div class="hd num">vs 300 ms target</div>
-  <div>/cart</div><div class="num mut">150 ms</div><div class="num">290 ms</div><div class="bbc"><div class="gl-bb" style="--t:56.6%"><i style="--w:54.7%"></i></div></div>
-  <div class="at">/reports/export<span class="gl-flag">over target</span></div><div class="num mut at">390 ms</div><div class="num x at">530 ms</div><div class="bbc at"><div class="gl-bb" style="--t:56.6%"><i style="--w:56.6%"></i><b style="--o:43.4%"></b></div></div>
-</div>
+<!-- parts of one whole: 22 of 90 seats in use, the rest unused (blue: what the answer is about) -->
+<span class="gl-ga"><i class="use" style="flex:22"></i><i class="hi" style="flex:68"></i></span>
+<!-- against a limit: --v is value ÷ limit; the tick is the limit, only the part past it is red -->
+<span class="gl-ga lim" style="--v:0.865"><i class="f"></i><i class="rest"></i><i class="tick"></i><i class="bad"></i></span>
 ```
 
-- `--c` is the number of columns after the name. Each row is one name cell, then one `num` cell per column (and a `bbc` cell for a target bar), all on one line.
-- Use the name the original uses, kept short. If it needs explaining, explain it in the bullets, not under the name, so every row stays one line and the same height. A name too long for a narrow panel wraps onto a second line rather than being cut off; numbers never wrap.
-- Numbers are plain. A column that's only context (the before value, a change the answer doesn't dwell on) takes `mut` on its cells, so the column that matters reads first.
-- **Rows to look at:** add `at` to every cell of the rows the answer is about: a light blue tint with a blue edge on the name.
-- **Negative values:** `x` only on the cell that's past the line or failing (red, medium weight), and a `gl-flag` with the answer's word right after the name ("over target", "over budget"). Never color a whole row's text, and never mark a value red just because it went up.
-- **Against a target or limit:** when the answer gives one line for a column (a 300 ms target, a budget), add a `bbc` column with a `gl-bb` bar in every row. Let S be the largest value or the line, whichever is bigger: `--t` = line ÷ S × 100, `--w` = the smaller of value and line ÷ S × 100, and for a value past the line a `<b>` with `--o` = (value − line) ÷ S × 100. The bar is soft blue up to the line and red past it.
-- Sort by what matters (for example the biggest change first) unless the original's order matters.
-- **As a status grid** (each item in each setting, such as test suites across platforms): one `num` column per setting and one word in each cell ("pass", "fail", "flaky"). Counts and details ("3 of 40 failed") go in the bullets, so every column stays narrow. Add `st` to the grid. `x` goes only on the failing cells, which get a red word on a light red fill, so the failures show where they are; a borderline cell gets `w`, which colors only its word. Rows the answer is about can take `at`. A header with two parts can take two lines (`iOS<br>17`). About five settings fit a narrow panel; with more, split the grid in two.
-
-### Columns: one series across up to 12 periods or categories
-
-```html
-<div class="gl-cols">
-  <div class="gl-col"><div class="lv">$1,840</div><div class="b" style="height:39px"></div><div class="lx">May</div></div>
-  <div class="gl-col"><div class="lv">$4,760</div><div class="b hi" style="height:100px"></div><div class="lx">Oct</div></div>
-</div>
-```
-
-Bar height in px = round(value ÷ largest value × 100). Mark at most one or two columns: `hi` for the one the answer is about, `bad` only when that value is past a line the answer gives (over budget, over a limit) or failed. The rest stay soft blue, and their labels stay muted.
+- **Parts:** each `<i>` is one part, its `flex` the part's amount, 2 px apart. `use` is grey (in use, kept), `hi` blue (what the answer is about, such as what you'd stop paying for), plain soft blue for an ordinary part, `rest` the empty track, `bad` red (past the line).
+- **Against a limit:** always the four parts in that order; only `--v` changes. Every limit sits at the same place (80% of the width), so rows compare at a glance. The overshoot is drawn up to 25% past the limit; beyond that it stops at the edge, and the value printed next to it says the rest. `gl-ga lim hi` makes the fill blue for the row the answer is about. `<i class="f use">` makes it grey when the gauge sits among usage gauges whose grey means "in use".
+- Always print the value and the limit next to the gauge, in words or columns ("2.3 of 2 GiB", "Budget 50,000").
 
 ### Bars: amounts across up to about 12 items
 
 ```html
-<div class="gl-bars">
-  <div class="n">Item</div><div class="gl-track"><div class="gl-fill hi" style="width:100%"></div></div><div class="v">$2,240</div>
-  <div class="n">Item</div><div class="gl-track"><div class="gl-fill" style="width:20%"></div></div><div class="v">$450</div>
-</div>
-```
-
-Width % = value ÷ largest value × 100, largest first. Mark only the item the answer is about, with `hi`; `bad` only when its value is past a line the answer gives. Bars show amounts; for a share of a limit, use a meter.
-
-### Meters: one or more values, each against its own limit or whole
-
-```html
-<div class="gl-mtr">
-  <div class="n">queue<span class="gl-flag">over limit</span></div><div class="gl-m bad" style="--lim:93%"><i style="width:100%"></i></div><div class="v x">108 %</div><div class="d x">5.4 of 5 GB</div>
-  <div class="n">cache<span class="gl-flag warn">tight</span></div><div class="gl-m" style="--lim:93%"><i style="width:82%"></i></div><div class="v">89 %</div><div class="d">7.1 of 8 GB</div>
-  <div class="n">db</div><div class="gl-m" style="--lim:93%"><i style="width:22%"></i></div><div class="v">24 %</div><div class="d">120 of 500 GB</div>
-</div>
-```
-
-- Use for disk or memory against a limit, quota used, budget spent, coverage against a target: anywhere the limit is part of the meaning.
-- Every row has four cells: name, meter, value, detail. The value column holds one figure in one format for every row: the share of the limit ("89 %") when the original gives it or it's exact arithmetic, otherwise the amount ("7.1 GB"). The detail column says what it's measured against, as the original writes it ("7.1 of 8 GB", or "of 8 GB"); leave it as an empty `<div class="d"></div>` when there's nothing to add.
-- Each meter measures its row against its own limit, all on one shared scale. When nothing is over its limit, width % = the share (capped at 100). When something is over, let S be the largest share (108 for 108 %): width % = share ÷ S × 100, and every meter gets `style="--lim:…%"` set to 100 ÷ S × 100 (93 % here), which draws the limit as a mark, so the overshoot past it shows.
-- Over the limit or failing: `bad` on the meter (a red fill on a light red track, so the overshoot past the limit mark shows), `x` on the value and detail, and a `gl-flag` with the original's word after the name. Borderline: a `gl-flag warn` after the name and nothing else; the meter stays soft blue. The item the answer is about, when it isn't over: `hi`.
-- Sort by how full, most first, unless the original's order matters. A single meter is one row.
-
-### Split bar: one total and the parts it's made of
-
-```html
-<div class="gl-sec">
-  <div class="gl-split"><i class="hi" style="--v:412"></i><i class="gl-g1" style="--v:210"></i><i class="gl-g2" style="--v:96"></i><i class="gl-g3" style="--v:31"></i></div>
-  <div class="gl-tbl" style="--c:1">
-    <div><i class="gl-sw hi"></i>Videos</div><div class="num">412 GB</div>
-    <div><i class="gl-sw gl-g1"></i>Backups</div><div class="num">210 GB</div>
-    <div><i class="gl-sw gl-g2"></i>Photos</div><div class="num">96 GB</div>
-    <div><i class="gl-sw gl-g3"></i>Other</div><div class="num">31 GB</div>
+<section class="gl-card">
+  <header class="gl-hd"><h3 class="gl-t">AWS change from September to October</h3><p class="gl-sub">Dollars, by service. NAT Gateway's bar is cut to fit; the four smallest are drawn 5 times bigger.</p></header>
+  <div class="gl-bars">
+    <div class="gl-b hi"><div class="n">NAT Gateway</div><div class="t"><i style="width:100%"><b class="gl-cut"></b></i></div><div class="v">+2,130</div></div>
+    <div class="gl-b"><div class="n">CloudWatch</div><div class="t"><i style="width:76%"></i></div><div class="v">+380</div></div>
+    <div class="gl-zoom">These four, drawn 5 times bigger</div>
+    <div class="gl-b"><div class="n">Other</div><div class="t"><i style="width:95%"></i></div><div class="v">+95</div></div>
   </div>
-</div>
+</section>
 ```
 
-- For 2 to 6 parts, when the answer is about how one total splits ("most of the disk is videos"). To compare the parts with each other, or for more parts, use bars.
-- `--v` is the part's value as a plain number, with no unit or separators. The bar has no text; the list under it gives every name and value, in the same order as the blocks, largest first.
-- The part the answer is about gets `hi` on both its block and its swatch (`bad` only when that part is itself past a limit). The other parts take `gl-g1`, `gl-g2` and on in order, darkest first, on block and swatch alike: lighter steps of the same blue.
-- Add a share column only when the original gives the shares.
+- Largest first, one scale from zero: width = value ÷ the scale's top × 100%. The value sits on one right edge.
+- **Outlier:** when one bar is more than about 3 times the next, it gets `width:100%` with a `gl-cut` inside, and the rest use the next one's scale. Say "… is cut to fit" in the subtitle.
+- **Small values:** when bars would be under about 4 px, they go below a `gl-zoom` divider on their own scale, drawn an exact whole number of times bigger, and the factor is in the divider and the subtitle. `style="--nw:9.5em"` on both lists keeps their tracks aligned when a factor compares them.
+- `hi` on the item the answer is about, `bad` on one past a line.
 
-### Diverging bars: changes that go up for some items and down for others
+### Split bar: one total and its parts
 
 ```html
-<div class="gl-dv">
-  <div class="n foc">/feed<span class="gl-flag">misses target</span></div><div class="l"></div><div class="r"><i class="bad" style="width:100%"></i></div><div class="v x">+90 ms</div>
-  <div class="n">/profile</div><div class="l"></div><div class="r"><i style="width:17%"></i></div><div class="v">+15 ms</div>
-  <div class="n">/upload</div><div class="l"><i style="width:50%"></i></div><div class="r"></div><div class="v">−45 ms</div>
-</div>
+<div class="gl-split"><i class="hi" style="flex:860"></i><i style="flex:410"></i><i style="flex:290"></i></div>
 ```
 
-- Every row is one change in the same unit; the vertical line is zero. Decreases grow left from it (in the `l` cell), increases grow right (in the `r` cell); leave the other cell empty.
-- Width % = the change's size ÷ the largest change's size × 100, on both sides.
-- The changes the answer is about get `hi` on the bar and `foc` on the name. A change that takes a value past a line the answer gives (a target, an SLO) gets `bad` on the bar, `x` on the value and a `gl-flag` with the answer's word after the name. Everything else stays soft blue, in both directions. Write the sign on every value ("+15 ms", "−45 ms").
-- Sort by the change, largest first, or worst first, unless the original's order matters.
+Followed by a table of the parts in the same left-to-right order ("Part, left to right"), with the amount and share columns. No legend, no swatches: the order ties them.
 
-### Comparison: 2 or more options sharing the same specs
+### Columns: one series across up to 12 periods
 
 ```html
-<div class="gl-cmp" style="--n:3;--r:3">
-  <div class="col labels"><div class="hd"></div><div>Price</div><div>RAM</div></div>
-  <div class="col pk"><div class="hd"><span class="nw">Option A-1</span><div class="gl-note pick">Recommended</div></div>
-    <div data-l="Price"><span><span class="gl-val">$34/mo</span></span></div>
-    <div data-l="RAM"><span><span class="gl-val">16 GB</span></span></div></div>
-  <div class="col"><div class="hd">Option B</div>
-    <div data-l="Price"><span><span class="gl-val">$28/mo</span></span></div>
-    <div data-l="RAM" class="flag"><span><span class="gl-val">8 GB</span><span class="gl-q">tight with Postgres</span></span></div></div>
-  <div class="col"><div class="hd">Option C</div>
-    <div data-l="Price"><span><span class="gl-val">$42/mo</span><span class="gl-q">over budget</span></span></div>
-    <div data-l="RAM"><span class="none">—</span></div></div>
+<div class="gl-cols" style="--n:6">
+  <div class="gl-col"><i style="height:77%"></i></div> …
+  <div class="gl-col hi"><i style="height:100%"><b class="gl-cut"></b></i></div>
 </div>
+<div class="gl-axis" style="--n:6"><div><span>May</span><b>1,840</b></div> … <div class="hi"><span>Oct</span><b>4,760</b></div></div>
 ```
 
-- `--n` is the number of options and `--r` is the number of specs + 1. The first column is always `col labels` with an empty `hd`, then one label per spec.
-- Each option is one `col`: its header, then one cell per spec, in the same order as the labels. Every cell carries `data-l` with its spec name, which is used in narrow panels.
-- Write values number first, in the same unit across a row ("8 vCPU", "4 vCPU"). Put qualifiers in `.gl-q`, about 20 characters at most; longer notes go in the bullets.
-- Add `pk` to the recommended option's `col` and a `pick` note in its header. This gives the column a blue fill with a blue top edge: the one bold element in the picture, so nothing else should compete with it.
-- Flag at most one deciding drawback per option, the one the original gives as its reason: add `flag` to that cell and give it a short `.gl-q`. Only the qualifier turns red; the value stays readable.
-- Wrap names with hyphens or numbers in `.nw`.
-- Rows stay locked across the options. In a narrow panel each option becomes a card with label–value lines, two side by side.
+From zero; height = value ÷ the scale's top × 100%. Values sit in one row under the period names, never floating above the columns. An outlier more than about twice the next gets `height:100%` and a `gl-cut`, said in the subtitle.
 
 ### Bridge: how a total got from A to B
 
 ```html
-<div class="gl-br">
-  <div class="n tot">September</div><div class="t"><i class="tot" style="--a:0%;--w:44%"></i></div><div class="v tot">$2,110</div>
-  <div class="n foc">NAT Gateway <span class="why">· debug logs</span></div><div class="t"><i class="hi" style="--a:44%;--w:44.4%"></i></div><div class="v">+$2,130</div>
-  <div class="n">CloudWatch</div><div class="t"><i style="--a:88.4%;--w:7.9%"></i></div><div class="v">+$380</div>
-  <div class="n">Other</div><div class="t"><i style="--a:96.4%;--w:3.6%"></i></div><div class="v">+$175</div>
-  <div class="n">Savings Plan credit</div><div class="t"><i style="--a:98.6%;--w:1.4%"></i></div><div class="v">−$65</div>
-  <div class="n">EC2</div><div class="t"><i style="--a:98.6%;--w:0.6%"></i></div><div class="v">+$30</div>
-  <div class="n tot">October</div><div class="t"><i class="tot" style="--a:0%;--w:99.3%"></i></div><div class="v tot">$4,760</div>
+<div class="gl-br" style="--nw:9.5em">
+  <div class="gl-s tot"><div class="n">September</div><div class="t"><i style="--a:0%;--w:44.3%"></i></div><div class="v">2,110</div></div>
+  <div class="gl-s hi"><div class="n">NAT Gateway</div><div class="t"><i style="--a:44.3%;--w:44.7%"></i></div><div class="v">+2,130</div></div>
+  <div class="gl-s tot"><div class="n">October</div><div class="t"><i style="--a:0%;--w:100%"></i></div><div class="v">4,760</div></div>
 </div>
 ```
 
-Here the running total peaks at $4,795 after "Other", above the end, so S = 4,795 and October's bar stops just short of the edge.
+`--a` is where a step starts and `--w` its length, both as a share of the largest total. The start plus every step equals the end. Steps too small to see are grouped into one step ("The four smallest +140", calculated), and listed below in a `gl-bars` panel drawn an exact factor bigger, as in Bars.
 
-- For an answer that explains how one total became another through a few changes: a bill from one month to the next, a budget to its actual, a load time before and after several fixes. The rows read top to bottom: the start total, one row per change, the end total.
-- **It must add up.** Start + every change = end, exactly, using only the answer's figures. If it doesn't, the answer has a remainder: show it as its own row under the answer's name for it ("Other", "not explained"), or, if the answer gives none, use a table instead.
-- Geometry, all on one scale: let S be the largest running total (the start, the end or any total in between). A total row has `--a:0%` and `--w` = total ÷ S × 100. A change from running total c₀ to c₁ has `--a` = the smaller of c₀ and c₁ ÷ S × 100 and `--w` = the size of the change ÷ S × 100. Totals start at zero, so they compare honestly; the changes float between them.
-- Order the changes biggest first, or in the answer's order when the order means something (steps of a migration). Running totals follow that order, so work them out after sorting.
-- Write a sign on every change ("+$2,130", "−$65"). The one or two changes the answer is about get `hi` on the bar and `foc` on the name, with the answer's word for them in a `why` span (`NAT Gateway <span class="why">· debug logs</span>`); the rest stay soft blue, increases and decreases alike. `bad` only for a change that broke a line the answer gives, such as a budget.
-- **Amounts before and after.** When the answer also gives each item's own amounts (September and October for every service), add `d` to the `gl-br` and a fourth cell to every row with them, muted: `<div class="d">$110 → $2,240</div>` (an empty `<div class="d"></div>` on the total rows). Otherwise those numbers would be lost.
-- Up to about 10 changes. With more, the answer is really a table.
+### Inline trend: several periods for each row
 
-### Lead item: one item made almost all of the change
+A `gl-spk` in a `gc` table cell, then the first and last values in their own columns:
 
 ```html
-<div class="gl-sec gl-tiles">
-  <div class="gl-tile"><div class="gl-k">Data transfer out</div><div class="gl-v hi">+$1,580</div><div class="gl-note">of +$1,610 in all · 98 % (calculated)</div></div>
-</div>
-<div class="gl-sec gl-bars"> … the other changes, largest first … </div>
+<span class="gl-spk" role="img" aria-label="Logs, May to October: 1,020, 1,240, 1,460, 1,730, 2,040, 2,430"><i style="height:42%"></i> … <i class="hi" style="height:100%"></i></span>
 ```
 
-A pattern, not a new component: when one item accounts for nearly all of a change and the rest are small, that item is the headline tile, with its share of the whole in the note when that's exact arithmetic on the answer's figures (marked "calculated"). Every other item follows as bars of their change on one scale, so the reader sees at once how small they are; when the answer gives more than the change for each item (amounts before and after), use a table with every one of its number columns instead, so none is lost. If two or more items matter, use the bridge instead.
+Each row's bars are scaled to that row (say so in the subtitle); the aria-label lists every value.
 
-### Table with an inline trend: several periods for each row
+### Diverging bars: changes up and down, one unit
 
 ```html
-<div class="gl-sec gl-tbl tr" style="--c:2">
-  <div class="hd">Product</div><div class="hd sp">May–Oct</div><div class="hd num">May</div><div class="hd num">Oct</div>
-  <div class="at">Logs<span class="gl-flag hi">up every month</span></div><div class="sp at"><div class="gl-spk" style="--k:6" role="img" aria-label="Logs, May to October: $1,020, $1,240, $1,460, $1,730, $2,040, $2,430"><i style="--h:42%" title="May $1,020"></i><i style="--h:51%" title="Jun $1,240"></i><i style="--h:60%" title="Jul $1,460"></i><i style="--h:71%" title="Aug $1,730"></i><i style="--h:84%" title="Sep $2,040"></i><i class="hi" style="--h:100%" title="Oct $2,430"></i></div></div><div class="num mut at">$1,020</div><div class="num at">$2,430</div>
-  <div>Infra hosts</div><div class="sp"><div class="gl-spk" style="--k:6" role="img" aria-label="Infra hosts, May to October: $900, $870, $900, $870, $900, $900"><i style="--h:100%" title="May $900"></i><i style="--h:97%" title="Jun $870"></i><i style="--h:100%" title="Jul $900"></i><i style="--h:97%" title="Aug $870"></i><i style="--h:100%" title="Sep $900"></i><i style="--h:100%" title="Oct $900"></i></div></div><div class="num">$900</div><div class="num">$900</div>
+<div class="gl-dv">
+  <div class="gl-s hi"><div class="n">/search</div><div class="l"></div><div class="r"><i style="width:100%"></i></div><div class="v">+140</div></div>
+  <div class="gl-s"><div class="n">/checkout</div><div class="l"><i style="width:86%"></i></div><div class="r"></div><div class="v">−120</div></div>
 </div>
 ```
 
-- For a table where each row has a value per period (up to 12) and the answer is about how each row moved: which grew, which stayed flat, which jumped once. The trend shows the shape; the number columns print the first and last values.
-- `--k` is the number of periods. Each `<i>` is one period, oldest first, with `--h` = value ÷ the row's largest value × 100 %, a `title` with the period and value, and the whole trend has a `role="img"` and an `aria-label` listing every value. Columns start at zero.
-- Each row is scaled to its own largest value, so the trend compares shapes, not sizes; the printed numbers carry the sizes. Say so in the caption if the answer invites comparing rows by height.
-- Mark the period the answer is about with `hi`, only in the row it's about (`bad` only when that period broke a line the answer gives). Rows to look at take `at` and their status a `gl-flag`, as in Table.
-- When the answer gives only two periods, there's no trend to show: use the plain table.
+Sorted from the largest rise to the largest fall; the subtitle says which side is which ("Milliseconds; faster to the left, slower to the right").
 
-### Before → after against a benchmark
+### Comparison: options, one of them recommended
 
 ```html
-<div class="gl-sec gl-ba">
-  <div class="hd">Team</div><div class="hd v">Q2 → Q3</div>
-  <div class="at">Data platform<span class="gl-flag">over budget</span></div><div class="v at">$41,200<span class="gl-arw">→</span><span class="x">$58,900</span><span class="gl-q">budget $50,000</span></div>
-  <div>Web</div><div class="v">$22,400<span class="gl-arw">→</span>$21,100<span class="gl-q">budget $25,000</span></div>
-</div>
-```
-
-- For items that each moved from one value to another and are judged against a third value the answer gives for each: a budget, a target, a competitor's score. The benchmark sits muted under the new value, so the reader compares the two numbers that matter without a third column.
-- Same unit within a row. The benchmark keeps the answer's own label ("budget", "AutoSync", "target").
-- A row that ends on the wrong side of its benchmark gets `at` on both cells, a `gl-flag` with the answer's word after the name ("over budget", "still behind") and only its new value in red (`<span class="x">`). Rows on the right side stay plain.
-- Sort with the rows that miss their benchmark first, then by the size of the change, unless the answer's order matters. This is the one table whose rows take two lines.
-
-### Causes with counts: problems grouped by why they happen
-
-```html
-<div class="gl-sec gl-cz">
-  <div class="n">Russian checked against an English track <span class="gl-note">fix built</span></div><div class="b"><div class="gl-track"><div class="gl-fill hi" style="width:100%"></div></div></div><div class="v">10</div>
-  <div class="it">Sherlock RU first, Fargo RU best, Dark RU best, …every item the answer names</div>
-  <div class="n">Scoring reference needs fixing <span class="gl-note bad">open</span></div><div class="b"><div class="gl-track"><div class="gl-fill" style="width:60%"></div></div></div><div class="v">6</div>
-  <div class="it">Detectorists EN first, Fleabag EN best, Succession EN first, …</div>
-</div>
-```
-
-- For failures, losses, waste or problems the answer groups by cause: one row per cause with its count or amount, and the items it affects listed underneath in small muted text. It's a list and a bar chart in one, so the reader sees which cause matters most and exactly what it covers.
-- Use the answer's own causes, its own grouping and its own counts. Never regroup the items, and list every item the answer names under its cause (no "and 6 more" when the answer names them).
-- The bar carries the number the answer ranks the causes by: a count, or an amount such as cost per month. When the answer gives both, the bar and the value column take the one it leads with and the other goes after the name ("Unattached EBS volumes · 3"). Bars share one scale: width % = value ÷ the largest value × 100, largest first. Mark only the cause the answer is about, with `hi`.
-- A status the answer gives for a cause ("fix built", "re-measuring", "open") is a plain `gl-note` right after its name; only a status that's still a problem gets `bad`.
-
-### Interactive table: many rows, or one set of rows sliced several ways
-
-Only when SKILL.md's rule for interaction says so (about 15 rows or more, or two or more ways to slice the same rows). Everything else stays static.
-
-```html
-<div class="gl-sec" data-gl-view>
-  <div class="gl-ctl">
-    <div class="gl-seg" role="group" aria-label="Show">
-      <button type="button" class="gl-chip" aria-pressed="true" data-f="">All</button>
-      <button type="button" class="gl-chip" aria-pressed="false" data-f="lose">Losses only</button>
-    </div>
-    <input class="gl-find" type="search" placeholder="Find a title" aria-label="Find a title">
-    <span class="gl-count" aria-live="polite">25 of 25 shown</span>
+<div class="gl-bento">
+  <div class="gl-pick">
+    <p class="gl-vd pick">Recommended</p><h4>Kestrel KS‑8</h4>
+    <p class="gl-price"><b>$34</b> a month</p>
+    <dl class="gl-specs">
+      <div class="gl-kv"><dt>CPU</dt><dd>8 vCPU<small>dedicated, EPYC</small></dd></div>
+      <div class="gl-kv"><dt>RAM (GB)</dt><dd>16</dd></div> …
+    </dl>
   </div>
-  <table class="gl-dt st">
-    <thead><tr><th scope="col"><button type="button">Title</button></th><th scope="col" class="num"><button type="button">EN best</button></th><th scope="col" class="num"><button type="button">RU first</button></th></tr></thead>
-    <tbody>
-      <tr class="at" data-tags="lose"><td>The Station Agent</td><td class="num x" data-v="0">lose</td><td class="num x" data-v="0">lose</td></tr>
-      <tr><td>Sherlock</td><td class="num" data-v="2">beat</td><td class="num" data-v="2">beat</td></tr>
-    </tbody>
-  </table>
+  <div class="gl-alts">
+    <div class="gl-alt">
+      <p class="gl-vd bad">Over budget</p>
+      <div class="gl-nmrow"><b>Corvid C4</b><span class="gl-pr2 x"><b>$42</b> a month</span></div>
+      <dl class="gl-mini"><div><dt>CPU</dt><dd>6 vCPU<small>dedicated</small></dd></div> …</dl>
+    </div> …
+  </div>
 </div>
 ```
 
-- A real `<table>`, so screen readers announce rows, columns and the sort. The first column is the row's name; every other column is `num`, right-aligned like the static table. The rest works exactly as in Table: `at` on the `<tr>` of a row to look at, `x` on a cell past the line or failing, `w` on a borderline cell, `mut` on context columns, a `gl-flag` after the name, `st` on the table for a status grid, and an optional `bbc` cell with a target bar (that column hides on narrow panels).
-- **Sorting:** every header that can be sorted holds a `<button>`. A cell sorts by its `data-v` when it has one (a plain number: the amount without its unit, or a rank for words, such as lose 0, tie 1, beat 2) and by its text otherwise. Give `data-v` to every cell of a column or to none.
-- **Filter chips** use the answer's own categories and words ("Losses only", "Failing", "Over budget"); a row belongs to a chip through the words in its `data-tags`. The first chip, `data-f=""`, shows every row. One group, one chip pressed at a time.
-- **Search** (`gl-find`) only when there are enough rows that people would look for one by name, roughly 30 or more. It matches the row's text.
-- **The count** (`gl-count`) always says how many rows are showing: "12 of 40 shown".
-- The first view is the static picture: every row shown, already sorted and marked the way the answer needs. Mark the column it's sorted by with `aria-sort="descending"` or `"ascending"` on its `<th>`.
+- Goes straight inside `.gl`, without a card: the tiles are the cards. A one-line title above it is a `gl-hd` on its own.
+- The recommended option is the big tile: its verdict, name, the main number large (`gl-price`), every spec on a label column. The others are smaller tiles, each headed by the one deciding drawback the answer gives, in its words and color (`gl-vd bad` past a line or failing, `gl-vd warn` tight), then name and main number, then the same specs in a compact grid.
+- Mark the value behind each drawback in its spec (`<div class="x">` or `class="w"` on the spec's `div`, `gl-pr2 x` on a price). Don't repeat the drawback's words there.
+- Same specs, same labels, same order in every tile; units in the labels ("RAM (GB)"). With no recommendation in the answer, every option is a `gl-alt` tile in the answer's order.
+- Narrow panels stack the tiles, the pick first.
+
+### Status grid: a status for each item in each setting
+
+A table whose cells are `<div class="gl-cell">pass</div>`, with `gl-cell fail` (red word on a red tint) and `gl-cell warn` (borderline, such as flaky) as needed: one word per cell, the answer's word. The one real problem the answer names gets a `<small class="x">` line under its name.
+
+### Interactive table: many rows, or one set sliced several ways
+
+Only when SKILL.md says so (about 15 rows or more, or two or more ways to slice the same rows).
+
+```html
+<section class="gl-card" data-gl-view data-limit="12">
+  <header class="gl-hd"><h3 class="gl-t">p95 latency, 40 endpoints</h3><p class="gl-sub">Milliseconds, slowest first. The target is 300 ms; values over it are red.</p></header>
+  <div class="gl-ctl">
+    <button type="button" class="gl-chip" aria-pressed="true" data-f="">All</button>
+    <button type="button" class="gl-chip" aria-pressed="false" data-f="miss">Misses target</button>
+    <input class="gl-find" type="search" placeholder="Find an endpoint" aria-label="Find an endpoint">
+    <span class="gl-count" aria-live="polite">12 of 40 shown</span>
+  </div>
+  <div class="gl-tb" role="table" style="--c:3">
+    <div class="gl-row h" role="row"><div role="columnheader"><button type="button" data-k="n">Endpoint</button></div><div class="num" role="columnheader"><button type="button" data-k="b">Before</button></div><div class="num" role="columnheader"><button type="button" data-k="a">After</button></div><div class="num" role="columnheader" aria-sort="descending"><button type="button" data-k="c">Change</button></div></div>
+    <div class="gl-row" role="row" data-tags="miss slower"><div class="gl-nm" role="cell" data-k="n">/reports<wbr>/export</div><div class="num" role="cell" data-k="b" data-v="390">390</div><div class="num x" role="cell" data-k="a" data-v="530">530</div><div class="num" role="cell" data-k="c" data-v="140">+140</div></div>
+  </div>
+  <button type="button" class="gl-more">Show all 40</button>
+</section>
+```
+
+- Rows are a `gl-tb` with ARIA table roles, so screen readers announce rows and columns.
+- **Sorting:** a header holds a `<button data-k="…">`; the cells of that column carry the same `data-k`. A cell sorts by its `data-v` (a plain number) when it has one, by its text otherwise. Mark the column the first view is sorted by with `aria-sort`.
+- **Filter chips** use the answer's own categories and words; a row belongs to a chip through its `data-tags`. The first chip (`data-f=""`) shows every row. Pressed chips are blue text on a blue tint.
+- **Search** (`gl-find`) only from about 30 rows.
+- **Long tables:** `data-limit` shows the first rows (sorted so the ones the answer is about come first, with all of them inside the limit) and a `gl-more` button to show the rest. The count always says how many rows are showing.
+- Break long paths with `<wbr>` before each `/`, so they wrap only between segments.
 
 ### View switch: one slice at a time
 
 ```html
-<div class="gl-sec">
-  <div class="gl-ctl"><div class="gl-seg" role="group" aria-label="Month">
-    <button type="button" aria-pressed="false" aria-controls="gl-v-sep">September</button>
-    <button type="button" aria-pressed="true" aria-controls="gl-v-oct">October</button>
-  </div></div>
-  <div class="gl-pane" id="gl-v-sep"> … September's services, as a table or bars … </div>
-  <div class="gl-pane" id="gl-v-oct"> … October's services … </div>
+<div class="gl-seg" role="group" aria-label="When">
+  <button type="button" aria-pressed="false" aria-controls="gl-v-start">Start</button>
+  <button type="button" aria-pressed="true" aria-controls="gl-v-now">Now</button>
 </div>
+<div id="gl-v-start"> … a table … </div>
+<div id="gl-v-now"> … the same table, now … </div>
 ```
 
-- For an answer that gives the same rows for several slices (each month's services, each language's results) when the reader needs one slice at a time. Each pane is an ordinary kit component; each button's `aria-controls` names its pane's `id` (make the ids unique, `gl-v-…`).
-- The pressed button is the slice the answer is about, so the first view answers the question. While the widget streams, every pane is visible; the script then shows only the pressed one.
-- Two to about six slices. With more, it's a table with a column per slice.
+For the same rows in two to about six slices, when the reader needs one at a time. The pressed button is the slice the answer is about.
 
-### The script for interactive pieces
+### Line: a series over time
 
-Paste once, as the last thing in the widget, whenever the picture has a `data-gl-view` section or a view switch:
+```html
+<section class="gl-card">
+  <header class="gl-hd"><h3 class="gl-t">Monthly AWS bill</h3><p class="gl-sub">Dollars, May to October</p><p class="gl-sub">The scale jumps from 2,200 to 4,600.</p></header>
+  <div class="gl-line">
+    <div class="gl-head"><b>+2,650</b><span>from September</span></div>
+    <div class="gl-plot">
+      <div class="gl-g" style="top:0%"><span>4,800</span></div> … <div class="gl-g z" style="top:100%"><span>1,800</span></div>
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <polyline class="gl-ln" points="12,90 28.4,74.3 …"/>
+        <polyline class="gl-ln hi" points="77.6,49.8 85.2,32"/><polyline class="gl-ln hi skip" points="85.2,32 89.9,16"/><polyline class="gl-ln hi" points="89.9,16 94,6.4"/>
+      </svg>
+      <div class="gl-pt" style="left:12%;top:90%"></div> … <div class="gl-pt hi" style="left:94%;top:6.4%"></div>
+    </div>
+    <div class="gl-axis" style="--n:6"> … <div class="hi"><span>Oct</span><b>4,760</b></div></div>
+  </div>
+</section>
+```
+
+- Points are spaced evenly across the plot: x = 12 + i ÷ (n − 1) × 82 for up to 12 points (room for the scale labels on the left), x = i ÷ (n − 1) × 100 for more. y = 100 − (value − bottom) ÷ (top − bottom) × 100, and each `gl-g` sits at its value's y.
+- A line may start above zero: fit the scale to the values (a few round gridlines). When one stretch is far from the rest, break the scale: two ranges with no space between them, the line `skip` (dashed) where it crosses, and the subtitle says what's left out ("The scale jumps from 2,200 to 4,600.").
+- The stretch the answer is about is `hi` (blue); `bad` (red) only for a stretch past a line. The answer's headline change can go in `gl-head`, top right.
+- **Up to 12 points:** values in one row under the periods (`gl-axis`), as in Columns.
+- **More than 12:** label the points the answer names and the last one (`<div class="gl-lab below" style="left:…;top:…">190 on 13 Mar</div>`, `gl-lab end` for the last), dates on a few ticks (`<div class="gl-xax"><span style="left:0%">1 Mar</span>…</div>`), and put every point on the line's wrapper for the hover readout and screen readers: `<div class="gl-line" data-gl-line data-x='["1 Mar","2 Mar",…]' data-y='[412,398,…]' data-unit="" role="img" aria-label="Daily verified signups, March: 412, 398, …">`.
+- One line, or two in the same unit (the one the answer is about in blue). Never a second y-axis.
+
+## The script
+
+Paste once, as the last thing in the widget, whenever the picture has a `data-gl-view` card, a view switch or a line with more than 12 points:
 
 ```html
 <script>
-(()=>{const P='aria-pressed',S='aria-sort';
-for(const v of document.querySelectorAll('[data-gl-view]')){const tb=v.querySelector('.gl-dt tbody');if(!tb)continue;
-const rows=[...tb.rows],cnt=v.querySelector('.gl-count'),find=v.querySelector('.gl-find'),chips=[...v.querySelectorAll('.gl-chip')];let f='',q='';
-const apply=()=>{let k=0;for(const r of rows){const ok=(!f||(r.dataset.tags||'').split(' ').includes(f))&&(!q||r.textContent.toLowerCase().includes(q));r.hidden=!ok;if(ok)k++}if(cnt)cnt.textContent=k+' of '+rows.length+' shown'};
+(()=>{const P='aria-pressed',S='aria-sort',fmt=v=>Number(v).toLocaleString('en-US');
+for(const v of document.querySelectorAll('[data-gl-view]')){const tb=v.querySelector('.gl-tb');if(!tb)continue;
+const rows=[...tb.querySelectorAll('.gl-row:not(.h)')],cnt=v.querySelector('.gl-count'),find=v.querySelector('.gl-find'),more=v.querySelector('.gl-more'),chips=[...v.querySelectorAll('.gl-chip')],lim=+v.dataset.limit||0;let f='',q='',open=!lim;
+const apply=()=>{let k=0,n=0;for(const r of [...tb.querySelectorAll('.gl-row:not(.h)')]){const ok=(!f||(r.dataset.tags||'').split(' ').includes(f))&&(!q||r.textContent.toLowerCase().includes(q));const show=ok&&(open||f||q||n<lim);if(ok)n++;r.hidden=!show;if(show)k++}
+if(cnt)cnt.textContent=k+' of '+rows.length+' shown';if(more){more.hidden=!lim||!!f||!!q;more.textContent=open?'Show fewer':'Show all '+rows.length}};
 for(const c of chips)c.addEventListener('click',()=>{for(const o of chips)o.setAttribute(P,o===c);f=c.dataset.f||'';apply()});
 if(find)find.addEventListener('input',()=>{q=find.value.trim().toLowerCase();apply()});
-const ths=[...v.querySelectorAll('.gl-dt thead th')];
-ths.forEach((th,i)=>{const b=th.querySelector('button');if(!b)return;b.addEventListener('click',()=>{
-const num=rows.some(r=>r.cells[i]&&r.cells[i].dataset.v!==undefined),cur=th.getAttribute(S);
-const dir=cur?(cur==='descending'?'ascending':'descending'):(num?'descending':'ascending');
-for(const o of ths)o.removeAttribute(S);th.setAttribute(S,dir);
-const key=r=>{const c=r.cells[i];return num?parseFloat(c.dataset.v):c.textContent.trim().toLowerCase()};
-[...tb.rows].sort((a,b)=>{const x=key(a),y=key(b),d=num?x-y:String(x).localeCompare(String(y));return dir==='ascending'?d:-d}).forEach(r=>tb.appendChild(r))})});
+if(more)more.addEventListener('click',()=>{open=!open;apply()});
+const hs=[...tb.querySelectorAll('.gl-row.h [data-k]')];
+for(const b of hs)b.addEventListener('click',()=>{const k=b.dataset.k,th=b.parentElement,cell=r=>r.querySelector('[data-k="'+k+'"]');
+const num=rows.some(r=>cell(r)&&cell(r).dataset.v!==undefined),cur=th.getAttribute(S),dir=cur?(cur==='descending'?'ascending':'descending'):(num?'descending':'ascending');
+for(const o of hs)o.parentElement.removeAttribute(S);th.setAttribute(S,dir);
+const key=r=>{const c=cell(r);return num?parseFloat(c&&c.dataset.v):(c?c.textContent.trim().toLowerCase():'')};
+[...rows].sort((a,c)=>{const x=key(a),y=key(c),d=num?x-y:String(x).localeCompare(String(y));return dir==='ascending'?d:-d}).forEach(r=>tb.appendChild(r));apply()});
 apply()}
 for(const g of document.querySelectorAll('.gl-seg')){const bs=[...g.querySelectorAll('button[aria-controls]')];if(!bs.length)continue;
 const show=b=>{for(const o of bs){o.setAttribute(P,o===b);const p=document.getElementById(o.getAttribute('aria-controls'));if(p)p.hidden=o!==b}};
-bs.forEach(b=>b.addEventListener('click',()=>show(b)));show(bs.find(b=>b.getAttribute(P)==='true')||bs[0])}})();
+bs.forEach(b=>b.addEventListener('click',()=>show(b)));show(bs.find(b=>b.getAttribute(P)==='true')||bs[0])}
+for(const l of document.querySelectorAll('[data-gl-line]')){const xs=JSON.parse(l.dataset.x),ys=JSON.parse(l.dataset.y),u=l.dataset.unit||'',p=l.querySelector('.gl-plot');if(!p||xs.length<2)continue;
+const g=document.createElement('div'),r=document.createElement('div');g.className='gl-guide';r.className='gl-read';g.hidden=r.hidden=true;p.append(g,r);
+const at=e=>{const b=p.getBoundingClientRect(),i=Math.max(0,Math.min(xs.length-1,Math.round((e.clientX-b.left)/b.width*(xs.length-1)))),x=i/(xs.length-1)*100;
+g.style.left=x+'%';r.style.left='clamp(60px,'+x+'%,calc(100% - 60px))';r.textContent=xs[i]+': '+fmt(ys[i])+u;g.hidden=r.hidden=false};
+p.addEventListener('pointermove',at);p.addEventListener('pointerleave',()=>{g.hidden=r.hidden=true})}})();
 </script>
 ```
 
-- It only reorders and hides rows and panes that are already on the page; it never creates, changes or computes a value, and reads no data from anywhere else.
+- It only reorders and hides rows and panes already on the page and reads values already in the widget; it never computes or changes a value.
 - Controls are ordinary buttons and a search field, so Tab, Enter and Space work, and the focus ring comes from the kit.
-
-### Lines with many points (more than 12)
-
-Use Chart.js only here; everything else is plain HTML. One line, or two when the answer compares two series in the same unit: the one it's about in blue, the other in soft blue, with a `gl-key` above the chart naming both. Never a second y-axis.
-
-```html
-<div class="gl-key"><span><i class="hi"></i>This year</span><span><i></i>Last year</span></div>
-<div class="gl-line"><canvas id="gl-line" role="img" aria-label="What the line shows">Every point as text: 1 May 0.4 %, 2 May 0.3 %, …</canvas></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script>
-(()=>{const r=document.documentElement,cs=getComputedStyle(r),tk=(n,f)=>cs.getPropertyValue(n).trim()||f;
-const dk=r.dataset.mode?r.dataset.mode==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
-const mu=tk('--text-muted','#898781'),ink=tk('--text-primary','#0b0b0b'),sec=tk('--text-secondary','#52514e'),srf=tk('--surface-2','#ffffff'),bd=tk('--border-strong','rgba(11,11,11,.22)'),font=tk('--font-sans','sans-serif');
-const fmt=v=>v.toLocaleString('en-US');
-const cross={id:'glx',afterDatasetsDraw(c){const a=c.tooltip&&c.tooltip.getActiveElements();if(!a||!a.length)return;const x=a[0].element.x,g=c.ctx;g.save();g.strokeStyle=mu;g.lineWidth=1;g.beginPath();g.moveTo(x,c.chartArea.top);g.lineTo(x,c.chartArea.bottom);g.stroke();g.restore();}};
-const end={id:'gle',afterDatasetsDraw(c){const m=c.getDatasetMeta(0).data,p=m[m.length-1];if(!p)return;const g=c.ctx,d=c.data.datasets[0].data;g.save();g.fillStyle=ink;g.font='500 12px '+font;g.textAlign='right';g.fillText(fmt(d[d.length-1]),p.x,p.y-8);g.restore();}};
-const line=(data,color,label,bad)=>({data,label,borderColor:color,borderWidth:2,pointRadius:0,pointHoverRadius:4,pointHoverBackgroundColor:color,pointHoverBorderColor:srf,pointHoverBorderWidth:2,tension:.25,segment:{borderColor:s=>bad&&s.p0DataIndex>=bad[0]&&s.p1DataIndex<=bad[1]?'#E24B4A':undefined}});
-new Chart(document.getElementById('gl-line'),{type:'line',
-data:{labels:[/* … */],datasets:[line([/* … */],'#378ADD','This year'),line([/* … */],'rgba(55,138,221,.4)','Last year')]},
-options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:20}},interaction:{mode:'index',intersect:false},
-plugins:{legend:{display:false},tooltip:{backgroundColor:srf,borderColor:bd,borderWidth:0.5,titleColor:sec,bodyColor:ink,titleFont:{size:12,weight:'400'},bodyFont:{size:13,weight:'500'},padding:8,displayColors:false,callbacks:{label:i=>fmt(i.parsed.y)+(c=>c>1?'  '+i.dataset.label:'')(i.chart.data.datasets.length)}}},
-scales:{x:{grid:{display:false},ticks:{color:mu,font:{size:12},maxRotation:0,autoSkipPadding:16}},y:{beginAtZero:true,grid:{color:dk?'#2c2c2a':'#e1e0d9'},border:{display:false},ticks:{color:mu,font:{size:12},callback:fmt}}}},plugins:[cross,end]});})();
-</script>
-```
-
-- With one line, drop the `gl-key` and the second `line(…)`.
-- The y-axis starts at zero, like bars, so a drop to half looks like half. Don't change it.
-- When the answer is about one stretch of the line (a dip, a spike, an outage), pass the index of its first and last point as the fourth argument, for example `line([/* … */],'#378ADD','',[20,23])` for an outage on the 21st to the 24th point. That stretch turns red, so use it for a stretch that's negative (an outage, errors past a limit, a dip below a target), and the section caption names it in words ("Error rate, May · outage 21–24 May"), since color alone isn't enough. A stretch that's only interesting stays in the line's blue and is named in the caption.
-- `fmt` writes values the way the original does: change it to add the unit (`v=>v+' ms'`) or the currency (`v=>'$'+v.toLocaleString('en-US')`).
-- The canvas text lists every point, so every value is on the picture without hovering. The chart prints only the last value; hovering anywhere shows a guide line and that date's values.
-- Colors are read from the app's theme at load, so the chart matches light and dark mode.

@@ -1,6 +1,6 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero-dark.png">
-  <img alt="A long Claude answer about an AWS bill, 276 words, fades into the background. Someone types /glance, and in front of it is glance's reply: Your AWS bill went from $2,110 in September to $4,760 in October because of two changes made in early October. Below the sentence, monthly totals from May to October as columns, with October in blue at $4,760." src="docs/images/hero-light.png" width="100%">
+  <img alt="A long Claude answer about an AWS bill, 276 words, fades into the background. Someone types /glance, and in front of it is glance's reply: October's AWS bill went up $2,650, almost all of it from NAT Gateway and CloudWatch, because of two changes made in the first week of October. Below the sentence, two headline figures on a grey card: +$2,650 added from September to October, large and blue, and 49.8 TB of NAT data processed in October, from 2.4 TB in September, at $0.045/GB." src="docs/images/hero-light.png" width="100%">
 </picture>
 
 # glance
@@ -25,7 +25,7 @@ Claude Code picks up new skills while it runs, so there's no restart. If `~/.cla
 
 ## Big tables
 
-A wide table is where a plain answer reads worst. Claude writes it as markdown, the chat lays it out at the width of its column, and every column with a long cell takes the room: short columns shrink to stacks of wrapped words, rows grow four lines tall, and the rows that matter look like all the others. glance rebuilds the same table: the same 14 tools and the same numbers, one line per row, sorted by what you'd save, the six worth acting on tinted, and the long advice moved into short phrases and the bullets.
+A wide table is where a plain answer reads worst. Claude writes it as markdown, the chat lays it out at the width of its column, and every column with a long cell takes the room: short columns shrink to stacks of wrapped words, rows grow four lines tall, and the rows that matter look like all the others. glance rebuilds the same table: the same 14 tools and the same numbers, one line per row, grouped by what to do and sorted by what you'd save, with a bar of used and unused seats on every row and the long advice moved into short notes under each name and the bullets.
 
 **Stock Claude:** 622 words, with a 14-row, 6-column table of renewals and three sections after it. Its table as the chat lays it out:
 
@@ -47,23 +47,23 @@ A wide table is where a plain answer reads worst. Claude writes it as markdown, 
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/table-glance-dark.png">
-  <img alt="glance's reply: Cutting or shrinking six tools saves about $46.6k a year. Removing unused seats on five others brings the total to about $50.4k. Below it, three tiles: cut or shrink 6 tools, about $46.6k; trim spare seats, about $3.8k; total a year, about $50.4k in blue, about 24% of $205k spend. Then one table, one line per tool, sorted by saving: Zoom $12,240, Figma $11,880, Notion $8,064, Miro $6,300, Linear $4,800 and DocuSign at least $3,360 are tinted blue, followed by the seat trims and the tools to keep." src="docs/images/table-glance-light.png" width="100%">
+  <img alt="glance's reply: Cutting Miro and Linear and shrinking four other tools saves about $46.6k a year. Removing spare seats elsewhere brings the total to about $50k. Below it, the saving a year, about $50.4k, large and blue, about 24% of $205k spend, beside about $46.6k from cutting or shrinking 6 tools and about $3.8k from dropping unused seats on 5 tools. Then every tool in groups, biggest saving first in each: Cut, with Miro, FigJam covers most use, 9 of 35 seats used, saving 6,300, and Linear, pilot ended, 6 of 25, saving 4,800; then Shrink. Each row has its renewal date, seats used of paid with a bar of used seats in grey and unused seats in blue, its cost and its saving in a tinted column. The table fades out after the first rows." src="docs/images/table-glance-light.png" width="100%">
 </picture>
 
 <details><summary>The whole picture</summary>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/table-glance-full-dark.png">
-  <img alt="glance's whole picture: the three tiles and all 14 tools, ending with Datadog flagged over commitment." src="docs/images/table-glance-full-light.png" width="100%">
+  <img alt="glance's whole picture: the headline figures and all 14 tools in five groups, cut, shrink, keep but drop seats, keep, and raise the commitment, ending with Datadog, 48,000 committed and about 61,000 used." src="docs/images/table-glance-full-light.png" width="100%">
 </picture>
 
 </details>
 
-<sub>A SaaS renewal review for a made-up 140-person company, answered by stock Claude (Opus 5.5), then re-told with `/glance`. Both pictures are the same width; the stock table is drawn by the browser's own table layout, the way a chat column draws markdown. glance's reply text: 279 words, from 622.</sub>
+<sub>A SaaS renewal review for a made-up 140-person company, answered by stock Claude (Opus 5.5), then re-told with `/glance`. Both pictures are the same width; the stock table is drawn by the browser's own table layout, the way a chat column draws markdown. glance's reply text: 219 words, from 622.</sub>
 
 ## Examples
 
-Each picture is glance's own reply to a sample answer, drawn with the v3 kit and cropped to the sentence and the picture. The bullets that follow it in the chat are left out. Above each one is what the original answer looked like. When an answer is mostly reasoning, glance draws nothing and keeps it to a sentence and bullets.
+Each picture is glance's own reply to a sample answer, drawn with the current kit and cropped to the sentence and the picture. The bullets that follow it in the chat are left out. Above each one is what the original answer looked like. When an answer is mostly reasoning, glance draws nothing and keeps it to a sentence and bullets.
 
 ### Bills
 
@@ -73,10 +73,19 @@ Each picture is glance's own reply to a sample answer, drawn with the v3 kit and
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/bill-jump-dark.png">
-  <img alt="glance's reply: Your AWS bill went from $2,110 in September to $4,760 in October because of two changes made in early October. Below it, monthly totals from May to October as columns, with October in blue at $4,760. Then a bridge from September's $2,110 to October's $4,760: NAT Gateway +$2,130 and CloudWatch +$380 in blue, then Other, EC2, S3 and RDS, each with its September and October cost." src="docs/images/bill-jump-light.png" width="100%">
+  <img alt="glance's reply: October's AWS bill went up $2,650, almost all of it from NAT Gateway and CloudWatch, because of two changes made in the first week of October. Below it, two headline figures: +$2,650 added from September to October, large and blue, and 49.8 TB of NAT data processed in October. Then the monthly bill from May to October as columns with each value underneath, October in blue at 4,760. The picture continues with a table by service and fades out." src="docs/images/bill-jump-light.png" width="100%">
 </picture>
 
-<sub>An AWS bill that more than doubled. glance picked columns for six months of totals, then a bridge from September to October with one step per service.</sub>
+<sub>An AWS bill that more than doubled. glance picked the increase as a headline figure, columns for six months of totals, then a table by service with each change in a tinted column.</sub>
+
+<details><summary>The whole picture</summary>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/bill-jump-full-dark.png">
+  <img alt="The same reply at full length: the headline figures, the columns, and what changed by service in dollars, September, October and change: NAT Gateway 110, 2,240, +2,130; CloudWatch 70, 450, +380; Other 30, 125, +95, not explained yet; EC2 1,180, 1,210, +30, Savings Plan coverage not checked; S3 290, 300, +10; RDS 430, 435, +5." src="docs/images/bill-jump-full-light.png" width="100%">
+</picture>
+
+</details>
 
 #### Teams against their budgets
 
@@ -84,10 +93,10 @@ Each picture is glance's own reply to a sample answer, drawn with the v3 kit and
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/bill-budget-dark.png">
-  <img alt="glance's reply: Two of five teams overspent in Q3, and the other three didn't save enough to cover it, so total spend went over budget. Below it, Q3 total spend of $139,600 in red, against a budget of $137,000, $2,600 over. Then one row per team from Q2 to Q3 with its budget underneath: Data platform, $41,200 to $58,900, and ML, $30,500 to $34,300, are tinted and flagged over budget. Web, Internal tools and Mobile backend came in under." src="docs/images/bill-budget-light.png" width="100%">
+  <img alt="glance's reply: Data platform and ML spent more than their Q3 budgets. That pushed total spend $2,600 over, even though the other three teams came in under. Below it, total Q3 spend of $139,600, large and red, budget $137,000, 2,600 over, with a gauge that runs just past its budget tick. Then each team against its Q3 budget in dollars: Q2, Q3, budget, and a gauge whose tick is the budget, at the same place on every row. Data platform, 41,200 to 58,900 against 50,000, 8,900 over, and ML, 30,500 to 34,300 against 32,000, 2,300 over, have their Q3 in red and the part of the gauge past the tick in red. Web, Mobile backend and Internal tools stay under." src="docs/images/bill-budget-light.png" width="100%">
 </picture>
 
-<sub>Quarterly cloud spend by team. glance picked a headline number, then before → after rows with each team's budget under its new value, so the two teams over budget stand out.</sub>
+<sub>Quarterly cloud spend by team. glance picked the total as a headline figure, then a gauge per team with every budget at the same place, so the two teams over budget stand out.</sub>
 
 #### Money spent on nothing
 
@@ -95,10 +104,10 @@ Each picture is glance's own reply to a sample answer, drawn with the v3 kit and
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/bill-idle-dark.png">
-  <img alt="glance's reply: I found 11 idle AWS resources costing $1,240 a month. The six left over from the September load test can be deleted today. Below it, monthly cost by cause, each with a bar and its resources listed underneath: Sept load test leftovers, 6 resources, $820, safe to delete, in blue; unattached EBS volumes, 3, $210, snapshot first; NAT Gateways in a retired VPC, 2, $210, waiting." src="docs/images/bill-idle-light.png" width="100%">
+  <img alt="glance's reply: You're paying $1,240 a month for 11 AWS resources nobody uses. The six left from September's load test cost $820 of that, and you can delete them today. Below it, $1,240 a month for 11 resources, large and blue. Then what they are and what to do, in dollars a month, largest first: Sept load test leftovers, lt-runner-1 to lt-runner-4, lt-db and lt-cache, 6, delete today, 820; unattached EBS volumes vol-0a1f, vol-0b77 and vol-0c3e, 3, snapshot, then delete, 210; NAT Gateways in a retired VPC, nat-0f3a and nat-0f3b, 2, wait for networking, 210." src="docs/images/bill-idle-light.png" width="100%">
 </picture>
 
-<sub>Idle cloud resources. glance picked causes with counts: one bar per cause, its status right after its name and every resource listed under it.</sub>
+<sub>Idle cloud resources. glance picked the total as a headline figure, then a table of causes: every resource under its cause, the count, the next step and the monthly cost.</sub>
 
 ### Test results
 
@@ -108,17 +117,17 @@ Each picture is glance's own reply to a sample answer, drawn with the v3 kit and
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/tests-grid-dark.png">
-  <img alt="glance's reply: The nightly run has 5 failures, all on Safari or Firefox. Only one is a real bug: Safari users can't pick a checkout address. Fix that one before Thursday. Below it, tiles for 85 passed, 5 failed in red, 3 flaky and 3 skipped. Then filter chips for All, Failing and Flaky, 24 of 24 shown, and a grid of specs by browser with failures first: checkout/address is tinted and flagged real bug, and the five fail cells are red. The list fades out after the first rows." src="docs/images/tests-grid-light.png" width="100%">
+  <img alt="glance's reply: Only one failure needs fixing before Thursday: address suggestions break for Safari customers. The other 4 failures are test problems, and nothing failed on Chrome or Edge. Below it, 5 runs failed, large and blue, of 96, 1 blocks release, beside 85 passed, 3 flaky and 3 skipped. Then every spec by browser, problem specs first, with filter chips for All, Failed and Flaky: checkout/address, real bug, blocks release, and two more specs fail on Safari; account/avatar-upload and orders/invoice-pdf fail on Firefox. Each fail is a red word on a red tint. The list fades out after the first rows." src="docs/images/tests-grid-light.png" width="100%">
 </picture>
 
-<sub>An end-to-end test run, 24 specs × 4 browsers. glance picked headline numbers and a status grid with filters, failures sorted to the top and the one real bug flagged.</sub>
+<sub>An end-to-end test run, 24 specs × 4 browsers. glance picked headline numbers and a status grid you can filter, problem specs first and the one real bug named under its spec.</sub>
 
 <details>
 <summary>See all 24 specs</summary>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/tests-grid-full-dark.png">
-  <img alt="The same reply at full length: the tiles, the filters and all 24 specs in four browsers, with every cell a word: pass, fail, flaky or skip." src="docs/images/tests-grid-full-light.png" width="100%">
+  <img alt="The same reply at full length: the headline numbers, the filters and all 24 specs in four browsers, with every cell a word: pass, fail, flaky or skip." src="docs/images/tests-grid-full-light.png" width="100%">
 </picture>
 
 </details>
@@ -131,17 +140,17 @@ Each picture is glance's own reply to a sample answer, drawn with the v3 kit and
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/perf-endpoints-dark.png">
-  <img alt="glance's reply: Of 40 endpoints, 19 got faster, 19 got slower and 2 stayed the same. 9 now miss the 300 ms p95 target. Below it, filter chips for All, Misses target, Slower, Faster and No change, a search box and 40 of 40 shown. Then a table sorted by the after value: the nine endpoints over 300 ms come first, tinted and flagged misses target, with the after value in red and a bar whose part past the 300 ms line is red. The table fades out after the first rows." src="docs/images/perf-endpoints-light.png" width="100%">
+  <img alt="glance's reply: After the Go 1.23 upgrade, as many endpoints got slower as got faster, and 9 are now over the 300 ms target. Below it, 9 of 40 endpoints now miss the 300 ms p95 target, large and blue, beside 19 faster, 19 slower and 2 unchanged. Then p95 latency in milliseconds, slowest after the upgrade first, with filter chips, a search box and 12 of 40 shown: /reports/export 390 to 530, /health 380 to 415, /feature-flags 340 to 400 and the other endpoints over the target have their after value in red and a gauge that runs past the 300 ms tick in red. The table fades out after the first rows." src="docs/images/perf-endpoints-light.png" width="100%">
 </picture>
 
-<sub>p95 latency for 40 endpoints. glance picked a table you can sort, filter and search, with a bar for each endpoint against the 300 ms target.</sub>
+<sub>p95 latency for 40 endpoints. glance picked a headline count and a table you can sort, filter and search, with a gauge for each endpoint against the 300 ms target.</sub>
 
 <details>
 <summary>See all 40 endpoints</summary>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/perf-endpoints-full-dark.png">
-  <img alt="The same reply at full length: all 40 endpoints with their before, after and change, sorted by the after value, each with a bar against the 300 ms target." src="docs/images/perf-endpoints-full-light.png" width="100%">
+  <img alt="The same reply at full length: all 40 endpoints with their before, after and change, slowest first, each with a gauge against the 300 ms target." src="docs/images/perf-endpoints-full-light.png" width="100%">
 </picture>
 
 </details>
@@ -152,10 +161,19 @@ Each picture is glance's own reply to a sample answer, drawn with the v3 kit and
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/perf-bundle-dark.png">
-  <img alt="glance's reply: Almost half of main.js is the chart library, echarts, and it loads on every page even though only the Reports page uses it. Below it, a split bar of main.js, 1.84 MB minified and 512 KB gzipped, with echarts in blue, and a table of its six parts, from echarts at 860 KB and 47 percent, flagged only Reports uses it, down to 31 other packages at 68 KB. Then three fixes as bars, biggest win first: lazy-load echarts, −860 KB; moment to date-fns, about −250 KB; per-function lodash, about −60 KB." src="docs/images/perf-bundle-light.png" width="100%">
+  <img alt="glance's reply: main.js is big mostly because the chart library, echarts, loads on every page even though only the Reports page uses it. It makes up almost half the file. Below it, what's in main.js, 1.84 MB minified and 512 KB gzipped: a split bar of its parts from left to right with echarts in blue, then a table of the six parts in KB and percent: echarts 860 and 47, only Reports uses it; our code 410 and 22; moment + locales 290 and 16; react + react-dom 140 and 8; lodash 72 and 4; everything else, 31 packages, 68 and 4. The picture continues with the fixes and fades out." src="docs/images/perf-bundle-light.png" width="100%">
 </picture>
 
-<sub>A JavaScript bundle that's too big. glance picked a split bar of what it's made of, then the fixes as bars, biggest win first.</sub>
+<sub>A JavaScript bundle that's too big. glance picked a split bar and a table of what it's made of, then the fixes as bars, biggest win first.</sub>
+
+<details><summary>The whole picture</summary>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/perf-bundle-full-dark.png">
+  <img alt="The same reply at full length: the split bar, the table of six parts, and the fixes as bars, biggest win first, in KB cut from main.js: lazy-load echarts 860, moment to date-fns about 250, per-function lodash about 60." src="docs/images/perf-bundle-full-light.png" width="100%">
+</picture>
+
+</details>
 
 ### Progress
 
@@ -165,10 +183,10 @@ Each picture is glance's own reply to a sample answer, drawn with the v3 kit and
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/progress-session-dark.png">
-  <img alt="glance's reply: Checkout now meets its mobile budget for load time, layout shift and JavaScript. Tap response and server time are still over, and it ships Monday behind a flag. Below it, five metrics from the start, to after the image and banner fixes, to now, each with its budget underneath. INP, 380 to 370 to 240 ms, and TTFB, 0.9 s throughout, are tinted and flagged over budget. LCP went from 4.8 to 2.3 s, JavaScript from 612 to 284 KB and CLS from 0.21 to 0.04, all under budget." src="docs/images/progress-session-light.png" width="100%">
+  <img alt="glance's reply: Checkout on mobile now loads fast enough and stays put on screen. Taps and the server are still slower than the budget allows. Below it, checkout on mobile against the budget, median of 5 Lighthouse runs on a Moto G Power over slow 4G: each metric at the start, after step 1 (hero image and banner slot), its budget, a gauge whose tick is the budget, and now, after step 2 (lazy SDKs, Intl for moment). LCP 4.8, 2.9, now 2.3 s against 2.5; INP 380, 370, now 240 ms against 200, 40 over, in red; CLS 0.21, 0.04, now 0.04 against 0.1; JavaScript 612, 612, now 284 KB gzipped against 300; TTFB 0.9 s throughout against 0.8, in red." src="docs/images/progress-session-light.png" width="100%">
 </picture>
 
-<sub>A day of performance work, recapped with `/glance everything we did today`. glance picked before → after rows with three steps, start, midway and now, each against its budget.</sub>
+<sub>A day of performance work, recapped with `/glance everything we did today`. glance picked one row per metric with the start, step 1 and now, and a gauge against its budget.</sub>
 
 ## Why not just use dataviz?
 
@@ -192,12 +210,12 @@ About one man in twelve can't easily tell red from green. Most charts lean on ex
   <img alt="Red next to amber or green nearly disappears for red-green color-blind readers; red next to blue stays clear. Three color pairs, as most people see them and with red-green color blindness: alert red and warning amber both turn olive, difference 3.2; alert red and success green both turn olive, 2.1; alert red and accent blue stay apart, 22.1. 8 is the minimum for colors that must be told apart." src="docs/images/color-light.png" width="100%">
 </picture>
 
-- **Blue says look here, red says negative.** Ordinary marks are a soft blue, and what the answer is about is blue, even when it's bad news. Red appears only on a value past a limit, target or budget, or on something failing: that number, the part of its bar past the line, and a red dot with a word after its name. Never a whole row of red text.
+- **Blue says look here, red says negative.** Ordinary marks are a soft blue, and what the answer is about is blue, even when it's bad news. Red appears only on a value past a limit, target or budget, or on something failing: that number, the part of its gauge past the line, and, when the answer says by how much, a short line under its name such as "8,900 over". Never a whole row of red text.
 - **Red never sits against green.** There's no green at all: an improvement stays soft blue. Blue and red stay far apart for everyone.
 - **There is no amber warning color.** v2 tried one for "tight" meters, and the color validator rejected it. Under red-green color blindness, amber and the alert red differ by only 3.2, where 8 is the minimum. Even with full color vision they score 12.7, below the floor of 15. So "tight" and "close" are words, and the bar stays soft blue.
-- **Every colored mark also carries a word**: "over limit", "over target", "fail", "Recommended". Color helps you find it, and the word tells you what it means, so nothing depends on color alone.
+- **Nothing depends on color alone.** A value past a line also runs past the tick on its gauge, a failing cell says "fail", the subtitle says what the tick and the red mean, and the recommended option is the large tile. Color helps you find it; the shape and the word tell you what it means.
 - **Every value is printed** on the picture, so nothing hides behind a hover. The two exceptions are the points of a long line chart and the middle months of an inline trend, which show on hover and are read out to screen readers.
-- **Each picture opens with a one-sentence summary** for screen readers. Its colors come from the app's theme, so light and dark mode both work. Comparisons turn into cards in narrow side panels.
+- **Each picture opens with a one-sentence summary** for screen readers. Its colors come from the app's theme, so light and dark mode both work. In narrow side panels, wide rows fold into two aligned lines and comparisons stack into one column.
 
 ## Commands
 

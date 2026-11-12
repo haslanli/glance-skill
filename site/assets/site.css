@@ -85,7 +85,7 @@ h4{font-size:clamp(22px,1.9vw,28px);letter-spacing:-.02em;line-height:1.15}
 .btn.ghost:hover{background:var(--ground-2)}
 
 /* ---------- hero ---------- */
-.hero{padding:clamp(28px,6vh,72px) var(--m) 0;position:relative;overflow-x:clip}   /* its glow bleeds off the edge and its flyers rest there hidden: neither may widen a phone's page */
+header.hero{padding:clamp(28px,6vh,72px) var(--m) 0;position:relative;overflow-x:clip}   /* its glow bleeds off the edge and its flyers rest there hidden: neither may widen a phone's page */
 .hero-copy{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(24px,4vw,72px);align-items:end;margin-bottom:clamp(28px,5vh,56px)}
 .hero h1{font-size:clamp(54px,7.6vw,128px);line-height:.93;letter-spacing:-.05em;font-weight:650}
 .hero .lede{margin-bottom:26px;max-width:28em}
@@ -194,8 +194,6 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
 @container stage (max-width:640px){.ex-sheet{display:none}.is-narrow .cmp-before,.is-narrow .cmp-handle{display:block}}
 /* while a morph runs: words and flags become boxes that can move, and pieces that leave fade from here */
 .w{display:inline-block;white-space:pre}
-:is(.morphing,.tmorph) .gl-flag{display:inline-block}
-@container (max-width:520px){:is(.morphing,.tmorph) :is(.gl-dt,.gl-tbl) .gl-flag{display:block}}
 .morph-layer{position:absolute;left:0;top:0;width:0;height:0;z-index:5;pointer-events:none}
 /* a clamped teaser mid-morph: its window and its bottom fade travel with it (same look as the mask) */
 .pic.clamp{position:relative}
@@ -255,13 +253,12 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
 /* live tables: the pressed chip's look is one piece that slides from chip to chip */
 /* while a live table moves, its cells are solid (the card, then the cell's own tint), so rows passing
    each other in a sort slide over one another instead of printing through */
-.tmorph .gl-dt tbody tr td{background-image:linear-gradient(var(--card),var(--card))}
-.tmorph .gl-dt tr.at td{background-image:linear-gradient(var(--gl-at),var(--gl-at)),linear-gradient(var(--card),var(--card))}
-.tmorph .gl-dt.st td.x{background-image:linear-gradient(var(--gl-rt),var(--gl-rt)),linear-gradient(var(--card),var(--card))}
+.tmorph .gl-tb>.gl-row:not(.h)>*{background-image:linear-gradient(var(--gl-panel),var(--gl-panel)),linear-gradient(var(--card),var(--card))}
+.tmorph .gl-tb .gl-cell.fail{background-image:linear-gradient(color-mix(in srgb,#E24B4A 12%,transparent),color-mix(in srgb,#E24B4A 12%,transparent)),linear-gradient(var(--card),var(--card))}
 .has-thumb{isolation:isolate}
 .has-thumb .gl-chip{position:relative;transition:color .3s var(--ease),font-weight .3s var(--ease)}
 .has-thumb .gl-chip[aria-pressed=true]{background:transparent;border-color:transparent}
-.chip-thumb{position:absolute;left:-.5px;top:-.5px;width:calc(100% + 1px);height:calc(100% + 1px);z-index:-1;pointer-events:none;border-radius:var(--radius);background:var(--bg-accent);border:.5px solid color-mix(in srgb,#378ADD 45%,transparent)}
+.chip-thumb{position:absolute;left:-.5px;top:-.5px;width:calc(100% + 1px);height:calc(100% + 1px);z-index:-1;pointer-events:none;border-radius:8px;background:var(--bg-accent)}
 .more{margin-top:14px;border:0;background:var(--card-2);color:var(--ink);border-radius:999px;padding:10px 18px;font:500 15px var(--font-sans);cursor:pointer}
 .more:hover{background:var(--ground-2)}
 
@@ -275,8 +272,8 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
 .src-tip{transform-origin:var(--ox,50%) var(--oy,100%);transition:opacity .15s var(--ease),transform .2s var(--ease)}
 .src-tip:not(.on){opacity:0;transform:scale(.86)}
 /* the sort arrow is the site's own piece, so it can travel between headers; the kit's drawn one steps aside */
-.has-sortar .gl-dt th[aria-sort] button::after{content:none}
-.has-sortar .gl-dt th{transition:color .35s var(--ease)}
+.has-sortar .gl-row [aria-sort] button::after{content:none}
+.has-sortar .gl-row.h>*{transition:color .35s var(--ease)}
 .sort-ar{display:inline-block;white-space:pre}
 .sort-ar i{display:inline-block;font-style:normal;transition:transform .4s var(--ease)}
 .copy,.cvd-toggle{position:relative;overflow:hidden}
@@ -292,8 +289,8 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
 .flyer .fl-to{position:absolute;left:2px;top:0;opacity:0;white-space:nowrap}
 
 /* scroll-build states, set only by the script */
-.gl td.pending,.gl .pending{transition:background-color .5s var(--ease),color .5s var(--ease)}
-.gl-tbl.st td.x.pending,.gl-dt.st td.x.pending,.gl-dt td.x.pending{background:transparent;color:var(--text-primary);font-weight:400}
+.gl .pending{transition:background-color .5s var(--ease),color .5s var(--ease)}
+.gl .x.pending,.gl .gl-cell.fail.pending{background:transparent;color:var(--text-primary);font-weight:400}
 
 @media (max-width:1000px){
   .ex,.ex.ex-flip{grid-template-columns:1fr}

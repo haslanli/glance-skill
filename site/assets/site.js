@@ -47,7 +47,7 @@
   // Count every number in el up to its value (from 0, or from the previous step in a before → after row).
   function countUp(tl, el, at, steps) {
     const nodes = [], walker = d.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
-      acceptNode: n => n.parentElement.closest('.gl-q,.gl-note,.gl-flag,.gl-tech,.why') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+      acceptNode: n => n.parentElement.closest('small,.gl-n,.gl-mk') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
     let n; while ((n = walker.nextNode())) nodes.push(n);
     const toks = [];
     for (const node of nodes) {
@@ -81,7 +81,10 @@
   const FACTS = [['$2,110', 'sep'], ['$4,760', 'oct'], ['2.25×', 'x'], ['Two Terraform changes', 'tf'], ['95%', 'pct'],
     ['NAT Gateway', 'nat'], ['+$2,130', 'natv'], ['CloudWatch', 'cw'], ['+$380', 'cwv'], ['Other', 'oth'], ['+$95', 'othv'],
     ['EC2 / RDS / S3', 'ec2'], ['+$45', 'ec2v']];
-  const ORDER = ['sep', 'oct', 'x', 'tf', 'pct', 'sepv', 'nat', 'natv', 'cw', 'cwv', 'oth', 'othv', 'ec2', 'ec2v', 'octv'];
+  // where each fact lands in the picture: the headline figure, its note, and the table's names and changes
+  const PIC = [['95%', 'pct'], ['2.25×', 'x'], ['NAT Gateway', 'nat'], ['+2,130', 'natv'], ['CloudWatch', 'cw'], ['+380', 'cwv'],
+    ['Other', 'oth'], ['+95', 'othv'], ['EC2 / RDS / S3', 'ec2'], ['+45', 'ec2v'], ['2,110', 'sepv'], ['4,760', 'octv']];
+  const ORDER = ['tf', 'pct', 'x', 'nat', 'natv', 'cw', 'cwv', 'oth', 'othv', 'ec2', 'ec2v', 'sepv', 'octv'];
   const hero = $('.hero'), answer = $('#hero-answer'), card = $('#hero-card'), layer = $('#layer');
   const back = $('#hero-back'), front = $('#hero-front'), glow = $('#hero-glow'), rig = $('#rig');
   let heroTl = null, heroReady = false;
@@ -96,13 +99,16 @@
         const s = d.createElement('span'); s.className = 'fact'; s.dataset.k = key; r.surroundContents(s); break;
       }
     }
-    const pairs = { nat: 'NAT Gateway', cw: 'CloudWatch', oth: 'Other', ec2: 'EC2 / RDS / S3' };
-    for (const [k, text] of Object.entries(pairs)) {
-      const n = $$('.gl-br .n', card).find(e => e.firstChild && e.firstChild.textContent.trim() === text);
-      if (n && !$(`[data-k="${k}"]`, card)) { const s = d.createElement('span'); s.textContent = n.firstChild.textContent; s.dataset.k = k; n.replaceChild(s, n.firstChild); }
+    const pic = $('.pic', card), skip = n => n.parentElement.closest('.sr-only, [data-k]');
+    const texts = () => { const out = [], w = d.createTreeWalker(pic, NodeFilter.SHOW_TEXT); for (let n; (n = w.nextNode());) if (n.data.trim() && !skip(n)) out.push(n); return out; };
+    for (const [text, k] of PIC) {
+      if ($(`[data-k="${k}"]`, pic)) continue;
+      const node = texts().find(n => n.data.includes(text)); if (!node) continue;
+      const r = d.createRange(), i = node.data.indexOf(text); r.setStart(node, i); r.setEnd(node, i + text.length);
+      const s = d.createElement('span'); s.dataset.k = k; r.surroundContents(s);
     }
-    const vals = { natv: '+$2,130', cwv: '+$380', othv: '+$95', ec2v: '+$45', sepv: '$2,110', octv: '$4,760' };
-    for (const [k, text] of Object.entries(vals)) { const v = $$('.gl-br .v', card).find(e => e.textContent.trim() === text); if (v) v.dataset.k = k; }
+    // every other run of text in the picture, so labels and notes can fade in around the facts
+    if (!$('.pw', pic)) for (const node of texts()) { const s = d.createElement('span'); s.className = 'pw'; node.replaceWith(s); s.append(node); }
     // the sentence's own words, so they can write themselves in around the facts
     const sent = $('.gsent', card);
     if (!$('.w', sent)) for (const node of [...sent.childNodes]) if (node.nodeType === 3) {
@@ -125,9 +131,9 @@
   function buildHero(delay) {
     markFacts();
     const facts = $$('.fact', answer), targets = $$('[data-k]', card);
-    const words = $$('.gsent .w', card), cap = $('.gl-cap', card);
-    const rows = $$('.gl-br > div:not(.t)', card).filter(e => !e.dataset.k), notes = $$('.gl-br .why, .gl-br .d', card);
-    const bars = $$('.gl-br i', card), bul = $$('.gbul > *, .gbul li', card), you = $('.you', card);
+    const words = $$('.gsent .w', card), runs = $$('.pic .pw', card);
+    const rows = runs.filter(e => !e.closest('small')), notes = runs.filter(e => e.closest('small'));
+    const bars = $$('.pic .gl-ga > i, .pic .gl-bars .t > i, .pic .gl-col > i', card), bul = $$('.gbul > *, .gbul li', card), you = $('.you', card);
     layer.innerHTML = '';
     // measured in the finished layout, before anything is set to its start
     const L = layer.getBoundingClientRect(), route = { sepv: 'sep', octv: 'oct' }, fl = [];
@@ -157,7 +163,7 @@
 
     // the start
     gsap.set(facts, { backgroundSize: '0% 100%' });
-    gsap.set([...words, cap, ...rows, ...notes, ...bul, you, ...targets], { autoAlpha: 0 });
+    gsap.set([...words, ...rows, ...notes, ...bul, you, ...targets], { autoAlpha: 0 });
     gsap.set(bars, { scaleX: 0, transformOrigin: '0 50%' });
     gsap.set(bul, { y: 10 }); gsap.set(card, { y: 30, opacity: 0 }); gsap.set(glow, { opacity: 0 }); gsap.set(back, { opacity: 1 });
     fl.forEach(p => gsap.set(p.f, { x: p.x0, y: p.y0, autoAlpha: 0, force3D: true }));
@@ -186,7 +192,7 @@
     });
     tl.to(back, { opacity: .42, duration: 1.4, ease: 'power2.inOut' }, 1.25);
     tl.to(words, { autoAlpha: 1, duration: .6, stagger: .028, ease: 'power1.out' }, 1.4);
-    tl.to([cap, ...rows], { autoAlpha: 1, duration: .4, stagger: .025 }, 2.05);
+    tl.to(rows, { autoAlpha: 1, duration: .4, stagger: .018 }, 2.05);
     tl.to(bars, { scaleX: 1, duration: .75, stagger: .08, ease: 'power3.out' }, 2.25);
     tl.to(notes, { autoAlpha: 1, duration: .4, stagger: .03 }, 2.7);
     tl.to(bul, { autoAlpha: 1, y: 0, duration: .5, stagger: .045, ease: 'power2.out', force3D: false }, 3.05);
@@ -261,7 +267,7 @@
      bars, tiles, flags) may also resize; words never do, they are counter-scaled inside a resizing
      box so text never stretches. A piece with no counterpart fades out where it was (a ghost copy)
      or fades in where it lands. Transforms and opacity only, all on one clock. */
-  const BOXES = '.gl-tile, .gl-col .b, .gl-br > *, .gl-br i, .gl-cz > *, .gl-track, .gl-fill, .gl-ba > div, .gl-bars > *, .gl-split, .gl-split > i, .gl-tbl > div, .gl-dt th, .gl-dt td, .gl-bb, .gl-bb > *, .gl-flag, .gl-find';
+  const BOXES = '.gl-card, .gl-hd, .gl-fig, .gl-sup, .gl-col > i, .gl-axis > div, .gl-br .n, .gl-br .v, .gl-br .t > i, .gl-bars .n, .gl-bars .t > i, .gl-bars .v, .gl-zoom, .gl-split, .gl-split > i, .gl-row > *, .gl-gh, .gl-ga, .gl-ga > i, .gl-spk, .gl-dv .n, .gl-dv i, .gl-dv .v, .gl-pick, .gl-alt, .gl-kv, .gl-mini > div, .gl-cell, .gl-nm small, .gl-find, .gl-more, .gl-plot, .gl-head';
   const ATOMS = '.w, .seg, .hint, button, code';
   const rectOf = el => { if (!el || !el.getClientRects().length) return null; const r = el.getBoundingClientRect(); return { x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height }; };
   const lerp = (a, b, v) => a + (b - a) * v;
@@ -326,7 +332,7 @@
     // ghosts: a copy of each piece that leaves, at the place it left from
     const layer = d.createElement('div'); layer.className = 'morph-layer gl'; layer.style.containerType = 'normal'; stage.append(layer);
     const ghosts = leaving.filter(g => !leaving.some(o => o !== g && o.el.contains(g.el))).map(({ el, a }) => {
-      const wrap = d.createElement('div'); wrap.className = 'morph-ghost' + (el.closest('.gl-dt') ? ' gl-dt' : '');
+      const wrap = d.createElement('div'); wrap.className = 'morph-ghost';
       wrap.style.cssText = `left:${a.x - S.x}px;top:${a.y - S.y}px;width:${a.w}px;height:${a.h}px`;
       const c = el.cloneNode(true); c.style.cssText += `;display:block;width:100%;height:100%;box-sizing:border-box;${styleOf.get(el) || ''}`;
       wrap.append(c); layer.append(wrap); return wrap;
@@ -565,11 +571,11 @@
        colour morph; the count runs from the old number to the new one;
      - typing in search takes over from wherever the rows are mid-move. */
   function initTables(ex) {
-    const after = $('.cmp-after', ex), views = $$('[data-gl-view]', after || ex).filter(v => $('.gl-dt tbody', v));
+    const after = $('.cmp-after', ex), views = $$('[data-gl-view]', after || ex).filter(v => $('.gl-tb .gl-row', v));
     if (!after || !views.length) return;
     const stage = $('.ex-stage', ex), shell = $('.ex-shell', ex), card = $('.ex-card', ex);
     const thumbs = new Map();
-    for (const seg of $$('.gl-seg', after).filter(s => $('.gl-chip', s))) {
+    for (const seg of $$('.gl-ctl', after).filter(s => $('.gl-chip', s))) {
       const t = d.createElement('span'); t.className = 'chip-thumb'; t.setAttribute('aria-hidden', 'true');
       ($('.gl-chip[aria-pressed=true]', seg) || $('.gl-chip', seg)).append(t); seg.classList.add('has-thumb'); thumbs.set(seg, t);
     }
@@ -588,13 +594,13 @@
     // the sort arrow: one piece per table (the kit's drawn arrow is hidden on the site) that travels from the
     // old sorted header to the new one and turns over when the direction flips
     const arrows = new Map();
-    for (const v of views) if ($('.gl-dt thead th button', v)) {
+    for (const v of views) if ($('.gl-row.h [data-k]', v)) {
       const ar = d.createElement('span'); ar.className = 'sort-ar'; ar.setAttribute('aria-hidden', 'true'); ar.innerHTML = ' <i>↓</i>';
       v.classList.add('has-sortar'); arrows.set(v, ar);
     }
     const glide = (v, animate) => {
       const ar = arrows.get(v); if (!ar) return;
-      const th = $('.gl-dt thead th[aria-sort]', v), btn = th && $('button', th);
+      const th = $('.gl-row.h [aria-sort]', v), btn = th && $('button', th);
       if (!btn) { ar.remove(); return; }
       const i = $('i', ar), from = ar.isConnected && ar.parentElement !== btn ? ar.getBoundingClientRect() : null, fresh = !ar.isConnected;
       gsap.killTweensOf(ar._o || {}); ar.style.transform = ''; ar.style.opacity = '';
@@ -615,7 +621,7 @@
     const run = (view, target, event, duration) => {
       ex._widthTween && ex._widthTween.progress(1); ex._moreTween && ex._moreTween.progress(1); ex._build && ex._build.progress(1);
       splitWords(after); ex.classList.add('tmorph');
-      const cnt = $('.gl-count', view), seg = target.closest('.gl-seg');
+      const cnt = $('.gl-count', view), seg = target.closest('.gl-ctl');
       const h0 = stage.getBoundingClientRect().height, H0 = shell.getBoundingClientRect().height, k0 = cnt ? parseInt(cnt.textContent, 10) : 0;
       let h1, H1, k1, final = '';
       ex._tableTween = morph(after, card, () => {
@@ -625,7 +631,7 @@
         stage.style.height = ''; h1 = stage.offsetHeight; H1 = card.offsetHeight; stage.style.height = h0 + 'px';
         if (seg) slide(seg);
         glide(view, true);
-      }, { duration, skip: '.gl-count, .gl-chip',
+      }, { duration, skip: '.gl-count, .gl-chip, .gl-more',
         extra: v => {
           stage.style.height = lerp(h0, h1, v) + 'px';
           const H = lerp(H0, H1, v);
@@ -642,7 +648,7 @@
     for (const v of views) {
       // caught on the way down, before the kit's own listeners, and replayed inside the morph
       v.addEventListener('click', e => {
-        const t = e.target.closest('.gl-chip, .gl-dt thead th button');
+        const t = e.target.closest('.gl-chip, .gl-row.h button, .gl-more');
         if (!t || pass || still()) return;
         e.stopPropagation(); run(v, t, () => new MouseEvent('click', { bubbles: true, cancelable: true }), t.matches('.gl-chip') ? .55 : .65);
       }, true);
@@ -661,7 +667,7 @@
   function lineText(b) { return b.tagName === 'TR' ? $$('th,td', b).map(c => c.textContent.trim()).join(' · ') : (b.tagName === 'LI' ? [...b.childNodes].filter(n => !(n.nodeType === 1 && /^(UL|OL)$/.test(n.tagName))).map(n => n.textContent).join('') : b.textContent).replace(/\s+/g, ' ').trim(); }
   const esc = t => t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   const TOK = /[+\-−]?\$?\d[\d,.]*(?:\s?(?:%|ms|s|kb|mb|gb|tb|×|x)\b)?/gi;
-  const ownText = el => [...el.childNodes].filter(n => !(n.nodeType === 1 && n.matches('.gl-q, .gl-note, .gl-flag, .gl-tech, .why'))).map(n => n.textContent).join('');
+  const ownText = el => [...el.childNodes].filter(n => !(n.nodeType === 1 && n.matches('small, .gl-mk'))).map(n => n.textContent).join('');
   function initSources(ex) {
     // each line also knows its twin in the side panel's copy of the answer, to light it up in narrow mode
     const LINES = '.said :is(p, li, tr, h1, h2, h3)', mainLines = $$('.ex-sheet ' + LINES, ex), mainRows = $$('.ex-sheet .said tr', ex);
@@ -669,10 +675,10 @@
     // table cells: found by their row's name, then by the cell's own text in that row of the original
     const srcRows = $$('.cmp-before .said tr', ex).map((tr, i) => Object.assign($$('th,td', tr).map(c => c.textContent.trim()), { main: mainRows[i] }));
     const label = c => norm(c.firstChild ? c.firstChild.textContent : c.textContent);
-    for (const tr of $$('.cmp-after .gl-dt tbody tr', ex)) {
-      const row = srcRows.find(r => norm(r[0]) === label(tr.cells[0])); if (!row) continue;
-      [...tr.cells].forEach((td, i) => {
-        if (td.classList.contains('bbc')) return;
+    for (const tr of $$('.cmp-after .gl-tb .gl-row:not(.h)', ex)) {
+      const cells = [...tr.children], row = srcRows.find(r => norm(r[0]) === label(cells[0])); if (!row) continue;
+      cells.forEach((td, i) => {
+        if (td.classList.contains('gc')) return;
         const t = i === 0 ? label(td) : norm(td.textContent);
         const j = norm(row[i] || '') === t ? i : row.findIndex(c => norm(c) === t); if (j < 0) return;
         td.classList.add('has-src'); td._src = { rows: [{ cells: row, mark: j }], mains: [row.main] };
@@ -680,7 +686,7 @@
     }
     // anything else with a number in it: the line, or two, of the original that hold its numbers
     const cands = $$('.cmp-after .gl :is(div, span, b)', ex).filter(el =>
-      !el.closest('.sr-only, th, button, .gl-ctl, .gl-count, .has-src') && !$$(':scope > :is(div, td)', el).length && /\d/.test(ownText(el)));
+      !el.closest('.sr-only, .gl-row.h, button, .gl-ctl, .gl-count, .has-src') && !$$(':scope > :is(div, td)', el).length && /\d/.test(ownText(el)));
     for (const el of cands) {
       const own = norm(ownText(el));
       const toks = [...new Set((own.match(TOK) || []).map(t => t.trim()))];
@@ -753,82 +759,92 @@
   function prepBuild(ex) {
     // clearProps: once built, nothing keeps a leftover transform, so later moves start from clean boxes
     const after = $('.cmp-after', ex), tl = gsap.timeline({ paused: true, defaults: { force3D: false, clearProps: 'transform' } });
-    const sent = $('.g-sent', after), secs = $$('.gl > .gl-sec', after);
+    const sent = $('.g-sent', after), secs = $$('.gl > .gl-card, .gl > .gl-hd, .gl > .gl-bento', after);
     tl.from(sent, { autoAlpha: 0, y: 14, duration: .55, ease: 'power2.out' }, 0);
     let t = .25;
+    const grow = (els, at, from = '0 50%') => { if (els.length) tl.from(els, { scaleX: 0, transformOrigin: from, duration: .75, stagger: .08, ease: 'power3.out' }, at); };
     for (const sec of secs) {
-      const cap = $(':scope > .gl-cap', sec); if (cap) tl.from(cap, { autoAlpha: 0, y: 8, duration: .4 }, t);
-      const ctl = $('.gl-ctl', sec); if (ctl) tl.from(ctl, { autoAlpha: 0, y: 8, duration: .4 }, t + .05);
-      // columns grow, their labels count up
-      const cols = $$('.gl-col', sec);
+      if (sec.matches('.gl-hd')) { tl.from(sec, { autoAlpha: 0, y: 8, duration: .4 }, t); t += .15; continue; }
+      tl.from(sec, { autoAlpha: 0, y: 16, duration: .55, ease: 'power2.out' }, t);
+      const hd = $(':scope > .gl-hd', sec); if (hd) tl.from(hd, { autoAlpha: 0, y: 8, duration: .4 }, t + .05);
+      const ctl = $('.gl-ctl, .gl-seg', sec); if (ctl) tl.from(ctl, { autoAlpha: 0, y: 8, duration: .4 }, t + .1);
+      t += .15;
+      // headline figures: each rises, its number counts up, a gauge under it fills
+      const figs = $$('.gl-fig', sec);
+      if (figs.length) {
+        tl.from(figs, { autoAlpha: 0, y: 12, duration: .5, stagger: .08, ease: 'power2.out' }, t);
+        figs.forEach((f, i) => { const v = $('.gl-v', f); if (v) countUp(tl, v, t + .1 + i * .08); });
+        grow($$('.gl-fig .gl-ga > i', sec), t + .3);
+        t += .6;
+      }
+      // the comparison: the pick lands first, the others after it
+      const tiles = $$('.gl-pick, .gl-alt', sec);
+      if (tiles.length) {
+        tl.from(tiles, { autoAlpha: 0, y: 14, duration: .55, stagger: .1, ease: 'power2.out' }, t);
+        tiles.forEach((tile, i) => { const p = $('.gl-price b, .gl-pr2 b', tile); if (p) countUp(tl, p, t + .15 + i * .1); });
+        t += .5 + tiles.length * .1;
+      }
+      // columns grow from the baseline; their values count up in the row under them
+      const cols = $$('.gl-col > i', sec);
       if (cols.length) {
-        tl.from($$('.gl-col .b', sec), { scaleY: 0, transformOrigin: '50% 100%', duration: .8, stagger: .07, ease: 'power3.out' }, t + .1);
-        tl.from($$('.gl-col .lv, .gl-col .lx', sec), { autoAlpha: 0, duration: .4, stagger: .035 }, t + .2);
-        $$('.gl-col .lv', sec).forEach((lv, i) => countUp(tl, lv, t + .15 + i * .07));
+        tl.from(cols, { scaleY: 0, transformOrigin: '50% 100%', duration: .8, stagger: .07, ease: 'power3.out' }, t);
+        $$('.gl-axis b', sec).forEach((b, i) => countUp(tl, b, t + .05 + i * .07));
         t += .9;
+      }
+      // a line draws itself from left to right, then its points and headline arrive
+      const plot = $('.gl-plot', sec);
+      if (plot) {
+        tl.fromTo($('svg', plot), { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 1.1, ease: 'power2.inOut' }, t);
+        tl.from($$('.gl-pt, .gl-lab', plot), { autoAlpha: 0, duration: .3, stagger: .05 }, t + .3);
+        if (!cols.length) $$('.gl-axis b', sec).forEach((b, i) => countUp(tl, b, t + .1 + i * .08));
+        const head = $('.gl-head b', sec); if (head) countUp(tl, head, t + .6);
+        t += 1.1;
       }
       // a bridge: steps drop in one by one
       const br = $('.gl-br', sec);
       if (br) {
-        tl.from($$(':scope > div:not(.t)', br), { autoAlpha: 0, duration: .35, stagger: .02 }, t);
-        tl.from($$('i', br), { scaleX: 0, transformOrigin: '0 50%', duration: .7, stagger: .09, ease: 'power3.out' }, t + .1);
+        tl.from($$('.n, .v', br), { autoAlpha: 0, duration: .35, stagger: .02 }, t);
+        grow($$('.t > i', br), t + .1);
         t += .8;
       }
-      // tiles: numbers count up
-      const tiles = $$('.gl-tile', sec);
-      if (tiles.length) { tl.from(tiles, { autoAlpha: 0, y: 12, duration: .5, stagger: .07, ease: 'power2.out' }, t); tiles.forEach((tile, i) => countUp(tl, $('.gl-v', tile), t + .1 + i * .07)); t += .5; }
-      // before -> after rows: each later value counts from the one before it
-      const ba = $('.gl-ba', sec);
-      if (ba) {
-        const cells = $$(':scope > div', ba);
-        tl.from(cells, { autoAlpha: 0, y: 10, duration: .45, stagger: .03, ease: 'power2.out' }, t);
-        $$(':scope > .v:not(.hd)', ba).forEach((v, i) => countUp(tl, v, t + .2 + i * .06, true));
-        t += .9;
-      }
-      // causes stack in, each bar grows
-      const cz = $('.gl-cz', sec);
-      if (cz) {
-        tl.from($$(':scope > *', cz), { autoAlpha: 0, y: 14, duration: .45, stagger: .04, ease: 'power2.out' }, t);
-        tl.from($$('.gl-fill', cz), { scaleX: 0, transformOrigin: '0 50%', duration: .8, stagger: .12, ease: 'power3.out' }, t + .2);
-        $$(':scope > .v', cz).forEach((v, i) => countUp(tl, v, t + .2 + i * .12));
-        t += .8;
-      }
-      // split bar sweeps in, then the parts list
-      const split = $('.gl-split', sec);
-      if (split) { tl.fromTo(split, { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: .9, ease: 'power3.inOut' }, t); t += .3; }
-      const tbl = $('.gl-tbl', sec);
-      if (tbl) { tl.from($$(':scope > div', tbl), { autoAlpha: 0, duration: .35, stagger: .012 }, t); t += .4; }
-      const bars = $('.gl-bars', sec);
-      if (bars) {
-        tl.from($$(':scope > *', bars), { autoAlpha: 0, duration: .35, stagger: .03 }, t);
-        tl.from($$('.gl-fill', bars), { scaleX: 0, transformOrigin: '0 50%', duration: .8, stagger: .12, ease: 'power3.out' }, t + .1);
+      // bars, diverging bars and the split bar grow out of their baselines
+      for (const bars of $$('.gl-bars', sec)) {
+        tl.from($$('.n, .v, .gl-zoom', bars), { autoAlpha: 0, duration: .35, stagger: .03 }, t);
+        grow($$('.t > i', bars), t + .1);
+        $$('.v', bars).forEach((v, i) => countUp(tl, v, t + .1 + i * .08));
         t += .7;
       }
+      const dv = $('.gl-dv', sec);
+      if (dv) {
+        tl.from($$('.n, .v', dv), { autoAlpha: 0, duration: .35, stagger: .03 }, t);
+        grow($$('.l i', dv), t + .1, '100% 50%'); grow($$('.r i', dv), t + .1);
+        t += .8;
+      }
+      const split = $('.gl-split', sec);
+      if (split) { tl.fromTo(split, { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: .9, ease: 'power3.inOut' }, t); t += .3; }
       // tables: a status grid fills in a wave and its failures settle red last; others rise row by row
-      const dt = $('.gl-dt', sec);
-      if (dt) {
-        const rows = $$('tbody tr', dt).slice(0, 16);
-        if (dt.classList.contains('st')) {
-          const cells = rows.flatMap(r => $$('td', r)), ncol = rows[0] ? rows[0].cells.length : 1;
-          tl.from($('thead', dt), { autoAlpha: 0, duration: .35 }, t);
-          tl.from(cells, { autoAlpha: 0, y: 6, duration: .35, ease: 'power2.out', stagger: { grid: [rows.length, ncol], from: 'start', amount: 1.1 } }, t + .1);
+      const tb = $('.gl-tb', sec);
+      if (tb) {
+        const head = $(':scope > .gl-row.h', tb), rows = $$(':scope > .gl-row:not(.h), :scope > .gl-gh', tb).filter(r => !r.hidden).slice(0, 18);
+        if (head) tl.from(head, { autoAlpha: 0, duration: .35 }, t);
+        if ($('.gl-cell', tb)) {
+          const grid = rows.filter(r => r.matches('.gl-row')), cells = grid.flatMap(r => [...r.children]), ncol = grid[0] ? grid[0].children.length : 1;
+          tl.from(cells, { autoAlpha: 0, y: 6, duration: .35, ease: 'power2.out', stagger: { grid: [grid.length, ncol], from: 'start', amount: 1.1 } }, t + .1);
           t += 1.3;
         } else {
-          tl.from($('thead', dt), { autoAlpha: 0, duration: .35 }, t);
           tl.from(rows, { autoAlpha: 0, y: 10, duration: .4, stagger: .045, ease: 'power2.out' }, t + .05);
-          tl.from($$('.gl-bb i', dt).slice(0, 16), { scaleX: 0, transformOrigin: '0 50%', duration: .6, stagger: .045, ease: 'power3.out' }, t + .2);
-          tl.from($$('.gl-bb b', dt).slice(0, 16), { scaleX: 0, transformOrigin: '0 50%', duration: .45, stagger: .045, ease: 'power2.out' }, t + .7);
+          grow($$('.gl-ga > i, .gl-spk', tb).filter(e => !e.closest('[hidden]')).slice(0, 40), t + .2);
           t += 1.2;
         }
-        const reds = $$('td.x', dt);
-        reds.forEach(c => c.classList.add('pending'));
-        reds.forEach((c, i) => tl.add(() => c.classList.remove('pending'), t + i * .07));
-        t += .2;
       }
-      t += .1;
+      // values past a line settle red last
+      const reds = $$('.x, .gl-cell.fail', sec).filter(e => !e.closest('.gl-hd'));
+      reds.forEach(c => c.classList.add('pending'));
+      reds.forEach((c, i) => tl.add(() => c.classList.remove('pending'), t + i * .07));
+      t += .2 + Math.min(reds.length, 6) * .05;
     }
     // flags and notes arrive last, next to what they describe
-    tl.from($$('.gl-flag, .gl-note', after), { autoAlpha: 0, x: -4, duration: .4, stagger: .03 }, Math.max(.6, t - .4));
+    tl.from($$('.gl-nm small, .gl-n', after), { autoAlpha: 0, x: -4, duration: .4, stagger: .03 }, Math.max(.6, t - .4));
     tl.add(() => ex._peek && ex._peek(), t + .4);
     return tl;
   }
