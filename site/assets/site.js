@@ -26,6 +26,8 @@
     };
   };
   const T = { quick: .15, ui: .24, move: .45, show: .5 }, EASE = bezier(.2, 0, 0, 1);
+  // the same curve with a little inertia: it runs about 4% past where it's going and settles back
+  const SETTLE = bezier(.2, 0, .1, 1.3);
 
   /* ---------------- theme ----------------
      What moves where: the new theme spreads out from the switch as a growing circle over the old one (a view
@@ -274,6 +276,30 @@
     input.addEventListener('input', () => set(+input.value));
     ex._cmpPos = () => parseFloat(cmp.style.getPropertyValue('--pos')) || 0;
     ex._cmpReset = () => { cmp.style.setProperty('--pos', '0%'); cmp.classList.remove('on'); input.value = 0; };
+    /* Before a Wide/Narrow switch the slider closes first: the line and its handle glide back to the start, run a
+       little past it and settle, the handle tucking out to its resting place on the card's edge as it goes and the
+       line fading over the last stretch. done() runs once it is fully closed (at once if it already was). */
+    ex._cmpClose = done => {
+      if (ex._peekTl) { ex._peekTl.kill(); ex._peekTl = null; }
+      ex.dataset.touched = '1';
+      const p0 = ex._cmpPos();
+      if (p0 <= 0 || !G() || REDUCED || !knob.offsetParent) { ex._cmpReset(); done(); return null; }   // closed already, no motion, or not shown (beside the panel)
+      // the handle's resting offset, read with its transition off so nothing moves
+      cmp.classList.add('closing'); cmp.classList.remove('on'); const rest = parseFloat(getComputedStyle(knob).translate) || 0; cmp.classList.add('on');
+      const o = { p: p0 };
+      const tw = gsap.to(o, { p: 0, duration: T.move, ease: SETTLE,
+        onUpdate: () => {
+          const k = 1 - o.p / p0;   // 0 at the start, 1 closed (a little over 1 in the overshoot)
+          cmp.style.setProperty('--pos', o.p + '%'); input.value = Math.max(0, o.p);
+          knob.style.translate = rest * k + 'px 0';
+          cmp.style.setProperty('--lo', 1 - clamp01((tw.progress() - .7) / .3));
+        },
+        onComplete: () => {
+          cmp.classList.remove('on'); knob.style.translate = ''; cmp.style.removeProperty('--lo'); cmp.classList.remove('closing');
+          ex._cmpReset(); ex._cmpCloseTw = null; done();
+        } });
+      return (ex._cmpCloseTw = tw);
+    };
     ex._peek = () => {
       if (!G() || REDUCED || peeked || ex.dataset.touched || $('.ex-stage', ex).classList.contains('is-narrow')) return;
       peeked = true;
@@ -423,100 +449,73 @@
     return place;
   }
 
-  /* Wide <-> Narrow. What moves where:
-     - the card's look (shell: background, shadow, glow) resizes from the wide box to the narrow one;
+  /* Wide <-> Narrow. What moves where (a partly open compare slider has already closed, see _cmpClose):
+     - the card's look (shell: background, shadow, glow) resizes from the wide box to the narrow one, and stays
+       solid the whole way: nothing behind it is ever drawn over it;
      - every piece of the glance travels to its new place; the kit's narrow layout moves flags under
        names and muted values under labels, and the endpoints' target-bar column leaves where it was;
      - the sheet (Claude's answer) slides out from behind the shrinking card, its hidden height opens
        up and it settles as the panel; going wide it slides back and tucks behind the growing card;
-     - a partly open compare layer hands off into that panel: its open window slides out of the card
-       and widens to the panel while its text cross-fades into the panel's, and the handle glides back
-       to the start; going wide the handle comes back out of the panel, the slider closed;
+     - the compare handle belongs to the card: it fades as the card starts to move and comes back as it lands;
      - the page below follows the example's height. */
   function initWidth(ex) {
     const frame = $('.ex-frame', ex), stage = $('.ex-stage', ex), sheet = $('.ex-sheet', ex), shell = $('.ex-shell', ex);
-    const card = $('.ex-card', ex), seg = $('.seg', ex), cmp = $('.cmp', ex), cmpLayer = $('.cmp-before', ex), layerText = $('.orig', cmpLayer), knob = $('.knob', ex);
+    const card = $('.ex-card', ex), seg = $('.seg', ex), knob = $('.knob', ex);
     const place = initThumb(seg);
     const panelFits = () => getComputedStyle(sheet).display !== 'none';
     const fit = () => { stage.style.minHeight = frame.classList.contains('narrow') && panelFits() ? sheet.offsetHeight + 'px' : ''; };
     new ResizeObserver(() => { fit(); place(); }).observe(sheet);
-    let running = null;
+    let running = null, closing = null, want = null;
     $$('.seg button', ex).forEach(b => b.addEventListener('click', () => {
       const narrow = b.dataset.w === 'narrow';
+      want = narrow;
+      if (closing) { $$('.seg button', ex).forEach(o => o.setAttribute('aria-pressed', o === b)); place(); return; }   // the switch follows the latest choice
       if (narrow === frame.classList.contains('narrow')) return;
       running && running.progress(1);
       $$('.seg button', ex).forEach(o => o.setAttribute('aria-pressed', o === b)); place();
-      switchTo(narrow);
+      // a partly open compare slider closes first; the switch starts only once it has settled
+      closing = ex._cmpClose(() => { closing = null; if (want !== frame.classList.contains('narrow')) switchTo(want); });
     }));
     function switchTo(narrow) {
       ex._build && ex._build.progress(1); ex._moreTween && ex._moreTween.progress(1); ex._tableTween && ex._tableTween.progress(1);
-      // the one-time peek hint stops for good: the switch decides where the compare layer goes now
-      ex.dataset.touched = '1';
-      if (ex._peekTl) { const mid = ex._peekTl.isActive(); ex._peekTl.kill(); ex._peekTl = null; if (mid) ex._cmpReset(); }   // a hint caught mid-way isn't the reader's position
       const apply = () => {
         frame.classList.toggle('narrow', narrow); stage.classList.toggle('is-narrow', narrow); fit(); ex._fits && ex._fits();
         if (narrow && panelFits()) ex._cmpReset();       // the panel takes over from the compare layer
       };
       if (!G() || REDUCED) { apply(); place(); window.ScrollTrigger && ScrollTrigger.refresh(); queueSweep(); return; }
-      splitWords($('.cmp-after', ex)); ex.classList.add('morphing');
-      const panel = panelFits(), pos = ex._cmpPos(), handoff = narrow && panel && pos > .5;
-      const c0 = rectOf(card), h0 = stage.offsetHeight, k0 = rectOf(knob), l0 = rectOf(cmpLayer), o0 = rectOf($('.orig-h', cmpLayer));
-      const sh = rectOf(sheet), sheetOrigin = rectOf($('.orig-h', sheet));
+      splitWords($('.cmp-after', ex));
+      const panel = panelFits();
+      // whether the handle shows before and after: beside the panel (narrow, desktop) the compare layer is off
+      const knobBefore = !(stage.classList.contains('is-narrow') && panel), knobAfter = !(narrow && panel);
+      ex.classList.add('morphing');
+      const c0 = rectOf(card), h0 = stage.offsetHeight, k0 = knobBefore ? rectOf(knob) : null, sh = rectOf(sheet);
       if (panel) sheet.classList.add('moving');
-      let c1, h1, k1, l1;
-      if (handoff) sheet.style.zIndex = 2;   // the answer rides above the card while it leaves it
+      let c1, h1, k1;
       running = ex._widthTween = morph(card, stage, () => {
-        // the compare layer keeps its wide size and wrap while it travels, so its text doesn't jump
-        if (handoff) Object.assign(cmpLayer.style, { left: '-10px', top: '-6px', right: 'auto', bottom: 'auto', width: l0.w + 'px', height: l0.h + 'px' });
         apply();
         // the example's final height; its minimum is only set once the move ends, so the height can travel
         h1 = narrow && panel ? Math.max(frame.offsetHeight, sheet.offsetHeight) : frame.offsetHeight;
         stage.style.minHeight = ''; stage.style.height = h0 + 'px';
-        c1 = rectOf(card); k1 = rectOf(knob); l1 = rectOf(cmpLayer);
+        c1 = rectOf(card); k1 = knobAfter ? rectOf(knob) : null;
       }, {
         extra: v => {
           stage.style.height = lerp(h0, h1, v) + 'px';
           const x = lerp(c0.x, c1.x, v), y = lerp(c0.y, c1.y, v);
-          Object.assign(shell.style, { left: x - c1.x + 'px', top: y - c1.y + 'px', width: lerp(c0.w, c1.w, v) + 'px', height: lerp(c0.h, c1.h, v) + 'px' });
+          // the card's background is drawn on whole pixels, rounded outward, so its edges are never a half-transparent
+          // anti-aliased row that the answer behind it could show through
+          const L = Math.floor(x), T = Math.floor(y), R = Math.ceil(x + lerp(c0.w, c1.w, v)), B = Math.ceil(y + lerp(c0.h, c1.h, v));
+          Object.assign(shell.style, { left: L - c1.x + 'px', top: T - c1.y + 'px', width: R - L + 'px', height: B - T + 'px' });
+          // the handle rides with the card's edge, out at the start and back in as the card lands
+          if (k0 && k1) knob.style.transform = `translate(${lerp(k0.x, k1.x, v) - k1.x}px,${lerp(k0.y, k1.y, v) - k1.y}px)`;
+          knob.style.opacity = Math.max(k0 ? 1 - clamp01(v / .2) : 0, k1 ? clamp01((v - .8) / .2) : 0);
           if (!panel) return;
-          if (handoff) {
-            // the open window of the compare layer travels to the panel's place and size
-            const W0 = { x: l0.x, y: l0.y, w: l0.w * pos / 100, h: l0.h }, W = { x: lerp(W0.x, sh.x, v), y: lerp(W0.y, sh.y, v), w: lerp(W0.w, sh.w, v), h: lerp(W0.h, sh.h, v) };
-            const dx = (o0.x - sheetOrigin.x) * (1 - v), dy = (o0.y - sheetOrigin.y) * (1 - v);
-            const sx = sh.x + dx, sy = sh.y + dy;
-            sheet.style.transform = `translate(${dx}px,${dy}px)`;
-            sheet.style.clipPath = `inset(${Math.max(0, W.y - sy)}px ${Math.max(0, sx + sh.w - W.x - W.w)}px ${Math.max(0, sy + sh.h - W.y - W.h)}px ${Math.max(0, W.x - sx)}px round ${22 * v}px)`;
-            // a clean hand-over: the layer's text fades out on its solid background, then the panel (on top)
-            // fades in, then the layer steps away; never two texts, never the glance showing through
-            sheet.style.opacity = clamp01((v - .12) / .16);
-            layerText.style.opacity = 1 - clamp01(v / .14);
-            // the layer's text rides along with the sheet's, so both read as one block changing its wrap
-            const lxx = (sheetOrigin.x + dx) - o0.x + l0.x - l1.x, lyy = (sheetOrigin.y + dy) - o0.y + l0.y - l1.y;
-            cmpLayer.style.transform = `translate(${lxx}px,${lyy}px)`;
-            const lsx = l1.x + lxx, lsy = l1.y + lyy;
-            cmpLayer.style.clipPath = `inset(${Math.max(0, W.y - lsy)}px ${Math.max(0, lsx + l1.w - W.x - W.w)}px ${Math.max(0, lsy + l1.h - W.y - W.h)}px ${Math.max(0, W.x - lsx)}px)`;
-            cmpLayer.style.opacity = v < .3 ? 1 : 0;
-            knob.style.transform = `translate(${lerp(k0.x, k1.x, v) - k1.x}px,${lerp(k0.y, k1.y, v) - k1.y}px)`;
-            knob.style.opacity = 1 - clamp01((v - .55) / .45);
-            return;
-          }
           // tucked behind the card (wide) <-> the panel (narrow); its hidden height opens as it comes out
           const t = narrow ? 1 - v : v, cardH = narrow ? c0.h : c1.h, hidden = Math.max(0, sh.h - (cardH - 28));
           sheet.style.transform = `translate(${32 * t}px,0) scale(${1 - .04 * t})`;
           sheet.style.clipPath = `inset(0 0 ${hidden * t}px 0 round 22px)`;
-          if (narrow) {   // the closed handle rides with the card's edge and fades there
-            knob.style.transform = `translate(${lerp(k0.x, k1.x, v) - k1.x}px,${lerp(k0.y, k1.y, v) - k1.y}px)`;
-            knob.style.opacity = 1 - clamp01(v / .4);
-          }
-          else {   // the handle comes back out of the panel to the card's edge, closed
-            knob.style.transform = `translate(${lerp(sh.x + sh.w - 17 - k1.x, 0, v)}px,0)`;
-            knob.style.opacity = clamp01((v - .35) / .5);
-          }
         },
         done: () => {
-          for (const el of [sheet, cmpLayer, knob]) { el.style.transform = ''; el.style.clipPath = ''; el.style.opacity = ''; }
-          layerText.style.opacity = '';
-          Object.assign(cmpLayer.style, { left: '', top: '', right: '', bottom: '', width: '', height: '' }); sheet.style.zIndex = '';
+          for (const el of [sheet, knob]) { el.style.transform = ''; el.style.clipPath = ''; el.style.opacity = ''; }
           Object.assign(shell.style, { left: '', top: '', width: '', height: '' });
           stage.style.height = ''; fit(); sheet.classList.remove('moving'); ex.classList.remove('morphing'); running = ex._widthTween = null;
           window.ScrollTrigger && ScrollTrigger.refresh(); queueSweep();

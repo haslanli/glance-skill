@@ -245,6 +245,8 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
 .cmp-handle{position:absolute;top:-6px;bottom:-6px;left:var(--pos);width:0;z-index:4}
 .cmp-handle::before{content:"";position:absolute;top:0;bottom:0;left:-1px;width:2px;background:var(--blue);opacity:0;transition:opacity var(--t-quick) var(--ease)}
 .cmp.on .cmp-handle::before{opacity:1}
+/* closing before a Wide/Narrow switch: the handle and line are driven frame by frame (site.js), no transition lag */
+.cmp.closing .knob{transition:none;pointer-events:none}.cmp.closing .cmp-handle::before{opacity:var(--lo,1);transition:none}
 .knob{position:absolute;top:min(180px,40%);left:-17px;width:34px;height:52px;border-radius:999px;background:var(--blue);box-shadow:0 6px 20px -6px rgba(24,95,165,.7);
   display:flex;align-items:center;justify-content:center;gap:4px;cursor:ew-resize;transition:transform var(--t-quick) var(--ease),translate var(--t-ui) var(--ease)}
 .knob i{display:block;width:2px;height:16px;border-radius:1px;background:#fff;opacity:.9}
