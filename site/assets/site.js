@@ -198,8 +198,9 @@
     knob.addEventListener('pointerup', end); knob.addEventListener('pointercancel', end);
     knob.addEventListener('click', () => input.focus({ preventScroll: true }));
     input.addEventListener('input', () => set(+input.value));
+    ex._cmpReset = () => { cmp.style.setProperty('--pos', '0%'); cmp.classList.remove('on'); input.value = 0; };
     ex._peek = () => {
-      if (!G() || REDUCED || ex.dataset.touched) return;
+      if (!G() || REDUCED || ex.dataset.touched || $('.ex-stage', ex).classList.contains('is-narrow')) return;
       const o = { p: 0 };
       gsap.timeline().to(o, { p: 26, duration: .9, ease: 'power2.inOut', onUpdate: () => { if (!ex.dataset.touched) { cmp.style.setProperty('--pos', o.p + '%'); cmp.classList.toggle('on', o.p > .5); } } })
         .to(o, { p: 0, duration: .8, delay: .5, ease: 'power2.inOut', onUpdate: () => { if (!ex.dataset.touched) { cmp.style.setProperty('--pos', o.p + '%'); cmp.classList.toggle('on', o.p > .5); } } });
@@ -214,6 +215,7 @@
       const w0 = frame.getBoundingClientRect().width;
       frame.style.width = ''; frame.classList.toggle('narrow', narrow);
       stage.classList.toggle('is-narrow', narrow);   // narrow brings Claude's own answer in beside it
+      if (narrow && ex._cmpReset) ex._cmpReset();    // and the compare layer, which would repeat it, closes
       gsap.set(main, { clearProps: 'opacity' });
       const w1 = frame.getBoundingClientRect().width;
       const done = () => { frame.style.width = ''; resizing = null; window.ScrollTrigger && ScrollTrigger.refresh(); queueSweep(); };

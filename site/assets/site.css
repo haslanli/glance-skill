@@ -183,7 +183,10 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
 .ex-main .src-lit{border-radius:4px;box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 16%,transparent);transition:background-color .2s}
 .ex-back{transition:opacity .35s var(--ease)}
 .is-narrow .ex-back{opacity:0}
-@container stage (max-width:640px){.is-narrow .ex-main{display:none}}
+/* with the whole answer right beside the narrow glance, the drag-to-compare layer would only repeat it */
+.is-narrow .cmp-before,.is-narrow .cmp-handle{display:none}
+/* on a phone there's no room for the answer beside it, so the compare edge stays the way to see it */
+@container stage (max-width:640px){.is-narrow .ex-main{display:none}.is-narrow .cmp-before,.is-narrow .cmp-handle{display:block}}
 .ex-tools{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin:0 0 18px;font-size:13px;color:var(--ink-3)}
 .seg{display:inline-flex;background:var(--card-2);border-radius:999px;padding:3px}
 .seg button{border:0;background:transparent;color:var(--ink-2);font:500 13px var(--font-sans);padding:5px 12px;border-radius:999px;cursor:pointer;transition:background-color .2s,color .2s}
