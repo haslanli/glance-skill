@@ -7,19 +7,38 @@
   const G = () => typeof window.gsap !== 'undefined';
   const $ = (s, el = d) => el.querySelector(s), $$ = (s, el = d) => [...el.querySelectorAll(s)];
 
-  /* ---------------- theme ---------------- */
+  /* ---------------- theme ----------------
+     What moves where: the new theme spreads out from the switch as a growing circle over the old one (a view
+     transition), so the change visibly starts where it was asked for; the switch's half-filled icon turns
+     over and its label slides to the other word. Without view transitions every colour crossfades instead;
+     with reduced motion the theme just changes. */
   const themeBtn = $('#theme'), themeLabel = $('.theme-l');
   const mq = matchMedia('(prefers-color-scheme: dark)');
   let saved = null; try { saved = localStorage.getItem('glance-theme'); } catch (e) {}
-  const applyTheme = () => {
+  const applyTheme = (animate) => {
     root.dataset.theme = saved || (mq.matches ? 'dark' : 'light');
-    if (themeLabel) themeLabel.textContent = root.dataset.theme === 'dark' ? 'Light' : 'Dark';
+    const text = root.dataset.theme === 'dark' ? 'Light' : 'Dark';
+    if (!themeLabel || themeLabel.textContent === text) return;
+    if (animate && themeLabel.offsetParent) relabel(themeBtn, text, themeLabel); else themeLabel.textContent = text;
   };
-  applyTheme(); mq.addEventListener('change', applyTheme);
+  const crossfade = () => { root.classList.add('theming'); clearTimeout(crossfade.t); crossfade.t = setTimeout(() => root.classList.remove('theming'), 650); };
+  const switchTheme = from => {
+    if (REDUCED) { applyTheme(false); return; }
+    if (!d.startViewTransition || !from) { crossfade(); applyTheme(true); return; }
+    const r = from.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+    const R = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+    // inside the circle the new theme is already whole: no colour of its own fades in late
+    const vt = d.startViewTransition(() => { root.classList.add('vt'); applyTheme(true); });
+    vt.ready.then(() => root.animate({ clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${R}px at ${x}px ${y}px)`] },
+      { duration: 700, easing: 'cubic-bezier(.45,0,.2,1)', pseudoElement: '::view-transition-new(root)' })).catch(() => {});
+    vt.finished.finally(() => root.classList.remove('vt'));
+  };
+  applyTheme(false);
+  mq.addEventListener('change', () => { if (!saved) switchTheme(null); });
   themeBtn && themeBtn.addEventListener('click', () => {
     saved = root.dataset.theme === 'dark' ? 'light' : 'dark';
     try { localStorage.setItem('glance-theme', saved); } catch (e) {}
-    applyTheme();
+    switchTheme(themeBtn);
   });
 
   /* ---------------- helpers ---------------- */
@@ -480,8 +499,8 @@
 
   // A button's label changes in place: the old words slide up and out, the new ones slide in from below,
   // and the button's width travels between the two.
-  function relabel(btn, text) {
-    let lbl = $('.lbl', btn);
+  function relabel(btn, text, own) {
+    let lbl = own || $('.lbl', btn);
     if (!lbl) { lbl = d.createElement('span'); lbl.className = 'lbl'; lbl.textContent = btn.textContent; btn.textContent = ''; btn.append(lbl); }
     $$('.lbl-old', btn).forEach(n => n.remove());
     if (!G() || REDUCED) { lbl.textContent = text; return; }
