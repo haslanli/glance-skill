@@ -239,17 +239,26 @@
     }
   }
   // morph(scope, stage, mutate, opts): returns the running tween (or null when nothing animates).
-  function morph(scope, stage, mutate, { duration = .62, ease = 'power2.inOut', extra, done } = {}) {
-    const nodes = $$(BOXES + ',' + ATOMS, scope).filter(el => !el.closest('.cmp-before, .cmp-handle, .sr-only'));
+  function morph(scope, stage, mutate, { duration = .62, ease = 'power2.inOut', extra, done, skip } = {}) {
+    // a morph still running here is taken over from where its pieces are seen right now, not from its end
+    const prev = scope._morph;
+    const nodes = $$(BOXES + ',' + ATOMS, scope).filter(el => !el.closest('.cmp-before, .cmp-handle, .sr-only' + (skip ? ', ' + skip : '')));
     const before = new Map(nodes.map(el => [el, rectOf(el)]));
     // a clamped teaser clips its rows to its box; during the move that window travels too, instead of
-    // cutting everything to the final box at once
-    const clips = $$('.pic.clamp:not(.open)', scope).map(el => ({ el, a: rectOf(el) }));
+    // cutting everything to the final box at once. Its fade leaves when the rows end up fitting the box.
+    const clips = $$('.pic.clamp:not(.open)', scope).map(el => {
+      const c = { el, a: el._win || rectOf(el), fa: el._co !== undefined ? el._co : el.classList.contains('fits') ? 0 : 1 };
+      delete el._win; delete el._co; return c;
+    });
     const styleOf = new Map();
-    for (const el of nodes) if (before.get(el)) { const cs = getComputedStyle(el); styleOf.set(el, `font:${cs.font};color:${cs.color};letter-spacing:${cs.letterSpacing};text-align:${cs.textAlign};white-space:${cs.whiteSpace}`); }
+    for (const el of nodes) if (before.get(el)) {
+      const cs = getComputedStyle(el);
+      styleOf.set(el, `font:${cs.font};color:${cs.color};letter-spacing:${cs.letterSpacing};text-align:${cs.textAlign};white-space:${cs.whiteSpace};padding:${cs.padding};background-color:${cs.backgroundColor};background-image:${cs.backgroundImage};box-shadow:${cs.boxShadow};max-width:none`);
+    }
+    const carried = prev ? prev.stop() : [];
     mutate();
     const after = new Map(nodes.map(el => [el, rectOf(el)]));
-    for (const c of clips) { c.b = rectOf(c.el); c.el.style.overflow = 'visible'; c.el.classList.add('clip-morph'); }
+    for (const c of clips) { c.b = rectOf(c.el); c.fb = c.el.classList.contains('fits') ? 0 : 1; c.el.style.overflow = 'visible'; c.el.classList.add('clip-morph'); }
     const S = rectOf(stage), top = scrollY - 300, bottom = scrollY + innerHeight + 300;
     const seen = r => r && r.y + r.h > top && r.y < bottom;
     const nodeOf = new Map(), travel = [], leaving = [], entering = [];
@@ -279,6 +288,9 @@
       wrap.append(c); layer.append(wrap); return wrap;
     });
     const enter = entering.filter(e => !entering.some(o => o !== e && o.contains(e)));
+    // pieces a taken-over morph was still fading in carry on from their opacity; a ghost already took a copy
+    const fadeUp = [];
+    for (const el of carried) { if (nodeOf.has(el)) fadeUp.push({ el, o: parseFloat(el.style.opacity) || 0 }); else if (!enter.includes(el)) el.style.opacity = ''; }
     const render = v => {
       for (const n of travel) {
         const P = n.parent && n.parent.M, psx = P ? P.sx : 1, psy = P ? P.sy : 1, pox = P ? P.ox : 0, poy = P ? P.oy : 0;
@@ -292,25 +304,40 @@
       const out = 1 - clamp01(v / .45), inn = clamp01((v - .5) / .5);
       for (const g of ghosts) { g.style.opacity = out; g.style.transform = `scale(${.96 + .04 * out})`; }
       for (const e of enter) e.style.opacity = inn;
+      for (const f of fadeUp) f.el.style.opacity = lerp(f.o, 1, clamp01(v / .5));
       for (const c of clips) if (c.a && c.b) {
         // the teaser's window, travelling from its old box to its new one; it may reach past its own box
         const x = lerp(c.a.x, c.b.x, v) - c.b.x, y = lerp(c.a.y, c.b.y, v) - c.b.y, w = lerp(c.a.w, c.b.w, v), h = lerp(c.a.h, c.b.h, v);
         c.el.style.clipPath = `inset(${y}px ${c.b.w - x - w}px ${c.b.h - y - h}px ${x}px)`;
         c.el.style.setProperty('--fx', x + 'px'); c.el.style.setProperty('--fy', y + h * .82 + 'px');
         c.el.style.setProperty('--fw', w + 'px'); c.el.style.setProperty('--fh', h * .18 + 'px');
+        c.co = lerp(c.fa, c.fb, v); c.el.style.setProperty('--co', c.co);
+        c.win = { x: c.b.x + x, y: c.b.y + y, w, h };
       }
       extra && extra(v);
     };
+    const unclip = () => { for (const c of clips) { c.el.classList.remove('clip-morph'); c.el.style.overflow = ''; c.el.style.clipPath = ''; for (const k of ['--fx', '--fy', '--fw', '--fh', '--co']) c.el.style.removeProperty(k); } };
+    const untransform = () => { for (const n of travel) { n.el.style.transform = ''; n.el.style.transformOrigin = ''; if (n.radius) n.el.style.borderRadius = ''; if (n.shadow) n.el.style.boxShadow = ''; } };
     const finish = () => {
-      for (const c of clips) { c.el.classList.remove('clip-morph'); c.el.style.overflow = ''; c.el.style.clipPath = ''; for (const k of ['--fx', '--fy', '--fw', '--fh']) c.el.style.removeProperty(k); }
-      for (const n of travel) { n.el.style.transform = ''; n.el.style.transformOrigin = ''; if (n.radius) n.el.style.borderRadius = ''; if (n.shadow) n.el.style.boxShadow = ''; }
+      unclip(); untransform();
       for (const e of enter) e.style.opacity = '';
-      layer.remove();
+      for (const f of fadeUp) f.el.style.opacity = '';
+      layer.remove(); scope._morph = null;
       done && done();
     };
     render(0);
     const o = { v: 0 };
-    return gsap.to(o, { v: 1, duration, ease, onUpdate: () => render(o.v), onComplete: finish });
+    const tween = gsap.to(o, { v: 1, duration, ease, onUpdate: () => render(o.v), onComplete: finish });
+    // taken over by a newer morph: everything stands where it is seen, its ghosts keep fading out, and the
+    // newer morph learns which pieces were still fading in and where the teaser's window was
+    tween.stop = () => {
+      tween.kill(); untransform(); unclip(); scope._morph = null;
+      for (const c of clips) if (c.win) { c.el._win = c.win; c.el._co = c.co; }
+      gsap.to(layer, { opacity: 0, duration: .2, ease: 'none', onComplete: () => layer.remove() });
+      return [...enter, ...fadeUp.map(f => f.el)].filter(el => el.style.opacity !== '');
+    };
+    scope._morph = tween;
+    return tween;
   }
 
   // Wide/Narrow control: the pressed pill slides from one choice to the other.
@@ -348,12 +375,12 @@
       switchTo(narrow);
     }));
     function switchTo(narrow) {
-      ex._build && ex._build.progress(1); ex._moreTween && ex._moreTween.progress(1);
+      ex._build && ex._build.progress(1); ex._moreTween && ex._moreTween.progress(1); ex._tableTween && ex._tableTween.progress(1);
       // the one-time peek hint stops for good: the switch decides where the compare layer goes now
       ex.dataset.touched = '1';
       if (ex._peekTl) { const mid = ex._peekTl.isActive(); ex._peekTl.kill(); ex._peekTl = null; if (mid) ex._cmpReset(); }   // a hint caught mid-way isn't the reader's position
       const apply = () => {
-        frame.classList.toggle('narrow', narrow); stage.classList.toggle('is-narrow', narrow); fit();
+        frame.classList.toggle('narrow', narrow); stage.classList.toggle('is-narrow', narrow); fit(); ex._fits && ex._fits();
         if (narrow && panelFits()) ex._cmpReset();       // the panel takes over from the compare layer
       };
       if (!G() || REDUCED) { apply(); place(); window.ScrollTrigger && ScrollTrigger.refresh(); queueSweep(); return; }
@@ -364,7 +391,7 @@
       if (panel) sheet.classList.add('moving');
       let c1, h1, k1, l1;
       if (handoff) sheet.style.zIndex = 2;   // the answer rides above the card while it leaves it
-      running = morph(card, stage, () => {
+      running = ex._widthTween = morph(card, stage, () => {
         // the compare layer keeps its wide size and wrap while it travels, so its text doesn't jump
         if (handoff) Object.assign(cmpLayer.style, { left: '-10px', top: '-6px', right: 'auto', bottom: 'auto', width: l0.w + 'px', height: l0.h + 'px' });
         apply();
@@ -417,7 +444,7 @@
           layerText.style.opacity = '';
           Object.assign(cmpLayer.style, { left: '', top: '', right: '', bottom: '', width: '', height: '' }); sheet.style.zIndex = '';
           Object.assign(shell.style, { left: '', top: '', width: '', height: '' });
-          stage.style.height = ''; fit(); sheet.classList.remove('moving'); ex.classList.remove('morphing'); running = null;
+          stage.style.height = ''; fit(); sheet.classList.remove('moving'); ex.classList.remove('morphing'); running = ex._widthTween = null;
           window.ScrollTrigger && ScrollTrigger.refresh(); queueSweep();
         }
       });
@@ -452,8 +479,11 @@
   function initMore(ex) {
     const more = $('.more', ex); if (!more) return;
     const pic = $('.pic', ex), label = more.textContent.trim(), CLAMP = 860;
+    // rows that fit the teaser (a filter can leave only a few) hide nothing: no fade, no button
+    ex._fits = () => pic.classList.toggle('fits', pic.scrollHeight <= CLAMP + 1);
+    ex._fits();
     more.addEventListener('click', () => {
-      ex._moreTween && ex._moreTween.progress(1);
+      ex._moreTween && ex._moreTween.progress(1); ex._tableTween && ex._tableTween.progress(1); ex._widthTween && ex._widthTween.progress(1);
       const open = !pic.classList.contains('open');
       more.setAttribute('aria-expanded', open); relabel(more, open ? 'Show fewer' : label);
       if (!G() || REDUCED) { pic.classList.toggle('open', open); refresh(); return; }
@@ -476,6 +506,81 @@
           pic.classList.remove('fading'); root.style.overflowAnchor = ''; ex._moreTween = null; refresh();
         } });
     });
+  }
+
+  /* Live tables: filter chips, search and sort. The kit's own script does the work; the site replays each
+     of its events inside a morph, so the kit stays exactly as glance ships it. What moves where:
+     - rows that stay travel to their new places (a sort moves every row; columns that change width morph);
+     - rows that leave fade where they stood while the rest close up; rows that come back fade in at
+       their places while the rest make room;
+     - the card's background, its edge and the page below follow the table's height; rows are revealed
+       or covered at that moving edge;
+     - the pressed chip's highlight slides from the old chip to the new one, and its label's weight and
+       colour morph; the count runs from the old number to the new one;
+     - typing in search takes over from wherever the rows are mid-move. */
+  function initTables(ex) {
+    const after = $('.cmp-after', ex), views = $$('[data-gl-view]', after || ex).filter(v => $('.gl-dt tbody', v));
+    if (!after || !views.length) return;
+    const stage = $('.ex-stage', ex), shell = $('.ex-shell', ex), card = $('.ex-card', ex);
+    const thumbs = new Map();
+    for (const seg of $$('.gl-seg', after).filter(s => $('.gl-chip', s))) {
+      const t = d.createElement('span'); t.className = 'chip-thumb'; t.setAttribute('aria-hidden', 'true');
+      ($('.gl-chip[aria-pressed=true]', seg) || $('.gl-chip', seg)).append(t); seg.classList.add('has-thumb'); thumbs.set(seg, t);
+    }
+    const slide = seg => {
+      const t = thumbs.get(seg), to = $('.gl-chip[aria-pressed=true]', seg);
+      if (!t || !to || t.parentElement === to) return;
+      const r0 = t.getBoundingClientRect(); gsap.killTweensOf(t._o || {}); t.style.cssText = ''; to.append(t);
+      const o = t._o = { v: 0 };
+      gsap.to(o, { v: 1, duration: .5, ease: 'power2.inOut',
+        onUpdate: () => {   // the chip is measured live: its label's weight is changing under the thumb
+          const c = to.getBoundingClientRect();
+          t.style.cssText = `width:${lerp(r0.width, c.width, o.v)}px;height:${lerp(r0.height, c.height, o.v)}px;transform:translate(${lerp(r0.left, c.left, o.v) - c.left}px,${lerp(r0.top, c.top, o.v) - c.top}px)`;
+        },
+        onComplete: () => { t.style.cssText = ''; } });
+    };
+    let pass = false;
+    const run = (view, target, event, duration) => {
+      ex._widthTween && ex._widthTween.progress(1); ex._moreTween && ex._moreTween.progress(1); ex._build && ex._build.progress(1);
+      splitWords(after); ex.classList.add('tmorph');
+      const cnt = $('.gl-count', view), seg = target.closest('.gl-seg');
+      const h0 = stage.getBoundingClientRect().height, H0 = shell.getBoundingClientRect().height, k0 = cnt ? parseInt(cnt.textContent, 10) : 0;
+      let h1, H1, k1, final = '';
+      ex._tableTween = morph(after, card, () => {
+        pass = true; target.dispatchEvent(event()); pass = false;
+        ex._fits && ex._fits();
+        if (cnt) { final = cnt.textContent; k1 = parseInt(final, 10); }
+        stage.style.height = ''; h1 = stage.offsetHeight; H1 = card.offsetHeight; stage.style.height = h0 + 'px';
+        if (seg) slide(seg);
+      }, { duration, skip: '.gl-count, .gl-chip',
+        extra: v => {
+          stage.style.height = lerp(h0, h1, v) + 'px';
+          const H = lerp(H0, H1, v);
+          shell.style.height = H + 'px';
+          card.style.clipPath = `inset(-60px -60px ${H1 - H}px -60px)`;
+          if (cnt && k0 !== k1 && !isNaN(k0)) cnt.textContent = final.replace(/^\d+/, Math.round(lerp(k0, k1, v)));
+        },
+        done: () => {
+          stage.style.height = ''; shell.style.height = ''; card.style.clipPath = ''; if (cnt) cnt.textContent = final;
+          ex.classList.remove('tmorph'); ex._tableTween = null; refresh();
+        } });
+    };
+    const still = () => !G() || REDUCED;
+    for (const v of views) {
+      // caught on the way down, before the kit's own listeners, and replayed inside the morph
+      v.addEventListener('click', e => {
+        const t = e.target.closest('.gl-chip, .gl-dt thead th button');
+        if (!t || pass || still()) return;
+        e.stopPropagation(); run(v, t, () => new MouseEvent('click', { bubbles: true, cancelable: true }), t.matches('.gl-chip') ? .55 : .65);
+      }, true);
+      v.addEventListener('input', e => {
+        if (pass || still() || !e.target.matches('.gl-find')) return;
+        e.stopPropagation(); run(v, e.target, () => new Event('input', { bubbles: true }), .4);
+      }, true);
+      // without motion the kit acts alone; the teaser's fade and button still follow what's left
+      const settle = () => { if (still()) { ex._fits && ex._fits(); for (const seg of thumbs.keys()) { const on = $('.gl-chip[aria-pressed=true]', seg); on && on.append(thumbs.get(seg)); } refresh(); } };
+      v.addEventListener('click', settle); v.addEventListener('input', settle);
+    }
   }
 
   // Every number in the picture that appears in the original answer gets a tooltip with that line.
@@ -644,7 +749,7 @@
 
   function initExamples() {
     for (const ex of $$('[data-ex]')) {
-      initCompare(ex); initWidth(ex); initMore(ex); initSources(ex);
+      initCompare(ex); initWidth(ex); initMore(ex); initTables(ex); initSources(ex);
       if (G() && FINE && !REDUCED) {   // the glow behind the card leans toward the pointer
         const glowEl = $('.ex-glow', ex), stage = $('.ex-stage', ex);
         const gx = gsap.quickTo(glowEl, 'x', { duration: 1.2, ease: 'power3' }), gy = gsap.quickTo(glowEl, 'y', { duration: 1.2, ease: 'power3' });

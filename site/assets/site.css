@@ -184,8 +184,8 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
 @container stage (max-width:640px){.ex-sheet{display:none}.is-narrow .cmp-before,.is-narrow .cmp-handle{display:block}}
 /* while a morph runs: words and flags become boxes that can move, and pieces that leave fade from here */
 .w{display:inline-block;white-space:pre}
-.morphing .gl-flag{display:inline-block}
-@container (max-width:520px){.morphing :is(.gl-dt,.gl-tbl) .gl-flag{display:block}}
+:is(.morphing,.tmorph) .gl-flag{display:inline-block}
+@container (max-width:520px){:is(.morphing,.tmorph) :is(.gl-dt,.gl-tbl) .gl-flag{display:block}}
 .morph-layer{position:absolute;left:0;top:0;width:0;height:0;z-index:5;pointer-events:none}
 /* a clamped teaser mid-morph: its window and its bottom fade travel with it (same look as the mask) */
 .pic.clamp{position:relative}
@@ -197,7 +197,7 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
 .lbl-old{position:absolute;white-space:nowrap;pointer-events:none}
 .more{position:relative;white-space:nowrap;overflow:hidden;text-align:left}
 .pic.clamp.clip-morph{-webkit-mask-image:none;mask-image:none}
-.pic.clamp.clip-morph::after{content:"";position:absolute;left:var(--fx);top:var(--fy);width:var(--fw);height:var(--fh);pointer-events:none;z-index:2;
+.pic.clamp.clip-morph::after{content:"";position:absolute;left:var(--fx);top:var(--fy);width:var(--fw);height:var(--fh);pointer-events:none;z-index:2;opacity:var(--co,1);
   background:linear-gradient(color-mix(in srgb,var(--card) 0%,transparent),var(--card))}
 .morph-ghost{position:absolute;box-sizing:border-box;margin:0;overflow:hidden;transform-origin:0 0}
 .ex-tools{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin:0 0 18px;font-size:13px;color:var(--ink-3)}
@@ -239,6 +239,19 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
 .cmp-handle input:focus-visible+.knob,.cmp-handle:focus-within .knob{outline:2px solid var(--blue-ink);outline-offset:3px}
 .pic.clamp{max-height:860px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 82%,transparent);mask-image:linear-gradient(#000 82%,transparent)}
 .pic.clamp.open{max-height:none;-webkit-mask-image:none;mask-image:none}
+/* a filtered table that fits the teaser hides nothing: no fade, and no button to show more */
+.pic.clamp.fits{-webkit-mask-image:none;mask-image:none}
+.pic.clamp.fits~.more{display:none}
+/* live tables: the pressed chip's look is one piece that slides from chip to chip */
+/* while a live table moves, its cells are solid (the card, then the cell's own tint), so rows passing
+   each other in a sort slide over one another instead of printing through */
+.tmorph .gl-dt tbody tr td{background-image:linear-gradient(var(--card),var(--card))}
+.tmorph .gl-dt tr.at td{background-image:linear-gradient(var(--gl-at),var(--gl-at)),linear-gradient(var(--card),var(--card))}
+.tmorph .gl-dt.st td.x{background-image:linear-gradient(var(--gl-rt),var(--gl-rt)),linear-gradient(var(--card),var(--card))}
+.has-thumb{isolation:isolate}
+.has-thumb .gl-chip{position:relative;transition:color .3s var(--ease),font-weight .3s var(--ease)}
+.has-thumb .gl-chip[aria-pressed=true]{background:transparent;border-color:transparent}
+.chip-thumb{position:absolute;left:-.5px;top:-.5px;width:calc(100% + 1px);height:calc(100% + 1px);z-index:-1;pointer-events:none;border-radius:var(--radius);background:var(--bg-accent);border:.5px solid color-mix(in srgb,#378ADD 45%,transparent)}
 .more{margin-top:14px;border:0;background:var(--card-2);color:var(--ink);border-radius:999px;padding:10px 18px;font:500 15px var(--font-sans);cursor:pointer}
 .more:hover{background:var(--ground-2)}
 
