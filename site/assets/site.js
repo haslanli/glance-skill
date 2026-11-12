@@ -99,80 +99,105 @@
     if (G()) gsap.set([front, glow, card, back], { clearProps: 'opacity,transform' });
   }
 
-  function playHero() {
-    if (!G() || REDUCED) { heroFinal(); return; }
-    heroTl && heroTl.kill(); layer.innerHTML = '';
+  /* The hero is one reversible timeline. Every flight is built up front from measured positions, and every
+     change is a tween or a set, never a one-way callback, so Replay can rewind it: the bullets drop out, the
+     bars shrink, the words un-write, the facts fly back into the answer and the card sinks away, then it
+     plays again. */
+  function buildHero(delay) {
     markFacts();
     const facts = $$('.fact', answer), targets = $$('[data-k]', card);
     const words = $$('.gsent .w', card), cap = $('.gl-cap', card);
     const rows = $$('.gl-br > div:not(.t)', card).filter(e => !e.dataset.k), notes = $$('.gl-br .why, .gl-br .d', card);
     const bars = $$('.gl-br i', card), bul = $$('.gbul > *, .gbul li', card), you = $('.you', card);
-    facts.forEach(f => f.classList.remove('gone'));
+    layer.innerHTML = '';
+    // measured in the finished layout, before anything is set to its start
+    const L = layer.getBoundingClientRect(), route = { sepv: 'sep', octv: 'oct' }, fl = [];
+    const textRects = el => { const r = d.createRange(); r.selectNodeContents(el); return r.getClientRects(); };
+    facts.forEach(f => { f.classList.remove('gone'); f.dataset.gone = '0'; });
+    gsap.set(card, { clearProps: 'transform' });
+    for (const dst of targets) {
+      const k = dst.dataset.k, src = $(`.fact[data-k="${route[k] || k}"]`, answer); if (!src) continue;
+      // aim at where the text itself sits (a right-aligned value is not at its cell's left edge)
+      const a = textRects(src)[0] || src.getBoundingClientRect();
+      const dr = textRects(dst), b = dr[0] || dst.getBoundingClientRect(), wraps = dr.length > 1;
+      const cs = getComputedStyle(src), ds = getComputedStyle(dst);
+      const s = parseFloat(ds.fontSize) / parseFloat(cs.fontSize);
+      // Two layers: the answer's type, crossfading into the glance's type drawn at 1/s so that,
+      // scaled by s on landing, it matches the target exactly and the hand-over is invisible.
+      const f = d.createElement('span'); f.className = 'flyer';
+      f.style.cssText = `font-family:${cs.fontFamily};font-size:${cs.fontSize};line-height:${b.height / s}px`;
+      const from = d.createElement('span'); from.textContent = src.textContent;
+      from.style.cssText = `font-weight:${cs.fontWeight};letter-spacing:${cs.letterSpacing};font-variant-numeric:${cs.fontVariantNumeric}`;
+      const to = d.createElement('span'); to.className = 'fl-to'; to.textContent = dst.textContent;
+      const ls = parseFloat(ds.letterSpacing);
+      to.style.cssText = `font-family:${ds.fontFamily};font-weight:${ds.fontWeight};font-variant-numeric:${ds.fontVariantNumeric};letter-spacing:${isNaN(ls) ? 'normal' : ls / s + 'px'}`;
+      f.append(from, to); layer.append(f);
+      fl.push({ f, from, to, dst, k, wraps, x0: a.left - L.left, y0: a.top - L.top, x1: b.left - L.left, y1: b.top - L.top, s, color: ds.color });
+    }
+    fl.sort((p, q) => ORDER.indexOf(p.k) - ORDER.indexOf(q.k));
+
+    // the start
     gsap.set(facts, { backgroundSize: '0% 100%' });
     gsap.set([...words, cap, ...rows, ...notes, ...bul, you, ...targets], { autoAlpha: 0 });
     gsap.set(bars, { scaleX: 0, transformOrigin: '0 50%' });
     gsap.set(bul, { y: 10 }); gsap.set(card, { y: 30, opacity: 0 }); gsap.set(glow, { opacity: 0 }); gsap.set(back, { opacity: 1 });
+    fl.forEach(p => gsap.set(p.f, { x: p.x0, y: p.y0, autoAlpha: 0, force3D: true }));
     hero.classList.add('ready');
 
-    const tl = heroTl = gsap.timeline({ delay: .35 });
+    const tl = gsap.timeline({ delay, paused: !delay });
     tl.to(facts, { backgroundSize: '100% 100%', duration: .4, stagger: .035, ease: 'power2.out' }, 0);
     tl.to(card, { y: 0, opacity: 1, duration: .8, ease: 'power3.out' }, .45);
     tl.to(glow, { opacity: 1, duration: 1.4, ease: 'power1.inOut' }, .6);
     tl.to(you, { autoAlpha: 1, duration: .35 }, .75);
-    tl.add(() => {
-      const L = layer.getBoundingClientRect();
-      const route = { sepv: 'sep', octv: 'oct' };
-      const fl = [];
-      for (const dst of targets) {
-        const k = dst.dataset.k, src = $(`.fact[data-k="${route[k] || k}"]`, answer); if (!src) continue;
-        // aim at where the text itself sits (a right-aligned value is not at its cell's left edge)
-        const textRects = el => { const r = d.createRange(); r.selectNodeContents(el); return r.getClientRects(); };
-        const a = textRects(src)[0] || src.getBoundingClientRect();
-        const dr = textRects(dst), b = dr[0] || dst.getBoundingClientRect(), wraps = dr.length > 1;
-        const cs = getComputedStyle(src), ds = getComputedStyle(dst);
-        const s = parseFloat(ds.fontSize) / parseFloat(cs.fontSize);
-        // Two layers: the answer's type, crossfading into the glance's type drawn at 1/s so that,
-        // scaled by s on landing, it matches the target exactly and the hand-over is invisible.
-        const f = d.createElement('span'); f.className = 'flyer'; f.dataset.wraps = wraps ? '1' : '';
-        f.style.cssText = `font-family:${cs.fontFamily};font-size:${cs.fontSize};line-height:${b.height / s}px`;
-        const from = d.createElement('span'); from.textContent = src.textContent;
-        from.style.cssText = `font-weight:${cs.fontWeight};letter-spacing:${cs.letterSpacing};font-variant-numeric:${cs.fontVariantNumeric}`;
-        const to = d.createElement('span'); to.className = 'fl-to'; to.textContent = dst.textContent;
-        const ls = parseFloat(ds.letterSpacing);
-        to.style.cssText = `font-family:${ds.fontFamily};font-weight:${ds.fontWeight};font-variant-numeric:${ds.fontVariantNumeric};letter-spacing:${isNaN(ls) ? 'normal' : ls / s + 'px'}`;
-        f.append(from, to); layer.append(f);
-        fl.push({ f, from, to, dst, k, x0: a.left - L.left, y0: a.top - L.top, x1: b.left - L.left, y1: b.top - L.top, s, color: ds.color });
-      }
-      fl.sort((p, q) => ORDER.indexOf(p.k) - ORDER.indexOf(q.k));
-      facts.forEach(f => f.classList.add('gone'));
-      const now = tl.time();
-      fl.forEach((p, i) => {
-        gsap.set(p.f, { x: p.x0, y: p.y0, force3D: true });
-        const lift = 46 + (i % 5) * 15, mx = p.x0 + (p.x1 - p.x0) * .45, my = Math.min(p.y0, p.y1) - lift;
-        const ft = gsap.timeline();
-        ft.to(p.f, { x: mx, y: my, scale: (1 + p.s) / 2 + .1, duration: .5, ease: 'power2.out' })
-          .to(p.f, { x: p.x1, y: p.y1, scale: p.s, duration: .55, ease: 'power3.inOut' })
-          .to(p.from, { opacity: 0, duration: .45, ease: 'power1.inOut' }, .35)
-          .to(p.to, { opacity: 1, duration: .45, ease: 'power1.inOut' }, .35)
-          .to(p.f, { backgroundColor: 'rgba(0,0,0,0)', boxShadow: 'none', color: p.color, duration: .25 }, '-=.25');
-        if (p.f.dataset.wraps)   // the target breaks over two lines: crossfade rather than swap
-          ft.to(p.dst, { autoAlpha: 1, duration: .3 }).to(p.f, { opacity: 0, duration: .3 }, '<').add(() => p.f.remove());
-        else ft.add(() => { gsap.set(p.dst, { autoAlpha: 1 }); p.f.remove(); });
-        tl.add(ft, now + i * .075);   // nested, so Replay stops every flight with the rest
-      });
-    }, 1.0);
+    // each fact lifts off the answer (leaving its outline behind) and flies to its place in the glance
+    tl.set(facts, { attr: { 'data-gone': 1 } }, 1.0);
+    fl.forEach((p, i) => {
+      const lift = 46 + (i % 5) * 15, mx = p.x0 + (p.x1 - p.x0) * .45, my = Math.min(p.y0, p.y1) - lift;
+      const ft = gsap.timeline();
+      ft.set(p.f, { autoAlpha: 1, immediateRender: false })
+        .to(p.f, { x: mx, y: my, scale: (1 + p.s) / 2 + .1, duration: .5, ease: 'power2.out' })
+        .to(p.f, { x: p.x1, y: p.y1, scale: p.s, duration: .55, ease: 'power3.inOut' })
+        .to(p.from, { opacity: 0, duration: .45, ease: 'power1.inOut' }, .35)
+        .to(p.to, { opacity: 1, duration: .45, ease: 'power1.inOut' }, .35)
+        .to(p.f, { backgroundColor: 'rgba(0,0,0,0)', boxShadow: 'none', color: p.color, duration: .25 }, '-=.25');
+      if (p.wraps)   // the target breaks over two lines: crossfade rather than swap
+        ft.to(p.dst, { autoAlpha: 1, duration: .3 }).to(p.f, { autoAlpha: 0, duration: .3 }, '<');
+      else ft.set(p.dst, { autoAlpha: 1 }).set(p.f, { autoAlpha: 0 });
+      tl.add(ft, 1.0 + i * .075);
+    });
     tl.to(back, { opacity: .42, duration: 1.4, ease: 'power2.inOut' }, 1.25);
     tl.to(words, { autoAlpha: 1, duration: .6, stagger: .028, ease: 'power1.out' }, 1.4);
     tl.to([cap, ...rows], { autoAlpha: 1, duration: .4, stagger: .025 }, 2.05);
     tl.to(bars, { scaleX: 1, duration: .75, stagger: .08, ease: 'power3.out' }, 2.25);
     tl.to(notes, { autoAlpha: 1, duration: .4, stagger: .03 }, 2.7);
     tl.to(bul, { autoAlpha: 1, y: 0, duration: .5, stagger: .045, ease: 'power2.out', force3D: false }, 3.05);
+    // played back to the start (Replay), it plays forward again
+    tl.eventCallback('onReverseComplete', () => { tl.timeScale(1); gsap.delayedCall(.25, () => { if (tl === heroTl) tl.play(); }); });
+    return tl;
+  }
+
+  function playHero() {
+    if (!G() || REDUCED) { heroFinal(); return; }
+    heroTl && heroTl.kill();
+    heroTl = buildHero(.35);
+  }
+
+  function replayHero() {
+    if (!G() || REDUCED) return;
+    if (heroTl && heroTl.reversed() && heroTl.isActive()) return;   // already rewinding
+    if (!heroTl || heroTl.progress() === 1) {
+      // finished: build it afresh from today's layout (the window may have changed) and show it at its end,
+      // which is exactly what's on screen, so the rewind starts from what the reader sees
+      heroTl && heroTl.kill();
+      heroTl = buildHero(0); heroTl.progress(1);
+    }
+    heroTl.timeScale(Math.max(2.4, heroTl.time() / 1.4)).reverse();
   }
 
   function initHero() {
     if (!hero) return;
     markFacts();
-    $('#replay').addEventListener('click', () => { if (G() && !REDUCED) { window.scrollTo({ top: 0, behavior: 'smooth' }); playHero(); } });
+    $('#replay').addEventListener('click', () => { if (G() && !REDUCED) { window.scrollTo({ top: 0, behavior: 'smooth' }); replayHero(); } });
     if (!G() || REDUCED) { heroFinal(); return; }
     (d.fonts ? d.fonts.ready : Promise.resolve()).then(() => requestAnimationFrame(playHero));
     if (FINE) {
