@@ -883,7 +883,7 @@
   /* ---------------- section entrances ---------------- */
   function initEntrances() {
     if (!G() || REDUCED) return;
-    const groups = [['.sec-head > *'], ['.group > h3'], ['.ex-text > *'], ['.install-in > *'], ['.cmd-text > *', '.cmd-table tr'], ['.dataviz > h2', '.statement', '.dv-list li', '.dv-end'],
+    const groups = [['.sec-head > *'], ['.group > h3'], ['.ex-text > *'], ['.bt-head > *'], ['.bt-panel', '.bt-note'], ['.install-in > *'], ['.cmd-text > *', '.cmd-table tr'], ['.dataviz > h2', '.statement', '.dv-list li', '.dv-end'],
       ['.rd-text > *', '.rd-fig'], ['.credits h2', '.cr-grid p'], ['.foot-mark']];
     for (const sels of groups) {
       const els = sels.flatMap(s => $$(s)); if (!els.length) continue;

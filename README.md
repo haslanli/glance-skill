@@ -13,7 +13,7 @@ Every picture on the site is live: sort and filter the tables, drag to compare w
 
 glance is a skill for Claude Code. Type `/glance` after a long answer, and Claude tells it again for someone short on time or background. You get the answer in one plain sentence, a picture when the answer has data, and a few short bullets for the rest. It's built to keep every number, name, path, command, warning and open question, and to add nothing. So it cuts wording, not facts: on real answers the text comes out about half to two-thirds as long, and a table keeps its size, because every value stays. In the Claude desktop app the picture is drawn right in the chat; in a terminal it becomes a markdown table.
 
-**Contents:** [Live demo](https://haslanli.github.io/glance-skill/) · [Install](#install) · [Examples](#examples): [bills](#bills), [test results](#test-results), [performance](#performance), [progress](#progress) · [Commands](#commands) · [Why not dataviz?](#why-not-just-use-dataviz) · [Readable by everyone](#readable-by-everyone) · [New in v3](#new-in-v3)
+**Contents:** [Live demo](https://haslanli.github.io/glance-skill/) · [Install](#install) · [Big tables](#big-tables) · [Examples](#examples): [bills](#bills), [test results](#test-results), [performance](#performance), [progress](#progress) · [Commands](#commands) · [Why not dataviz?](#why-not-just-use-dataviz) · [Readable by everyone](#readable-by-everyone) · [New in v3](#new-in-v3)
 
 ## Install
 
@@ -22,6 +22,44 @@ git clone https://github.com/haslanli/glance-skill ~/.claude/skills/glance
 ```
 
 Claude Code picks up new skills while it runs, so there's no restart. If `~/.claude/skills` didn't exist before, run `/reload-skills` once. To update later, run `git -C ~/.claude/skills/glance pull`.
+
+## Big tables
+
+A wide table is where a plain answer reads worst. Claude writes it as markdown, the chat lays it out at the width of its column, and every column with a long cell takes the room: short columns shrink to stacks of wrapped words, rows grow four lines tall, and the rows that matter look like all the others. glance rebuilds the same table: the same 14 tools and the same numbers, one line per row, sorted by what you'd save, the six worth acting on tinted, and the long advice moved into short phrases and the bullets.
+
+**Stock Claude:** 622 words, with a 14-row, 6-column table of renewals and three sections after it. Its table as the chat lays it out:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/table-stock-dark.png">
+  <img alt="Stock Claude's answer about which SaaS subscriptions to cut. A lead paragraph, then a markdown table with columns Tool, Renews, Cost, Seats used (90 days) / paid, Recommendation and Annual saving. The Recommendation column takes most of the width, so the header 'Seats used (90 days) / paid' wraps onto four lines and rows like DocuSign grow four lines tall. The rows are in renewal order with nothing marked." src="docs/images/table-stock-light.png" width="100%">
+</picture>
+
+<details><summary>The whole table</summary>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/table-stock-full-dark.png">
+  <img alt="The same stock answer's whole 14-row table." src="docs/images/table-stock-full-light.png" width="100%">
+</picture>
+
+</details>
+
+**glance, on the same answer:**
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/table-glance-dark.png">
+  <img alt="glance's reply: Cutting or shrinking six tools saves about $46.6k a year. Removing unused seats on five others brings the total to about $50.4k. Below it, three tiles: cut or shrink 6 tools, about $46.6k; trim spare seats, about $3.8k; total a year, about $50.4k in blue, about 24% of $205k spend. Then one table, one line per tool, sorted by saving: Zoom $12,240, Figma $11,880, Notion $8,064, Miro $6,300, Linear $4,800 and DocuSign at least $3,360 are tinted blue, followed by the seat trims and the tools to keep." src="docs/images/table-glance-light.png" width="100%">
+</picture>
+
+<details><summary>The whole picture</summary>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/table-glance-full-dark.png">
+  <img alt="glance's whole picture: the three tiles and all 14 tools, ending with Datadog flagged over commitment." src="docs/images/table-glance-full-light.png" width="100%">
+</picture>
+
+</details>
+
+<sub>A SaaS renewal review for a made-up 140-person company, answered by stock Claude (Opus 5.5), then re-told with `/glance`. Both pictures are the same width; the stock table is drawn by the browser's own table layout, the way a chat column draws markdown. glance's reply text: 279 words, from 622.</sub>
 
 ## Examples
 
@@ -163,7 +201,7 @@ About one man in twelve can't easily tell red from green. Most charts lean on ex
 
 ## Commands
 
-After a long answer, type `/glance`. To keep the result out of the main conversation, ask it as a side question: `/btw /glance`.
+After a long answer, type `/glance` in the main conversation.
 
 | Command | What it does |
 |---|---|
@@ -175,7 +213,7 @@ After a long answer, type `/glance`. To keep the result out of the main conversa
 | `/glance status` | Says which mode is on |
 | `/glance help` | Shows this list |
 
-Modes set inside `/btw` stay there. A side question doesn't change the main conversation.
+`/btw /glance` doesn't work as well: side questions can't load skills, so Claude guesses at the format from its one-paragraph description. In our tests it kept 52–63 % of the numbers and names, against 99 % for `/glance`.
 
 ## New in v3
 

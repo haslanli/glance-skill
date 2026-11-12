@@ -167,7 +167,7 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
 .ex.ex-wide.ex-flip .ex-text{order:0}
 /* An example's stage holds two things: the frame (the glance card) and the sheet (Claude's own answer).
    The sheet is ONE element in both states. In Wide it is tucked out of view behind the card; in Narrow
-   it is the panel beside the narrow glance, the way the app shows the main conversation next to a /btw
+   it is the panel beside the narrow glance, the way the app shows the main conversation next to a side
    panel. It keeps the same layout in both states, so moving between them is pure transform. */
 .ex-stage{position:relative;container:stage/inline-size}
 .ex-frame{position:relative;z-index:1;width:100%;margin-left:auto}
@@ -286,7 +286,7 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
 
 /* What the script brings in is hidden from the first paint, so nothing shows, vanishes and fades back.
    If the script never takes over, it all appears after 3 s anyway. */
-.js:not(.rv-ready) :is(.sec-head > *, .group > h3, .ex-text > *, .install-in > *, .cmd-text > *, .cmd-table tr, .dataviz > h2,
+.js:not(.rv-ready) :is(.sec-head > *, .group > h3, .ex-text > *, .install-in > *, .cmd-text > *, .cmd-table tr, .dataviz > h2, .bt-head > *, .bt-panel, .bt-note,
   .statement, .dv-list li, .dv-end, .rd-text > *, .rd-fig, .credits h2, .cr-grid p, .foot-mark, [data-ex] .cmp-after){opacity:0;animation:rv-fallback .4s 3s forwards}
 @keyframes rv-fallback{to{opacity:1}}
 .flyer .fl-to{position:absolute;left:2px;top:0;opacity:0;white-space:nowrap}
@@ -308,6 +308,23 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
 }
 
 /* ---------- install ---------- */
+.bigt{padding-top:var(--gap)}
+.bt-head{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:20px clamp(24px,4vw,72px);align-items:end;margin-bottom:clamp(36px,5vw,72px)}
+.bt-grid{display:grid;grid-template-columns:minmax(0,720px);gap:clamp(36px,4vw,56px);align-items:start}
+@media (min-width:1420px){.bt-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:40px}}
+.bt-panel{margin:0;min-width:0}
+.bt-cap{font-size:15px;color:var(--ink-2);margin:0 0 14px}.bt-cap b{color:var(--ink);font-weight:600}
+.bt-card{background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:22px 26px 26px;transition:background-color .35s var(--ease)}
+.bt-stock .bt-card{background:var(--card-2);box-shadow:var(--shadow-lo)}
+.bt-card .ask{margin:0 0 16px auto;max-width:85%;width:fit-content;font-size:13px;line-height:1.5;color:var(--ink-2);background:var(--card);border-radius:12px;padding:8px 12px}
+.bt-chat{font-size:14px;line-height:1.55;color:var(--text-primary)}
+.bt-chat p{margin:0 0 12px}.bt-chat .bt-more{margin:12px 0 0;color:var(--ink-3);font-size:13px}
+.bt-scroll{overflow-x:auto}
+.bt-chat table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.bt-chat th,.bt-chat td{text-align:left;vertical-align:top;padding:7px 10px 7px 0;border-bottom:.5px solid var(--border)}
+.bt-chat th,.bt-chat strong{font-weight:600}
+.bt-note{margin:22px 0 0;font-size:15px;color:var(--ink-3)}
+@media (max-width:1000px){.bt-head{grid-template-columns:1fr}.bt-card{padding:18px 18px 22px}}
 .install{padding-top:var(--gap)}
 .install-in{background:var(--field);color:var(--field-ink);border-radius:28px;padding:clamp(40px,6vw,96px) clamp(24px,5vw,88px)}
 .install h2{margin-bottom:clamp(28px,4vw,48px);max-width:12em}

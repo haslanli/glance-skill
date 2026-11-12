@@ -1,6 +1,6 @@
 ---
 name: glance
-description: "Use this skill whenever the user responds to an answer Claude already gave (or to several answers, or to pasted text) by asking for less of it rather than more: the bottom line, the gist, the conclusion, tl;dr, the key points, a shorter version, a simpler explanation, or a visual of it. Also use it when they say the answer is too long or confusing. Requests in any language count (\"покажи кратко\", \"长话短说\", \"要点だけ\", \"一言で\"). Also use it for a recap of everything done or decided so far in the session. The skill re-tells the same content: the answer in plain words first, then a chart, tiles or table of its data, then short bullets. It keeps every number, name, command and warning, invents nothing and cuts wording, not facts: text ends up about half to two-thirds as long; tables keep their size. Commands: /glance, /btw /glance, /glance [what|on|super|off|status|help]. Don't use it for new deliverables such as documents, dashboards, slides, emails, exports or translations, or for new questions about the topic."
+description: "Use this skill whenever the user responds to an answer Claude already gave (or to several answers, or to pasted text) by asking for less of it rather than more: the bottom line, the gist, the conclusion, tl;dr, the key points, a shorter version, a simpler explanation, or a visual of it. Also use it when they say the answer is too long or confusing. Requests in any language count (\"покажи кратко\", \"长话短说\", \"要点だけ\", \"一言で\"). Also use it for a recap of everything done or decided so far in the session. The skill re-tells the same content: the answer in plain words first, then a chart, tiles or table of its data, then short bullets. It keeps every number, name, command and warning, invents nothing and cuts wording, not facts: text ends up about half to two-thirds as long; tables keep their size. Commands: /glance, /glance [what|on|super|off|status|help]. Don't use it for new deliverables such as documents, dashboards, slides, emails, exports or translations, or for new questions about the topic."
 argument-hint: "[what | on | super | off | status | help]"
 license: MIT
 ---
@@ -28,9 +28,8 @@ If the arguments are `help` (or `--help`, `-h`, `?`), print this block exactly a
 - When the answer has data, it gets a picture: a chart, tiles, a grid, cards
   or a reshaped table.
 - A mode lasts until /glance off, in this conversation only.
-- Inside /btw, modes don't carry over: in the terminal, /btw answers once and
-  keeps nothing; in the desktop app, /btw opens a side chat, so a mode set there
-  stays in that side chat.
+- Use it in the main conversation: /btw side questions can't load skills,
+  so /btw /glance gives a rough guess instead of a glance.
 ```
 
 ## Which answer
@@ -103,9 +102,9 @@ One picture of one to three sections (for example tiles, then the main chart, th
 
 **How.**
 
-- With a visual tool (in the Claude desktop app, including its /btw side chat, the visualize tool): call `read_me` with the modules `mockup` and `data_viz` (add `chart` only for a line chart). Then read `references/ui-kit.md` in this skill's folder and build the picture from it: paste its CSS block exactly, start with the one-sentence screen-reader summary, use only its components, and don't restyle them. Where the tool's guide and the kit differ, the kit wins. Draw with `show_widget`. The answer sentence is the first text of your reply, written before you call `show_widget` (calling `read_me` first is fine), so the reader gets the answer before the picture; the bullets come after it.
+- With a visual tool (in the Claude desktop app, the visualize tool): call `read_me` with the modules `mockup` and `data_viz` (add `chart` only for a line chart). Then read `references/ui-kit.md` in this skill's folder and build the picture from it: paste its CSS block exactly, start with the one-sentence screen-reader summary, use only its components, and don't restyle them. Where the tool's guide and the kit differ, the kit wins. Draw with `show_widget`. The answer sentence is the first text of your reply, written before you call `show_widget` (calling `read_me` first is fine), so the reader gets the answer before the picture; the bullets come after it.
 - When the answer explains a bill or a change in spend, read `references/bills.md` first: it says what such a reader needs to see and which of the forms above fits.
-- Without one (a terminal, or /btw in the terminal): a markdown table, reshaped as below, or before → after inside the bullets.
+- Without one (a terminal): a markdown table, reshaped as below, or before → after inside the bullets.
 - Color carries meaning only: soft blue for every ordinary mark, blue for what to look at, red for what's negative. Explain it with direct labels or a short legend.
 - Values and labels go on the picture; sentences of explanation stay in the reply.
 
@@ -123,7 +122,7 @@ One picture of one to three sections (for example tiles, then the main chart, th
 - **Same order, same names.** Items appear in the same order and under the same names in the tiles, the chart, the rows and the bullets.
 - **Same unit, number first.** Within one row or series, write every value the same way ("8 vCPU", "4 vCPU"), with the same unit, separators and decimals as the original. Qualifiers like "dedicated" go in the small line under the value, kept to about 20 characters; longer notes belong in the bullets.
 - **Make the deciding cells stand out.** At most one flagged drawback per option, the one the original gives as its reason, with a few words ("tight with Postgres", "over budget"). Mark the recommended option. The reader shouldn't have to scan every cell to see why.
-- **One line per row.** Use the name the original uses, kept short, so every table row stays one line and the same height. If a name needs explaining, explain it in the bullets in plain words.
+- **Short labels, so nothing has to wrap.** Use the name the original uses, kept short, so every table row stays one line and the same height. If a name needs explaining, explain it in the bullets in plain words. Tile notes stay under about 30 characters, column labels use short forms ("Sep", "Q3"), and a tile value is one figure or one before → after. The kit wraps anything longer instead of cutting it off, but a wrapped label is a sign it should have been shorter. Never shorten a value to make it fit.
 - **Blue says look here; red says negative.** Blue goes on what the answer is about, even when it's bad news: the service that made the bill jump is blue. Red goes only on a value that's past a line the answer gives (a limit, target or budget) or failing: its number, the part of its bar past the line, and a flag (a red dot and the answer's word) after its name. Never a whole row of red text, never red just because a number went up, and never green: an improvement stays soft blue. Always with a word, never color alone, which also keeps it readable for color-blind people.
 - **Proximity and alignment.** A note sits right next to what it describes: under its value, or for a table row, as a flag right after the row's name. It never goes in a separate column at the edge. Text aligns left, numbers align right in their own columns, headers align like their columns, and rows line up across columns.
 - **Honest scales.** Bars start at zero, and things being compared share one scale and one unit. Never mix units on one axis.
@@ -186,7 +185,7 @@ Where the words go:
 
 1. **Nothing lost:** tick off every fact of the original (of every source answer, when there are several) against the picture and the bullets.
 2. **Picture correct:** reshaped data matches the original row for row and value for value, and the sort order and marks are right.
-3. **Picture precise:** built only from the kit (its CSS block pasted as is, no restyling), then the "Design it precisely" list: one thing stands out, same order and names, values written the same way, at most one flag per option, one line per row, blue only on what the answer is about and red only on values past a line or failing, notes next to what they describe, nothing drifting out of line.
+3. **Picture precise:** built only from the kit (its CSS block pasted as is, no restyling), then the "Design it precisely" list: one thing stands out, same order and names, values written the same way, short labels, at most one flag per option, one line per row, blue only on what the answer is about and red only on values past a line or failing, notes next to what they describe, nothing drifting out of line.
 4. **Right form:** the form fits what the answer says about its data, from the list under The picture; bars, columns, meters, diverging bars and a bridge's totals start at zero and share one scale and one unit; a bridge's start plus its steps equals its end; every value is printed (a line's points are in its canvas text); no pie, donut, second y-axis or color outside soft blue, blue and red; widths and heights match the kit's formulas.
 5. **Shorter:** count the words. The answer sentence plus the bullets come to about a third of the original's prose (more only when the original is nearly all facts), and the whole glance is shorter than the original. If not, cut in this order before touching any fact: anything that restates the answer or the picture, added findings, glosses, words a phrase doesn't need.
 6. **Made for this answer:** if this layout would fit almost any answer, the picture or the grouping isn't working for this content. Rework it.

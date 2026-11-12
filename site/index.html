@@ -13,12 +13,12 @@
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23185FA5'/%3E%3Crect x='7' y='17' width='4' height='8' rx='1' fill='%23B5D4F4'/%3E%3Crect x='14' y='13' width='4' height='12' rx='1' fill='%23B5D4F4'/%3E%3Crect x='21' y='7' width='4' height='18' rx='1' fill='%23fff'/%3E%3C/svg%3E">
 <script>(function(){var d=document.documentElement,t=null;d.classList.add('js');try{t=localStorage.getItem('glance-theme')}catch(e){}d.dataset.theme=t||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')})();</script>
-<link rel="stylesheet" href="assets/kit.css?v=3f0c6aeb2d">
-<link rel="stylesheet" href="assets/site.css?v=44dc23ae61">
+<link rel="stylesheet" href="assets/kit.css?v=e217019bc9">
+<link rel="stylesheet" href="assets/site.css?v=1ed61e96ad">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
 <script src="assets/kit.js?v=65a3c2f304" defer></script>
-<script src="assets/site.js?v=df1f6a8149" defer></script>
+<script src="assets/site.js?v=69863d1e5d" defer></script>
 </head>
 <body>
 <a class="skip" href="#examples">Skip to the examples</a>
@@ -167,7 +167,7 @@
   <div class="sec-head">
     <h2 id="examples-h">Real answers, re-told</h2>
     <p class="lede">Every picture here is glance's own reply to a sample answer, live on the page. Sort and filter the tables, switch a panel to narrow, drag the edge to see the original, and hover any number to see the line it came from.</p>
-    <p class="groups">Jump to <a href="#bills">bills</a>, <a href="#tests">test results</a>, <a href="#perf">performance</a> or <a href="#progress">progress</a>.</p>
+    <p class="groups">Jump to <a href="#bills">bills</a>, <a href="#tests">test results</a>, <a href="#perf">performance</a> or <a href="#progress">progress</a>, and see what glance does to a <a href="#big-tables">big table</a>.</p>
   </div>
   <section class="group" id="bills" aria-labelledby="bills-h"><h3 id="bills-h">Bills</h3>
 <article class="ex" id="bill-jump" data-ex>
@@ -2266,6 +2266,174 @@
 </article></section>
 </section>
 
+<section class="bigt" id="big-tables" aria-labelledby="bigt-h">
+  <div class="bt-head">
+    <h2 id="bigt-h">Big tables</h2>
+    <p class="lede">A wide table is where a plain answer reads worst. The chat gives every column with a long cell the room, so short columns shrink to stacks of wrapped words and rows grow four lines tall. glance rebuilds the same table: the same 14 rows and numbers, one line each, sorted by what matters, with the rows to act on marked.</p>
+  </div>
+  <div class="bt-grid">
+    <figure class="bt-panel bt-stock">
+      <figcaption class="bt-cap"><b>Stock Claude</b> · 622 words, the table as the chat lays it out</figcaption>
+      <div class="bt-card"><p class="ask">Our SaaS renewals for early 2027 are in finance/saas-renewals-2027.csv. Which ones should we cut or shrink before they renew, and how much would we save? Give me the full picture for every tool.</p><div class="bt-chat"><p>The clearest savings are <b>about $46.6k a year</b> from six tools: Figma, Notion, Zoom, Miro, Linear and DocuSign. Removing unused seats on five more tools adds about $3.8k, for <b>about $50k in total</b>. That's roughly 24% of the $205k annual spend. Several of these renew in January, so timing matters (see the end).</p><div class="bt-scroll"><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Renews</th>
+<th>Cost</th>
+<th>Seats used (90 days) / paid</th>
+<th>Recommendation</th>
+<th>Annual saving</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Figma</strong></td>
+<td>Jan 15</td>
+<td>$21,600</td>
+<td>18 / 40</td>
+<td><strong>Shrink</strong> to about 18 seats ($540 each)</td>
+<td><strong>$11,880</strong></td>
+</tr>
+<tr>
+<td><strong>Miro</strong></td>
+<td>Jan 20</td>
+<td>$6,300</td>
+<td>9 / 35</td>
+<td><strong>Cut.</strong> FigJam, which comes with Figma, covers most of what it's used for</td>
+<td><strong>$6,300</strong></td>
+</tr>
+<tr>
+<td><strong>DocuSign</strong></td>
+<td>Jan 25</td>
+<td>$4,800</td>
+<td>3 / 10</td>
+<td><strong>Shrink</strong> to 3 seats, or switch to a per-envelope plan (about 60 envelopes a year)</td>
+<td><strong>$3,360</strong> at least, more if you switch plans</td>
+</tr>
+<tr>
+<td><strong>Linear</strong></td>
+<td>Jan 31</td>
+<td>$4,800</td>
+<td>6 / 25</td>
+<td><strong>Cut.</strong> The pilot ended and the team went back to Jira</td>
+<td><strong>$4,800</strong></td>
+</tr>
+<tr>
+<td><strong>Notion</strong></td>
+<td>Feb 1</td>
+<td>$17,280</td>
+<td>64 / 120</td>
+<td><strong>Shrink</strong> to about 64 seats ($144 each), then decide whether to merge it into Confluence</td>
+<td><strong>$8,064</strong></td>
+</tr>
+<tr>
+<td><strong>Calendly</strong></td>
+<td>Feb 14</td>
+<td>$3,840</td>
+<td>19 / 20</td>
+<td>Keep. Drop 1 seat</td>
+<td>$192</td>
+</tr>
+<tr>
+<td><strong>Zoom</strong></td>
+<td>Feb 20</td>
+<td>$16,200</td>
+<td>22 / 90</td>
+<td><strong>Shrink</strong> to about 22 seats ($180 each), or cut it if those users can move to Meet</td>
+<td><strong>$12,240</strong> (up to $16,200)</td>
+</tr>
+<tr>
+<td><strong>Slack</strong></td>
+<td>Mar 1</td>
+<td>$25,200</td>
+<td>131 / 140</td>
+<td>Keep. Drop 9 seats</td>
+<td>about $1,750 against the new price</td>
+</tr>
+<tr>
+<td><strong>Datadog</strong></td>
+<td>Mar 31</td>
+<td>$48,000 committed</td>
+<td>n/a</td>
+<td><strong>Raise the commitment</strong> (see below)</td>
+<td>Avoids paying for overage</td>
+</tr>
+<tr>
+<td><strong>Confluence</strong></td>
+<td>Apr 10</td>
+<td>$6,480</td>
+<td>57 / 60</td>
+<td>Keep. It comes bundled with Jira</td>
+<td>–</td>
+</tr>
+<tr>
+<td><strong>Jira</strong></td>
+<td>Apr 10</td>
+<td>$9,360</td>
+<td>58 / 60</td>
+<td>Keep</td>
+<td>–</td>
+</tr>
+<tr>
+<td><strong>Loom</strong></td>
+<td>May 5</td>
+<td>$4,500</td>
+<td>27 / 30</td>
+<td>Keep. Drop 3 seats</td>
+<td>$450</td>
+</tr>
+<tr>
+<td><strong>Google Workspace</strong></td>
+<td>Jun 30</td>
+<td>$23,520</td>
+<td>138 / 140</td>
+<td>Keep. Drop 2 seats</td>
+<td>$336</td>
+</tr>
+<tr>
+<td><strong>1Password</strong></td>
+<td>Aug 1</td>
+<td>$13,440</td>
+<td>129 / 140</td>
+<td>Keep, since security policy requires it. Drop 11 seats</td>
+<td>$1,056</td>
+</tr>
+</tbody>
+</table>
+</div><p class="bt-more">Then three more sections: what changes the numbers, Datadog, and timing.</p></div></div>
+    </figure>
+    <figure class="bt-panel bt-glance">
+      <figcaption class="bt-cap"><b>glance</b> · 279 words around one picture</figcaption>
+      <div class="bt-card"><p class="g-sent">Cutting or shrinking six tools saves about $46.6k a year. Removing unused seats on five others brings the total to about $50.4k.</p><div class="pic"><h2 class="sr-only">Annual savings for each of 14 SaaS tools. Cutting or shrinking six tools saves about $46.6k, trimming seats on others adds about $3.8k, and the total is about $50.4k.</h2>
+<div class="gl">
+  <div class="gl-sec gl-tiles">
+    <div class="gl-tile"><div class="gl-k">Cut or shrink 6 tools</div><div class="gl-v">≈ $46.6k</div></div>
+    <div class="gl-tile"><div class="gl-k">Trim spare seats</div><div class="gl-v">≈ $3.8k</div></div>
+    <div class="gl-tile"><div class="gl-k">Total a year</div><div class="gl-v hi">≈ $50.4k</div><div class="gl-note">~24 % of $205k spend</div></div>
+  </div>
+  <div class="gl-sec gl-tbl" style="--c:5">
+    <div class="hd">Tool</div><div class="hd num">Renews</div><div class="hd num">Used / paid</div><div class="hd num">Cost</div><div class="hd num">Action</div><div class="hd num">Saving / yr</div>
+    <div class="at">Zoom</div><div class="num mut at">Feb 20</div><div class="num mut at">22 / 90</div><div class="num mut at">$16,200</div><div class="num at">Shrink → 22 × $180</div><div class="num at">$12,240</div>
+    <div class="at">Figma</div><div class="num mut at">Jan 15</div><div class="num mut at">18 / 40</div><div class="num mut at">$21,600</div><div class="num at">Shrink → 18 × $540</div><div class="num at">$11,880</div>
+    <div class="at">Notion</div><div class="num mut at">Feb 1</div><div class="num mut at">64 / 120</div><div class="num mut at">$17,280</div><div class="num at">Shrink → 64 × $144</div><div class="num at">$8,064</div>
+    <div class="at">Miro</div><div class="num mut at">Jan 20</div><div class="num mut at">9 / 35</div><div class="num mut at">$6,300</div><div class="num at">Cut (FigJam covers)</div><div class="num at">$6,300</div>
+    <div class="at">Linear</div><div class="num mut at">Jan 31</div><div class="num mut at">6 / 25</div><div class="num mut at">$4,800</div><div class="num at">Cut (back on Jira)</div><div class="num at">$4,800</div>
+    <div class="at">DocuSign</div><div class="num mut at">Jan 25</div><div class="num mut at">3 / 10</div><div class="num mut at">$4,800</div><div class="num at">Shrink → 3 seats</div><div class="num at">≥ $3,360</div>
+    <div>Slack</div><div class="num mut">Mar 1</div><div class="num mut">131 / 140</div><div class="num mut">$25,200</div><div class="num">Drop 9 seats</div><div class="num">≈ $1,750</div>
+    <div>1Password</div><div class="num mut">Aug 1</div><div class="num mut">129 / 140</div><div class="num mut">$13,440</div><div class="num">Drop 11 seats</div><div class="num">$1,056</div>
+    <div>Loom</div><div class="num mut">May 5</div><div class="num mut">27 / 30</div><div class="num mut">$4,500</div><div class="num">Drop 3 seats</div><div class="num">$450</div>
+    <div>Google Workspace</div><div class="num mut">Jun 30</div><div class="num mut">138 / 140</div><div class="num mut">$23,520</div><div class="num">Drop 2 seats</div><div class="num">$336</div>
+    <div>Calendly</div><div class="num mut">Feb 14</div><div class="num mut">19 / 20</div><div class="num mut">$3,840</div><div class="num">Drop 1 seat</div><div class="num">$192</div>
+    <div>Confluence</div><div class="num mut">Apr 10</div><div class="num mut">57 / 60</div><div class="num mut">$6,480</div><div class="num">Keep (Jira bundle)</div><div class="num">—</div>
+    <div>Jira</div><div class="num mut">Apr 10</div><div class="num mut">58 / 60</div><div class="num mut">$9,360</div><div class="num">Keep</div><div class="num">—</div>
+    <div>Datadog<span class="gl-flag">over commitment</span></div><div class="num mut">Mar 31</div><div class="num mut">n/a</div><div class="num mut">$48,000</div><div class="num">Raise commitment</div><div class="num">—</div>
+  </div>
+</div></div></div>
+    </figure>
+  </div>
+  <p class="bt-note">A renewal review for a made-up 140-person company, answered by stock Claude (Opus 5.5), then re-told with <code>/glance</code>. Both columns are the same width.</p>
+</section>
+
 <section class="install" id="install" aria-labelledby="install-h">
   <div class="install-in">
     <h2 id="install-h">Install in one line</h2>
@@ -2277,8 +2445,8 @@
 <section class="commands" id="commands" aria-labelledby="commands-h">
   <div class="cmd-text">
     <h2 id="commands-h">Commands</h2>
-    <p>After a long answer, type <code>/glance</code>. To keep the result out of the main conversation, ask it as a side question: <code>/btw /glance</code>.</p>
-    <p>Modes set inside <code>/btw</code> stay there. A side question doesn't change the main conversation.</p>
+    <p>After a long answer, type <code>/glance</code> in the main conversation.</p>
+    <p><code>/btw /glance</code> doesn't work as well: side questions can't load skills, so Claude guesses at the format from its one-paragraph description. In our tests it kept 52–63% of the numbers and names, against 99% for <code>/glance</code>.</p>
   </div>
   <table class="cmd-table">
     <thead><tr><th scope="col">Command</th><th scope="col">What it does</th></tr></thead>

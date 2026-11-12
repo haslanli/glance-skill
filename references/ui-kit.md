@@ -1,6 +1,6 @@
 # glance UI kit
 
-Build every glance picture from this kit. It handles spacing, type sizes, alignment, light and dark mode, and narrow /btw panels, so every picture comes out at the same quality.
+Build every glance picture from this kit. It handles spacing, type sizes, alignment, light and dark mode, and narrow side panels, so every picture comes out at the same quality.
 
 Contents: The look · How to use it · CSS · Components: section caption, headline figures, notes, table, columns, bars, meters, split bar, diverging bars, comparison, bridge, lead item, table with an inline trend, before → after against a benchmark, causes with counts, interactive table, view switch, the script for interactive pieces, lines with many points.
 
@@ -35,18 +35,18 @@ It follows long-established design rules:
 .gl-sec+.gl-sec{margin-top:28px}
 .gl-cap{font-size:12px;font-weight:500;color:var(--text-secondary);margin:0 0 8px}
 .gl-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
-.gl-tile{background:var(--surface-1);border-radius:var(--radius);padding:12px 16px;min-width:0}
+.gl-tile{background:var(--surface-1);border-radius:var(--radius);padding:12px 16px;min-width:0;container-type:inline-size}
 .gl-k{font-size:12px;color:var(--text-secondary)}
-.gl-v{font-size:24px;font-weight:500;line-height:1.25;letter-spacing:-.01em;white-space:nowrap}.gl-v.hi{color:var(--text-accent)}.gl-v.bad{color:var(--text-danger)}
-.gl-note{font-size:12px;line-height:1.35;color:var(--text-muted);white-space:nowrap}
+.gl-v{font-size:clamp(18px,19cqi,24px);font-weight:500;line-height:1.25;letter-spacing:-.01em;white-space:nowrap;display:flex;flex-wrap:wrap;align-items:baseline}.gl-v.hi{color:var(--text-accent)}.gl-v.bad{color:var(--text-danger)}
+.gl-note{font-size:12px;line-height:1.35;color:var(--text-muted);overflow-wrap:break-word}
 .gl-note.bad{color:var(--text-danger)}.gl-note.warn{color:var(--text-warning)}.gl-note.pick{color:var(--text-accent)}.gl-note.good{color:var(--text-success)}
 .gl-flag{font-size:12px;font-weight:400;color:var(--text-danger);margin-left:8px;white-space:nowrap}.gl-flag::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gl-r);margin-right:5px;vertical-align:1px}
 .gl-flag.warn{color:var(--text-warning)}.gl-flag.warn::before{background:currentColor}.gl-flag.hi{color:var(--text-secondary)}.gl-flag.hi::before{background:var(--gl-a)}
 .gl-arw{color:var(--text-muted);font-weight:400;margin:0 .15em}
 .gl .nw{white-space:nowrap}
-.gl-tbl{display:grid;grid-template-columns:minmax(0,1fr) repeat(var(--c,2),max-content)}
-.gl-tbl>div{padding:10px 12px;border-bottom:0.5px solid var(--border);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gl-tbl>.num{text-align:right;padding-left:20px;overflow:visible}
+.gl-tbl{display:grid;grid-template-columns:minmax(min-content,1fr) repeat(var(--c,2),max-content);overflow-x:auto}
+.gl-tbl>div{padding:10px 12px;border-bottom:0.5px solid var(--border);min-width:0;overflow-wrap:break-word}
+.gl-tbl>.num{text-align:right;padding-left:20px;white-space:nowrap;overflow-wrap:normal}
 .gl-tbl>.hd{font-size:12px;font-weight:500;color:var(--text-secondary);background:var(--gl-band);border-bottom:0;padding-top:8px;padding-bottom:8px}
 .gl-tbl>.hd:first-child{border-radius:var(--radius) 0 0 var(--radius)}.gl-tbl>.hd:not(:has(+.hd)){border-radius:0 var(--radius) var(--radius) 0}
 .gl-tbl>.mut{color:var(--text-secondary)}
@@ -54,22 +54,22 @@ It follows long-established design rules:
 .gl-tbl>.x{color:var(--text-danger);font-weight:500}.gl-tbl>.w{color:var(--text-warning)}.gl-tbl.st>.x{background:var(--gl-rt)}
 .gl-tbl>.bbc{display:flex;align-items:flex-start;justify-content:flex-end;padding-top:17px;padding-left:20px;overflow:visible}
 .gl-name{font-size:14px}.gl-tech{font-size:12px;color:var(--text-muted)}
-.gl-bars{display:grid;grid-template-columns:max-content minmax(48px,1fr) max-content;gap:10px 12px;align-items:center}
-.gl-bars .n{font-size:13px;color:var(--text-secondary)}
-.gl-bars .v{font-size:14px;text-align:right;color:var(--text-primary)}
+.gl-bars{display:grid;grid-template-columns:fit-content(45%) minmax(48px,1fr) max-content;gap:10px 12px;align-items:center}
+.gl-bars .n{font-size:13px;color:var(--text-secondary);overflow-wrap:anywhere}
+.gl-bars .v{font-size:14px;text-align:right;color:var(--text-primary);white-space:nowrap}
 .gl-track{height:8px}
 .gl-fill{height:100%;min-width:2px;border-radius:0 4px 4px 0;background:var(--gl-s)}
 .gl-bars .gl-track:has(.hi,.bad)+.v{font-weight:500}.gl-bars .n:has(+.gl-track .hi,+.gl-track .bad){color:var(--text-primary);font-weight:500}
 .gl-fill.hi{background:var(--gl-a)}.gl-fill.bad{background:var(--gl-r)}
 .gl-cols{display:flex;align-items:flex-end;gap:8px;height:150px}
 .gl-col{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
-.gl-col .lv{font-size:12px;color:var(--text-secondary);margin-bottom:4px;white-space:nowrap}
+.gl-col .lv{font-size:12px;color:var(--text-secondary);margin-bottom:4px;max-width:100%;text-align:center;overflow-wrap:anywhere}
 .gl-col:has(.b.hi,.b.bad) .lv{color:var(--text-primary);font-weight:500}
 .gl-col .b{width:100%;max-width:24px;border-radius:4px 4px 0 0;background:var(--gl-s)}
 .gl-col .b.hi{background:var(--gl-a)}.gl-col .b.bad{background:var(--gl-r)}
-.gl-col .lx{font-size:12px;color:var(--text-muted);margin-top:6px;white-space:nowrap}
-.gl-mtr{display:grid;grid-template-columns:max-content minmax(64px,1fr) max-content max-content;gap:10px 12px;align-items:center}
-.gl-mtr .n{font-size:13px;color:var(--text-secondary);white-space:nowrap}
+.gl-col .lx{font-size:12px;line-height:16px;min-height:32px;color:var(--text-muted);margin-top:6px;max-width:100%;text-align:center;overflow-wrap:anywhere}
+.gl-mtr{display:grid;grid-template-columns:fit-content(40%) minmax(64px,1fr) max-content max-content;gap:10px 12px;align-items:center}
+.gl-mtr .n{font-size:13px;color:var(--text-secondary);overflow-wrap:anywhere}
 .gl-mtr .v{font-size:14px;color:var(--text-primary);text-align:right;white-space:nowrap}
 .gl-mtr .d{font-size:12px;color:var(--text-muted);text-align:right;white-space:nowrap}
 .gl-mtr .x{color:var(--text-danger)}
@@ -78,9 +78,9 @@ It follows long-established design rules:
 .gl-m[style*="--lim"]::after{content:"";position:absolute;left:calc(var(--lim) - 1px);top:-4px;bottom:-4px;width:2px;border-radius:1px;background:var(--text-secondary)}
 .gl-m.hi>i{background:var(--gl-a)}
 .gl-m.bad{background:var(--gl-rt)}.gl-m.bad>i{background:var(--gl-r)}
-.gl-dv{display:grid;grid-template-columns:max-content minmax(40px,1fr) minmax(40px,1fr) max-content}
-.gl-dv>div{height:28px;display:flex;align-items:center;min-width:0}
-.gl-dv .n{font-size:13px;color:var(--text-secondary);white-space:nowrap}.gl-dv .v{font-size:14px;color:var(--text-primary);white-space:nowrap}
+.gl-dv{display:grid;grid-template-columns:fit-content(40%) minmax(40px,1fr) minmax(40px,1fr) max-content}
+.gl-dv>div{min-height:28px;display:flex;align-items:center;min-width:0}
+.gl-dv .n{font-size:13px;color:var(--text-secondary);overflow-wrap:anywhere}.gl-dv .v{font-size:14px;color:var(--text-primary);white-space:nowrap}
 .gl-dv .n{padding-right:12px}.gl-dv .v{justify-content:flex-end;padding-left:12px}.gl-dv .x{color:var(--text-danger)}.gl-dv .foc{color:var(--text-primary);font-weight:500}
 .gl-dv .l{justify-content:flex-end;border-right:1px solid var(--border-strong)}
 .gl-dv i{display:block;height:8px;min-width:2px;background:var(--gl-s)}
@@ -102,17 +102,17 @@ It follows long-established design rules:
 .gl-cmp>.col.pk{background:var(--bg-accent);border-radius:var(--radius);box-shadow:inset 0 3px 0 var(--gl-a)}
 .gl-cmp>.col.pk>div{border-top-color:color-mix(in srgb,var(--text-accent) 18%,transparent)}
 .gl-cmp>.col.pk .gl-q{color:var(--text-secondary)}
-.gl-val{display:block;font-size:14px;font-weight:500}.gl-q{display:block;font-size:12px;line-height:16px;color:var(--text-muted)}
+.gl-val{display:block;font-size:14px;font-weight:500;overflow-wrap:anywhere}.gl-q{display:block;font-size:12px;line-height:16px;color:var(--text-muted);overflow-wrap:anywhere}
 .gl-cmp .flag .gl-q{color:var(--text-danger)}
 .gl-cmp .none{color:var(--text-muted)}
-.gl-br{display:grid;grid-template-columns:max-content minmax(64px,1fr) max-content;gap:10px 12px;align-items:center}.gl-br.d{grid-template-columns:max-content minmax(64px,1fr) max-content max-content}
+.gl-br{display:grid;grid-template-columns:fit-content(45%) minmax(64px,1fr) max-content;gap:10px 12px;align-items:center}.gl-br.d{grid-template-columns:fit-content(40%) minmax(64px,1fr) max-content max-content}
 .gl-br .d{font-size:12px;color:var(--text-muted);text-align:right;white-space:nowrap}
-.gl-br .n{font-size:13px;color:var(--text-secondary);white-space:nowrap}.gl-br .v{font-size:14px;text-align:right;white-space:nowrap}
+.gl-br .n{font-size:13px;color:var(--text-secondary);overflow-wrap:anywhere}.gl-br .v{font-size:14px;text-align:right;white-space:nowrap}
 .gl-br .n.tot,.gl-br .v.tot,.gl-br .n.foc{color:var(--text-primary);font-weight:500}.gl-br .n .why{color:var(--text-secondary);font-weight:400}.gl-br .x{color:var(--text-danger)}
 .gl-br .t{position:relative;height:8px}
 .gl-br .t>i{position:absolute;top:0;bottom:0;left:min(var(--a),calc(100% - 2px));width:var(--w);min-width:2px;border-radius:2px;background:var(--gl-s)}
 .gl-br .t>i.tot{background:var(--gl-s2)}.gl-br .t>i.hi{background:var(--gl-a)}.gl-br .t>i.bad{background:var(--gl-r)}
-.gl-tbl.tr{grid-template-columns:minmax(0,1fr) max-content repeat(var(--c,2),max-content)}
+.gl-tbl.tr{grid-template-columns:minmax(min-content,1fr) max-content repeat(var(--c,2),max-content)}
 .gl-tbl>.sp{display:flex;align-items:center;padding-left:20px;overflow:visible}
 .gl-spk{display:flex;align-items:flex-end;gap:2px;height:16px;width:calc(var(--k,6)*10px - 2px)}
 .gl-spk>i{flex:1;height:var(--h);min-height:1px;border-radius:1px 1px 0 0;background:var(--gl-s)}
@@ -144,13 +144,14 @@ It follows long-established design rules:
 .gl-dt th{font-size:12px;font-weight:500;color:var(--text-secondary);background:var(--gl-band);border-bottom:0;padding-top:8px;padding-bottom:8px;vertical-align:bottom}
 .gl-dt th:first-child{border-radius:var(--radius) 0 0 var(--radius)}.gl-dt th:last-child{border-radius:0 var(--radius) var(--radius) 0}
 .gl-dt td{vertical-align:top}.gl-dt .num{text-align:right;padding-left:20px}.gl-dt td.mut{color:var(--text-secondary)}.gl-dt .bbc{padding-left:20px}.gl-dt td.bbc{padding-top:17px}
-.gl-dt td:first-child{width:100%;max-width:0;overflow:hidden;text-overflow:ellipsis}
+.gl-dt td:first-child{width:100%;max-width:0;white-space:normal;overflow-wrap:anywhere}
 .gl-dt th button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
 .gl-dt th[aria-sort]{color:var(--text-accent)}.gl-dt th[aria-sort=ascending] button::after{content:" ↑"}.gl-dt th[aria-sort=descending] button::after{content:" ↓"}
 .gl-dt tr.at td{background:var(--gl-at)}.gl-dt tr.at td:first-child{box-shadow:inset 3px 0 0 var(--gl-a)}
 .gl-dt td.x{color:var(--text-danger);font-weight:500}.gl-dt td.w{color:var(--text-warning)}.gl-dt.st td.x{background:var(--gl-rt)}
 .gl-dt tr[hidden],.gl-pane[hidden]{display:none}
-@container (max-width:520px){.gl-tbl .gl-flag,.gl-dt .gl-flag{display:block;margin:2px 0 0}.gl-tbl>div,.gl-dt th,.gl-dt td,.gl-ba>div{padding-left:8px;padding-right:8px}.gl-tbl>.num,.gl-dt .num,.gl-tbl>.bbc,.gl-tbl>.sp{padding-left:max(8px,calc(20px - var(--c,2)*3px))}.gl-tbl>.hd.num{white-space:normal}.gl-dt .bbc{display:none}.gl-bb{width:56px}.gl-count{margin-left:0;flex-basis:100%}.gl-br.d{grid-template-columns:minmax(0,1fr) minmax(48px,32%) max-content;row-gap:4px}.gl-br.d .n{white-space:normal;padding-top:6px}.gl-br.d .t,.gl-br.d .v{padding-top:6px}.gl-br.d .d{grid-column:1/-1;text-align:left}.gl-br.d .d:empty{display:none}.gl-cmp{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.gl-cmp>.labels{display:none}.gl-cmp>.col{border:0.5px solid var(--border);border-radius:var(--radius)}.gl-cmp>.col>div[data-l]{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 12px}.gl-cmp>.col>div[data-l]::before{content:attr(data-l);font-size:12px;color:var(--text-secondary);flex:none}.gl-cmp>.col>div[data-l]>*{text-align:right;min-width:0}}
+@container (max-width:520px){.gl-tbl .gl-flag,.gl-dt .gl-flag{display:block;margin:2px 0 0;white-space:normal}.gl-dt .bbc{display:none}.gl-bb{width:56px}.gl-count{margin-left:0;flex-basis:100%}.gl-br.d{grid-template-columns:minmax(0,1fr) minmax(48px,32%) max-content;row-gap:4px}.gl-br.d .n{white-space:normal;padding-top:6px}.gl-br.d .t,.gl-br.d .v{padding-top:6px}.gl-br.d .d{grid-column:1/-1;text-align:left}.gl-br.d .d:empty{display:none}.gl-cmp{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.gl-cmp>.labels{display:none}.gl-cmp>.col{border:0.5px solid var(--border);border-radius:var(--radius)}.gl-cmp>.col>div[data-l]{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:0 10px;padding:7px 12px}.gl-cmp>.col>div[data-l]::before{content:attr(data-l);font-size:12px;color:var(--text-secondary);flex:none}.gl-cmp>.col>div[data-l]>*{text-align:right;margin-left:auto;max-width:100%;overflow-wrap:anywhere}.gl-cmp>.col>div[data-l]>.gl-q{flex-basis:100%}}
+@container (max-width:640px){.gl-tbl>div,.gl-dt th,.gl-dt td,.gl-ba>div{padding-left:8px;padding-right:8px}.gl-tbl>.num,.gl-dt .num,.gl-tbl>.bbc,.gl-tbl>.sp{padding-left:max(8px,calc(20px - var(--c,2)*3px))}.gl-tbl>.hd.num{white-space:normal}}
 </style>
 ```
 
@@ -194,7 +195,7 @@ Plain small text, never a badge. `bad` is for what's past a limit or target, or 
 ```
 
 - `--c` is the number of columns after the name. Each row is one name cell, then one `num` cell per column (and a `bbc` cell for a target bar), all on one line.
-- Use the name the original uses, kept short. If it needs explaining, explain it in the bullets, not under the name, so every row stays one line and the same height.
+- Use the name the original uses, kept short. If it needs explaining, explain it in the bullets, not under the name, so every row stays one line and the same height. A name too long for a narrow panel wraps onto a second line rather than being cut off; numbers never wrap.
 - Numbers are plain. A column that's only context (the before value, a change the answer doesn't dwell on) takes `mut` on its cells, so the column that matters reads first.
 - **Rows to look at:** add `at` to every cell of the rows the answer is about: a light blue tint with a blue edge on the name.
 - **Negative values:** `x` only on the cell that's past the line or failing (red, medium weight), and a `gl-flag` with the answer's word right after the name ("over target", "over budget"). Never color a whole row's text, and never mark a value red just because it went up.
