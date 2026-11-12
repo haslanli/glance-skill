@@ -188,9 +188,12 @@
 
   /* ---------------- examples ---------------- */
   function initCompare(ex) {
-    const cmp = $('.cmp', ex), input = $('input', cmp), knob = $('.knob', cmp);
+    const cmp = $('.cmp', ex), input = $('.cmp-handle input', cmp), knob = $('.knob', cmp);   // its own range input, not the table's search box
     let dragging = false;
-    const set = p => { p = Math.max(0, Math.min(100, p)); cmp.style.setProperty('--pos', p + '%'); cmp.classList.toggle('on', p > .5); input.value = p; ex.dataset.touched = '1'; };
+    const set = p => {
+      if (ex._peekTl) { ex._peekTl.kill(); ex._peekTl = null; }   // the reader has the slider now; the hint is over
+      p = Math.max(0, Math.min(100, p)); cmp.style.setProperty('--pos', p + '%'); cmp.classList.toggle('on', p > .5); input.value = p; ex.dataset.touched = '1';
+    };
     const fromX = x => { const r = cmp.getBoundingClientRect(); set((x - r.left) / r.width * 100); };
     knob.addEventListener('pointerdown', e => { dragging = true; cmp.classList.add('drag'); knob.setPointerCapture(e.pointerId); e.preventDefault(); });
     knob.addEventListener('pointermove', e => dragging && fromX(e.clientX));
@@ -198,40 +201,227 @@
     knob.addEventListener('pointerup', end); knob.addEventListener('pointercancel', end);
     knob.addEventListener('click', () => input.focus({ preventScroll: true }));
     input.addEventListener('input', () => set(+input.value));
+    ex._cmpPos = () => parseFloat(cmp.style.getPropertyValue('--pos')) || 0;
     ex._cmpReset = () => { cmp.style.setProperty('--pos', '0%'); cmp.classList.remove('on'); input.value = 0; };
     ex._peek = () => {
       if (!G() || REDUCED || ex.dataset.touched || $('.ex-stage', ex).classList.contains('is-narrow')) return;
       const o = { p: 0 };
-      gsap.timeline().to(o, { p: 26, duration: .9, ease: 'power2.inOut', onUpdate: () => { if (!ex.dataset.touched) { cmp.style.setProperty('--pos', o.p + '%'); cmp.classList.toggle('on', o.p > .5); } } })
+      ex._peekTl = gsap.timeline().to(o, { p: 26, duration: .9, ease: 'power2.inOut', onUpdate: () => { if (!ex.dataset.touched) { cmp.style.setProperty('--pos', o.p + '%'); cmp.classList.toggle('on', o.p > .5); } } })
         .to(o, { p: 0, duration: .8, delay: .5, ease: 'power2.inOut', onUpdate: () => { if (!ex.dataset.touched) { cmp.style.setProperty('--pos', o.p + '%'); cmp.classList.toggle('on', o.p > .5); } } });
     };
   }
 
-  function initWidth(ex) {
-    // Both directions tween the frame between two pixel widths; the class only sets where it ends.
-    const frame = $('.ex-frame', ex), stage = $('.ex-stage', ex), main = $('.ex-main', ex);
-    let resizing = null, leaving = null;
-    const resize = narrow => {
-      const w0 = frame.getBoundingClientRect().width;
-      frame.style.width = ''; frame.classList.toggle('narrow', narrow);
-      stage.classList.toggle('is-narrow', narrow);   // narrow brings Claude's own answer in beside it
-      if (narrow && ex._cmpReset) ex._cmpReset();    // and the compare layer, which would repeat it, closes
-      gsap.set(main, { clearProps: 'opacity' });
-      const w1 = frame.getBoundingClientRect().width;
-      const done = () => { frame.style.width = ''; resizing = null; window.ScrollTrigger && ScrollTrigger.refresh(); queueSweep(); };
-      if (G() && !REDUCED && Math.abs(w1 - w0) > 1) resizing = gsap.fromTo(frame, { width: w0 }, { width: w1, duration: .6, ease: 'power3.inOut', onComplete: done });
-      else done();
+  /* ---------------- morph ----------------
+     Every state change in an example runs through here: note where each piece sits, switch to the
+     final layout in one go, then move each piece from its old place to its new one. Boxes (cells,
+     bars, tiles, flags) may also resize; words never do, they are counter-scaled inside a resizing
+     box so text never stretches. A piece with no counterpart fades out where it was (a ghost copy)
+     or fades in where it lands. Transforms and opacity only, all on one clock. */
+  const BOXES = '.gl-tile, .gl-col .b, .gl-br > *, .gl-br i, .gl-cz > *, .gl-track, .gl-fill, .gl-ba > div, .gl-bars > *, .gl-split, .gl-split > i, .gl-tbl > div, .gl-dt th, .gl-dt td, .gl-bb, .gl-bb > *, .gl-flag, .gl-find';
+  const ATOMS = '.w, .seg, .hint, button, code';
+  const rectOf = el => { if (!el || !el.getClientRects().length) return null; const r = el.getBoundingClientRect(); return { x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height }; };
+  const lerp = (a, b, v) => a + (b - a) * v;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  // Words become their own boxes once, so they can travel when a line re-wraps.
+  function splitWords(root) {
+    if (root.dataset.split) return; root.dataset.split = '1';
+    const skip = '.sr-only, button, input, code, .hint, .w, script, style';
+    const walker = d.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => !n.data.trim() || n.parentElement.closest(skip) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+    const nodes = []; let n; while ((n = walker.nextNode())) nodes.push(n);
+    for (const node of nodes) {
+      const frag = d.createDocumentFragment();
+      for (const part of node.data.split(/(\s+)/)) {
+        if (!part) continue;
+        if (/^\s+$/.test(part)) frag.append(part);
+        else { const w = d.createElement('span'); w.className = 'w'; w.textContent = part; frag.append(w); }
+      }
+      node.replaceWith(frag);
+    }
+  }
+  // morph(scope, stage, mutate, opts): returns the running tween (or null when nothing animates).
+  function morph(scope, stage, mutate, { duration = .62, ease = 'power2.inOut', extra, done } = {}) {
+    const nodes = $$(BOXES + ',' + ATOMS, scope).filter(el => !el.closest('.cmp-before, .cmp-handle, .sr-only'));
+    const before = new Map(nodes.map(el => [el, rectOf(el)]));
+    // a clamped teaser clips its rows to its box; during the move that window travels too, instead of
+    // cutting everything to the final box at once
+    const clips = $$('.pic.clamp:not(.open)', scope).map(el => ({ el, a: rectOf(el) }));
+    const styleOf = new Map();
+    for (const el of nodes) if (before.get(el)) { const cs = getComputedStyle(el); styleOf.set(el, `font:${cs.font};color:${cs.color};letter-spacing:${cs.letterSpacing};text-align:${cs.textAlign};white-space:${cs.whiteSpace}`); }
+    mutate();
+    const after = new Map(nodes.map(el => [el, rectOf(el)]));
+    for (const c of clips) { c.b = rectOf(c.el); c.el.style.overflow = 'visible'; c.el.classList.add('clip-morph'); }
+    const S = rectOf(stage), top = scrollY - 300, bottom = scrollY + innerHeight + 300;
+    const seen = r => r && r.y + r.h > top && r.y < bottom;
+    const nodeOf = new Map(), travel = [], leaving = [], entering = [];
+    for (const el of nodes) {
+      const a = before.get(el), b = after.get(el), atom = el.matches(ATOMS);
+      if (a && b) { if (atom && !seen(a) && !seen(b)) continue; const n = { el, a, b, atom }; nodeOf.set(el, n); travel.push(n); }
+      else if (a && seen(a) && !(el.parentElement && el.parentElement.closest(BOXES) && !after.get(el.parentElement.closest(BOXES)) && before.get(el.parentElement.closest(BOXES)))) leaving.push({ el, a });
+      else if (b && seen(b)) entering.push(el);
+    }
+    for (const n of travel) {
+      let p = n.el.parentElement; while (p && p !== scope && !nodeOf.has(p)) p = p.parentElement;
+      n.parent = p && p !== scope ? nodeOf.get(p) : null; n.el.style.transformOrigin = '0 0';
+      // a resizing box's corners and inset bar are counter-scaled every frame, so they keep their true size
+      if (!n.atom) {
+        const cs = getComputedStyle(n.el), r = ['TopLeft', 'TopRight', 'BottomRight', 'BottomLeft'].map(k => parseFloat(cs['border' + k + 'Radius']) || 0);
+        const m = /^(.*\)) (-?[\d.]+)px (-?[\d.]+)px ([\d.]+)px (-?[\d.]+)px inset$/.exec(cs.boxShadow);
+        if (r.some(Boolean)) n.radius = r;
+        if (m) n.shadow = { color: m[1], x: +m[2], y: +m[3], blur: +m[4], spread: +m[5] };
+      }
+    }
+    // ghosts: a copy of each piece that leaves, at the place it left from
+    const layer = d.createElement('div'); layer.className = 'morph-layer gl'; layer.style.containerType = 'normal'; stage.append(layer);
+    const ghosts = leaving.filter(g => !leaving.some(o => o !== g && o.el.contains(g.el))).map(({ el, a }) => {
+      const wrap = d.createElement('div'); wrap.className = 'morph-ghost' + (el.closest('.gl-dt') ? ' gl-dt' : '');
+      wrap.style.cssText = `left:${a.x - S.x}px;top:${a.y - S.y}px;width:${a.w}px;height:${a.h}px`;
+      const c = el.cloneNode(true); c.style.cssText += `;display:block;width:100%;height:100%;box-sizing:border-box;${styleOf.get(el) || ''}`;
+      wrap.append(c); layer.append(wrap); return wrap;
+    });
+    const enter = entering.filter(e => !entering.some(o => o !== e && o.contains(e)));
+    const render = v => {
+      for (const n of travel) {
+        const P = n.parent && n.parent.M, psx = P ? P.sx : 1, psy = P ? P.sy : 1, pox = P ? P.ox : 0, poy = P ? P.oy : 0;
+        const kx = n.atom || !n.b.w ? 1 : lerp(n.a.w, n.b.w, v) / n.b.w, ky = n.atom || !n.b.h ? 1 : lerp(n.a.h, n.b.h, v) / n.b.h;
+        const Dx = lerp(n.a.x, n.b.x, v), Dy = lerp(n.a.y, n.b.y, v);
+        n.el.style.transform = `translate(${(Dx - pox) / psx - n.b.x}px,${(Dy - poy) / psy - n.b.y}px) scale(${kx / psx},${ky / psy})`;
+        n.M = { sx: kx, sy: ky, ox: Dx - n.b.x * kx, oy: Dy - n.b.y * ky };
+        if (n.radius) n.el.style.borderRadius = n.radius.map(r => r / kx + 'px').join(' ') + ' / ' + n.radius.map(r => r / ky + 'px').join(' ');
+        if (n.shadow) { const s = n.shadow; n.el.style.boxShadow = `${s.color} ${s.x / kx}px ${s.y / ky}px ${s.blur / kx}px ${s.spread / kx}px inset`; }
+      }
+      const out = 1 - clamp01(v / .45), inn = clamp01((v - .5) / .5);
+      for (const g of ghosts) { g.style.opacity = out; g.style.transform = `scale(${.96 + .04 * out})`; }
+      for (const e of enter) e.style.opacity = inn;
+      for (const c of clips) if (c.a && c.b) {
+        // the teaser's window, travelling from its old box to its new one; it may reach past its own box
+        const x = lerp(c.a.x, c.b.x, v) - c.b.x, y = lerp(c.a.y, c.b.y, v) - c.b.y, w = lerp(c.a.w, c.b.w, v), h = lerp(c.a.h, c.b.h, v);
+        c.el.style.clipPath = `inset(${y}px ${c.b.w - x - w}px ${c.b.h - y - h}px ${x}px)`;
+        c.el.style.setProperty('--fx', x + 'px'); c.el.style.setProperty('--fy', y + h * .82 + 'px');
+        c.el.style.setProperty('--fw', w + 'px'); c.el.style.setProperty('--fh', h * .18 + 'px');
+      }
+      extra && extra(v);
     };
+    const finish = () => {
+      for (const c of clips) { c.el.classList.remove('clip-morph'); c.el.style.overflow = ''; c.el.style.clipPath = ''; for (const k of ['--fx', '--fy', '--fw', '--fh']) c.el.style.removeProperty(k); }
+      for (const n of travel) { n.el.style.transform = ''; n.el.style.transformOrigin = ''; if (n.radius) n.el.style.borderRadius = ''; if (n.shadow) n.el.style.boxShadow = ''; }
+      for (const e of enter) e.style.opacity = '';
+      layer.remove();
+      done && done();
+    };
+    render(0);
+    const o = { v: 0 };
+    return gsap.to(o, { v: 1, duration, ease, onUpdate: () => render(o.v), onComplete: finish });
+  }
+
+  // Wide/Narrow control: the pressed pill slides from one choice to the other.
+  function initThumb(seg) {
+    const t = d.createElement('span'); t.className = 'seg-thumb no-anim'; t.setAttribute('aria-hidden', 'true'); seg.prepend(t);
+    const place = () => { const b = $('button[aria-pressed=true]', seg); if (b) { t.style.width = b.offsetWidth + 'px'; t.style.transform = `translateX(${b.offsetLeft}px)`; } };
+    place(); requestAnimationFrame(() => requestAnimationFrame(() => t.classList.remove('no-anim')));
+    d.fonts && d.fonts.ready.then(place);
+    return place;
+  }
+
+  /* Wide <-> Narrow. What moves where:
+     - the card's look (shell: background, shadow, glow) resizes from the wide box to the narrow one;
+     - every piece of the glance travels to its new place; the kit's narrow layout moves flags under
+       names and muted values under labels, and the endpoints' target-bar column leaves where it was;
+     - the sheet (Claude's answer) slides out from behind the shrinking card, its hidden height opens
+       up and it settles as the panel; going wide it slides back and tucks behind the growing card;
+     - a partly open compare layer hands off into that panel: its open window slides out of the card
+       and widens to the panel while its text cross-fades into the panel's, and the handle glides back
+       to the start; going wide the handle comes back out of the panel, the slider closed;
+     - the page below follows the example's height. */
+  function initWidth(ex) {
+    const frame = $('.ex-frame', ex), stage = $('.ex-stage', ex), sheet = $('.ex-sheet', ex), shell = $('.ex-shell', ex);
+    const card = $('.ex-card', ex), seg = $('.seg', ex), cmp = $('.cmp', ex), cmpLayer = $('.cmp-before', ex), layerText = $('.orig', cmpLayer), knob = $('.knob', ex);
+    const place = initThumb(seg);
+    const panelFits = () => getComputedStyle(sheet).display !== 'none';
+    const fit = () => { stage.style.minHeight = frame.classList.contains('narrow') && panelFits() ? sheet.offsetHeight + 'px' : ''; };
+    new ResizeObserver(() => { fit(); place(); }).observe(sheet);
+    let running = null;
     $$('.seg button', ex).forEach(b => b.addEventListener('click', () => {
       const narrow = b.dataset.w === 'narrow';
       if (narrow === frame.classList.contains('narrow')) return;
-      $$('.seg button', ex).forEach(o => o.setAttribute('aria-pressed', o === b));
-      resizing && resizing.kill(); leaving && leaving.kill(); leaving = null;
-      // going wide, let the answer fade out before the glance grows over its place
-      if (!narrow && G() && !REDUCED && getComputedStyle(main).display !== 'none')
-        leaving = gsap.to(main, { opacity: 0, duration: .18, ease: 'power1.in', onComplete: () => { leaving = null; resize(false); } });
-      else resize(narrow);
+      running && running.progress(1);
+      $$('.seg button', ex).forEach(o => o.setAttribute('aria-pressed', o === b)); place();
+      switchTo(narrow);
     }));
+    function switchTo(narrow) {
+      ex._build && ex._build.progress(1);
+      // the one-time peek hint stops for good: the switch decides where the compare layer goes now
+      ex.dataset.touched = '1';
+      if (ex._peekTl) { const mid = ex._peekTl.isActive(); ex._peekTl.kill(); ex._peekTl = null; if (mid) ex._cmpReset(); }   // a hint caught mid-way isn't the reader's position
+      const apply = () => {
+        frame.classList.toggle('narrow', narrow); stage.classList.toggle('is-narrow', narrow); fit();
+        if (narrow && panelFits()) ex._cmpReset();       // the panel takes over from the compare layer
+      };
+      if (!G() || REDUCED) { apply(); place(); window.ScrollTrigger && ScrollTrigger.refresh(); queueSweep(); return; }
+      splitWords($('.cmp-after', ex)); ex.classList.add('morphing');
+      const panel = panelFits(), pos = ex._cmpPos(), handoff = narrow && panel && pos > .5;
+      const c0 = rectOf(card), h0 = stage.offsetHeight, k0 = rectOf(knob), l0 = rectOf(cmpLayer), o0 = rectOf($('.orig-h', cmpLayer));
+      const sh = rectOf(sheet), sheetOrigin = rectOf($('.orig-h', sheet));
+      if (panel) sheet.classList.add('moving');
+      let c1, h1, k1, l1;
+      if (handoff) sheet.style.zIndex = 2;   // the answer rides above the card while it leaves it
+      running = morph(card, stage, () => {
+        // the compare layer keeps its wide size and wrap while it travels, so its text doesn't jump
+        if (handoff) Object.assign(cmpLayer.style, { left: '-10px', top: '-6px', right: 'auto', bottom: 'auto', width: l0.w + 'px', height: l0.h + 'px' });
+        apply();
+        // the example's final height; its minimum is only set once the move ends, so the height can travel
+        h1 = narrow && panel ? Math.max(frame.offsetHeight, sheet.offsetHeight) : frame.offsetHeight;
+        stage.style.minHeight = ''; stage.style.height = h0 + 'px';
+        c1 = rectOf(card); k1 = rectOf(knob); l1 = rectOf(cmpLayer);
+      }, {
+        extra: v => {
+          stage.style.height = lerp(h0, h1, v) + 'px';
+          const x = lerp(c0.x, c1.x, v), y = lerp(c0.y, c1.y, v);
+          Object.assign(shell.style, { left: x - c1.x + 'px', top: y - c1.y + 'px', width: lerp(c0.w, c1.w, v) + 'px', height: lerp(c0.h, c1.h, v) + 'px' });
+          if (!panel) return;
+          if (handoff) {
+            // the open window of the compare layer travels to the panel's place and size
+            const W0 = { x: l0.x, y: l0.y, w: l0.w * pos / 100, h: l0.h }, W = { x: lerp(W0.x, sh.x, v), y: lerp(W0.y, sh.y, v), w: lerp(W0.w, sh.w, v), h: lerp(W0.h, sh.h, v) };
+            const dx = (o0.x - sheetOrigin.x) * (1 - v), dy = (o0.y - sheetOrigin.y) * (1 - v);
+            const sx = sh.x + dx, sy = sh.y + dy;
+            sheet.style.transform = `translate(${dx}px,${dy}px)`;
+            sheet.style.clipPath = `inset(${Math.max(0, W.y - sy)}px ${Math.max(0, sx + sh.w - W.x - W.w)}px ${Math.max(0, sy + sh.h - W.y - W.h)}px ${Math.max(0, W.x - sx)}px round ${22 * v}px)`;
+            // a clean hand-over: the layer's text fades out on its solid background, then the panel (on top)
+            // fades in, then the layer steps away; never two texts, never the glance showing through
+            sheet.style.opacity = clamp01((v - .12) / .16);
+            layerText.style.opacity = 1 - clamp01(v / .14);
+            // the layer's text rides along with the sheet's, so both read as one block changing its wrap
+            const lxx = (sheetOrigin.x + dx) - o0.x + l0.x - l1.x, lyy = (sheetOrigin.y + dy) - o0.y + l0.y - l1.y;
+            cmpLayer.style.transform = `translate(${lxx}px,${lyy}px)`;
+            const lsx = l1.x + lxx, lsy = l1.y + lyy;
+            cmpLayer.style.clipPath = `inset(${Math.max(0, W.y - lsy)}px ${Math.max(0, lsx + l1.w - W.x - W.w)}px ${Math.max(0, lsy + l1.h - W.y - W.h)}px ${Math.max(0, W.x - lsx)}px)`;
+            cmpLayer.style.opacity = v < .3 ? 1 : 0;
+            knob.style.transform = `translate(${lerp(k0.x, k1.x, v) - k1.x}px,${lerp(k0.y, k1.y, v) - k1.y}px)`;
+            knob.style.opacity = 1 - clamp01((v - .55) / .45);
+            return;
+          }
+          // tucked behind the card (wide) <-> the panel (narrow); its hidden height opens as it comes out
+          const t = narrow ? 1 - v : v, cardH = narrow ? c0.h : c1.h, hidden = Math.max(0, sh.h - (cardH - 28));
+          sheet.style.transform = `translate(${32 * t}px,0) scale(${1 - .04 * t})`;
+          sheet.style.clipPath = `inset(0 0 ${hidden * t}px 0 round 22px)`;
+          if (narrow) {   // the closed handle rides with the card's edge and fades there
+            knob.style.transform = `translate(${lerp(k0.x, k1.x, v) - k1.x}px,${lerp(k0.y, k1.y, v) - k1.y}px)`;
+            knob.style.opacity = 1 - clamp01(v / .4);
+          }
+          else {   // the handle comes back out of the panel to the card's edge, closed
+            knob.style.transform = `translate(${lerp(sh.x + sh.w - 17 - k1.x, 0, v)}px,0)`;
+            knob.style.opacity = clamp01((v - .35) / .5);
+          }
+        },
+        done: () => {
+          for (const el of [sheet, cmpLayer, knob]) { el.style.transform = ''; el.style.clipPath = ''; el.style.opacity = ''; }
+          layerText.style.opacity = '';
+          Object.assign(cmpLayer.style, { left: '', top: '', right: '', bottom: '', width: '', height: '' }); sheet.style.zIndex = '';
+          Object.assign(shell.style, { left: '', top: '', width: '', height: '' });
+          stage.style.height = ''; fit(); sheet.classList.remove('moving'); ex.classList.remove('morphing'); running = null;
+          window.ScrollTrigger && ScrollTrigger.refresh(); queueSweep();
+        }
+      });
+    }
     const more = $('.more', ex);
     if (more) {
       const label = more.textContent, pic = $('.pic', ex);
@@ -251,7 +441,7 @@
   const ownText = el => [...el.childNodes].filter(n => !(n.nodeType === 1 && n.matches('.gl-q, .gl-note, .gl-flag, .gl-tech, .why'))).map(n => n.textContent).join('');
   function initSources(ex) {
     // each line also knows its twin in the side panel's copy of the answer, to light it up in narrow mode
-    const LINES = '.said :is(p, li, tr, h1, h2, h3)', mainLines = $$('.ex-main ' + LINES, ex), mainRows = $$('.ex-main .said tr', ex);
+    const LINES = '.said :is(p, li, tr, h1, h2, h3)', mainLines = $$('.ex-sheet ' + LINES, ex), mainRows = $$('.ex-sheet .said tr', ex);
     const blocks = $$('.cmp-before ' + LINES, ex).map((b, i) => { const t = lineText(b); return { t, n: norm(t), main: mainLines[i] }; }).filter(b => b.n);
     // table cells: found by their row's name, then by the cell's own text in that row of the original
     const srcRows = $$('.cmp-before .said tr', ex).map((tr, i) => Object.assign($$('th,td', tr).map(c => c.textContent.trim()), { main: mainRows[i] }));
@@ -306,7 +496,7 @@
     }).join('<br><br>');
     tipLine.innerHTML = html; tip.hidden = false;
     // in narrow mode Claude's answer sits beside the glance, in full: light the same line there
-    const stage = el.closest('.ex-stage'), panel = stage && $('.ex-main', stage);
+    const stage = el.closest('.ex-stage'), panel = stage && $('.ex-sheet', stage);
     if (panel && stage.classList.contains('is-narrow') && getComputedStyle(panel).display !== 'none') {
       litMain = (src.mains || []).filter(Boolean);
       litMain.forEach(m => m.classList.add('src-lit'));
@@ -325,7 +515,8 @@
 
   // The build: the sentence, then the picture assembles itself, red settles last.
   function prepBuild(ex) {
-    const after = $('.cmp-after', ex), tl = gsap.timeline({ paused: true, defaults: { force3D: false } });
+    // clearProps: once built, nothing keeps a leftover transform, so later moves start from clean boxes
+    const after = $('.cmp-after', ex), tl = gsap.timeline({ paused: true, defaults: { force3D: false, clearProps: 'transform' } });
     const sent = $('.g-sent', after), secs = $$('.gl > .gl-sec', after);
     tl.from(sent, { autoAlpha: 0, y: 14, duration: .55, ease: 'power2.out' }, 0);
     let t = .25;
@@ -409,14 +600,13 @@
   function initExamples() {
     for (const ex of $$('[data-ex]')) {
       initCompare(ex); initWidth(ex); initSources(ex);
-      if (G() && FINE && !REDUCED) {
-        const backEl = $('.ex-back', ex), glowEl = $('.ex-glow', ex), stage = $('.ex-stage', ex);
-        const bx = gsap.quickTo(backEl, 'x', { duration: 1, ease: 'power3' }), by = gsap.quickTo(backEl, 'y', { duration: 1, ease: 'power3' });
+      if (G() && FINE && !REDUCED) {   // the glow behind the card leans toward the pointer
+        const glowEl = $('.ex-glow', ex), stage = $('.ex-stage', ex);
         const gx = gsap.quickTo(glowEl, 'x', { duration: 1.2, ease: 'power3' }), gy = gsap.quickTo(glowEl, 'y', { duration: 1.2, ease: 'power3' });
-        stage.addEventListener('pointermove', e => { const r = stage.getBoundingClientRect(), px = (e.clientX - r.left) / r.width - .5, py = (e.clientY - r.top) / r.height - .5; bx(-px * 18); by(-py * 14); gx(px * 30); gy(py * 24); });
-        stage.addEventListener('pointerleave', () => { bx(0); by(0); gx(0); gy(0); });
+        stage.addEventListener('pointermove', e => { const r = stage.getBoundingClientRect(), px = (e.clientX - r.left) / r.width - .5, py = (e.clientY - r.top) / r.height - .5; gx(px * 30); gy(py * 24); });
+        stage.addEventListener('pointerleave', () => { gx(0); gy(0); });
       }
-      if (G() && !REDUCED) builds.push({ card: $('.ex-card', ex), tl: prepBuild(ex) });
+      if (G() && !REDUCED) { const tl = prepBuild(ex); ex._build = tl; builds.push({ card: $('.ex-card', ex), tl }); }
     }
   }
 

@@ -14,11 +14,11 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23185FA5'/%3E%3Crect x='7' y='17' width='4' height='8' rx='1' fill='%23B5D4F4'/%3E%3Crect x='14' y='13' width='4' height='12' rx='1' fill='%23B5D4F4'/%3E%3Crect x='21' y='7' width='4' height='18' rx='1' fill='%23fff'/%3E%3C/svg%3E">
 <script>(function(){var d=document.documentElement,t=null;d.classList.add('js');try{t=localStorage.getItem('glance-theme')}catch(e){}d.dataset.theme=t||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')})();</script>
 <link rel="stylesheet" href="assets/kit.css?v=3f0c6aeb2d">
-<link rel="stylesheet" href="assets/site.css?v=4c1dec539d">
+<link rel="stylesheet" href="assets/site.css?v=699182a7f6">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
 <script src="assets/kit.js?v=65a3c2f304" defer></script>
-<script src="assets/site.js?v=59ffb10eea" defer></script>
+<script src="assets/site.js?v=74e86fb18c" defer></script>
 </head>
 <body>
 <a class="skip" href="#examples">Skip to the examples</a>
@@ -177,7 +177,7 @@
     <p class="caption">glance picked columns for six months of totals, then a bridge from September to October with one step per service.</p>
   </div>
   <div class="ex-stage">
-    <div class="ex-main"><div class="orig ex-main-in"><p class="orig-h">Claude's answer · 276 words</p><p class="ask">why did our aws bill jump so much in october?</p>
+    <div class="ex-sheet"><div class="orig ex-sheet-in"><p class="orig-h">Claude's answer · 276 words</p><p class="ask">why did our aws bill jump so much in october?</p>
 <div class="said"><h2 id="why-the-aws-bill-jumped-in-october">Why the AWS bill jumped in October</h2>
 <p><strong>Short version:</strong> October came to <strong>$4,760</strong>, up from <strong>$2,110</strong> in September. Almost all of the extra <strong>$2,650</strong> is NAT Gateway and CloudWatch, and both trace back to two changes made in the first week of October.</p>
 <h3 id="monthly-totals">Monthly totals</h3>
@@ -253,82 +253,7 @@
 </ul>
 </div></div></div>
     <div class="ex-frame">
-    <div class="ex-back" aria-hidden="true"><div class="ex-back-in"><p class="ask">why did our aws bill jump so much in october?</p>
-<div class="said"><h2 id="why-the-aws-bill-jumped-in-october">Why the AWS bill jumped in October</h2>
-<p><strong>Short version:</strong> October came to <strong>$4,760</strong>, up from <strong>$2,110</strong> in September. Almost all of the extra <strong>$2,650</strong> is NAT Gateway and CloudWatch, and both trace back to two changes made in the first week of October.</p>
-<h3 id="monthly-totals">Monthly totals</h3>
-<p>May $1,840 · June $1,910 · July $1,880 · August $2,020 · September $2,110 · October <strong>$4,760</strong></p>
-<h3 id="september--october-by-service">September → October by service</h3>
-<table>
-<thead>
-<tr>
-<th>Service</th>
-<th>September</th>
-<th>October</th>
-<th>Change</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>NAT Gateway</td>
-<td>$110</td>
-<td>$2,240</td>
-<td>+$2,130</td>
-</tr>
-<tr>
-<td>CloudWatch</td>
-<td>$70</td>
-<td>$450</td>
-<td>+$380</td>
-</tr>
-<tr>
-<td>EC2</td>
-<td>$1,180</td>
-<td>$1,210</td>
-<td>+$30</td>
-</tr>
-<tr>
-<td>RDS</td>
-<td>$430</td>
-<td>$435</td>
-<td>+$5</td>
-</tr>
-<tr>
-<td>S3</td>
-<td>$290</td>
-<td>$300</td>
-<td>+$10</td>
-</tr>
-<tr>
-<td>Other</td>
-<td>$30</td>
-<td>$125</td>
-<td>+$95</td>
-</tr>
-</tbody>
-</table>
-<h3 id="what-happened">What happened</h3>
-<ol type="1">
-<li><strong>Debug logging left on.</strong> <code>log-shipper</code> v2.3, deployed Oct 3, runs with <code>LOG_LEVEL=debug</code>. Its output leaves the private subnets through the NAT Gateway: about <strong>38 TB</strong> in October. The same logs also go to CloudWatch Logs (~<strong>760 GB</strong> ingested at $0.50/GB ≈ <strong>$380</strong>).</li>
-<li><strong>ECR endpoint deleted.</strong> Terraform change #412 (Oct 6) removed the ECR VPC endpoints, so container image pulls now go through the NAT Gateway too: about <strong>9 TB</strong>.</li>
-</ol>
-<p>NAT data processed went from <strong>2.4 TB</strong> to <strong>49.8 TB</strong>, at <strong>$0.045/GB</strong>.</p>
-<h3 id="fixes-in-order">Fixes, in order</h3>
-<ol type="1">
-<li>Set <code>LOG_LEVEL=info</code> on <code>log-shipper</code> and redeploy. Removes ~38 TB/month of NAT traffic and most of the CloudWatch ingestion.</li>
-<li>Restore <code>aws_vpc_endpoint.ecr_api</code> and <code>aws_vpc_endpoint.ecr_dkr</code> in Terraform. Costs about <strong>$29/month</strong> (2 interface endpoints × 2 AZs) and saves roughly <strong>$400/month</strong> in NAT processing.</li>
-<li>Set CloudWatch log retention to <strong>14 days</strong> (currently "Never expire").</li>
-<li>Add a billing alarm at <strong>$2,500</strong>.</li>
-</ol>
-<p>If 1 and 2 are done by <strong>Nov 5</strong>, November should land around <strong>$2,150</strong>.</p>
-<h3 id="not-verified">Not verified</h3>
-<ul>
-<li>Cost Explorer figures for Oct 28–31 are still estimates.</li>
-<li>I didn't check Savings Plan coverage for EC2.</li>
-<li>The "Other" increase (+$95) isn't explained yet.</li>
-</ul>
-</div></div></div>
-    <div class="ex-glow" aria-hidden="true"></div>
+    <div class="ex-shell" aria-hidden="true"><div class="ex-glow"></div><div class="ex-card-bg"></div></div>
     <figure class="ex-card">
       <div class="ex-tools">
         <div class="seg" role="group" aria-label="Panel width"><button type="button" aria-pressed="true" data-w="wide">Wide</button><button type="button" aria-pressed="false" data-w="narrow">Narrow</button></div>
@@ -455,7 +380,7 @@
     <p class="caption">glance picked a headline number, then before → after rows with each team's budget under its new value, so the two teams over budget stand out.</p>
   </div>
   <div class="ex-stage">
-    <div class="ex-main"><div class="orig ex-main-in"><p class="orig-h">Claude's answer · 152 words</p><p class="ask">how did each team do against its Q3 cloud budget?</p>
+    <div class="ex-sheet"><div class="orig ex-sheet-in"><p class="orig-h">Claude's answer · 152 words</p><p class="ask">how did each team do against its Q3 cloud budget?</p>
 <div class="said"><h2 id="q3-cloud-spend-by-team-against-budget">Q3 cloud spend by team, against budget</h2>
 <p><strong>Short version:</strong> Two of five teams went over their Q3 budget: Data platform by <strong>$8,900</strong> and ML by <strong>$2,300</strong>. The other three came in under, but not by enough: total Q3 spend was <strong>$139,600</strong> against <strong>$137,000</strong> budgeted, <strong>$2,600</strong> over.</p>
 <table>
@@ -516,67 +441,7 @@
 </ul>
 </div></div></div>
     <div class="ex-frame">
-    <div class="ex-back" aria-hidden="true"><div class="ex-back-in"><p class="ask">how did each team do against its Q3 cloud budget?</p>
-<div class="said"><h2 id="q3-cloud-spend-by-team-against-budget">Q3 cloud spend by team, against budget</h2>
-<p><strong>Short version:</strong> Two of five teams went over their Q3 budget: Data platform by <strong>$8,900</strong> and ML by <strong>$2,300</strong>. The other three came in under, but not by enough: total Q3 spend was <strong>$139,600</strong> against <strong>$137,000</strong> budgeted, <strong>$2,600</strong> over.</p>
-<table>
-<thead>
-<tr>
-<th>Team</th>
-<th>Q2</th>
-<th>Q3</th>
-<th>Q3 budget</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Data platform</td>
-<td>$41,200</td>
-<td>$58,900</td>
-<td>$50,000</td>
-</tr>
-<tr>
-<td>ML</td>
-<td>$30,500</td>
-<td>$34,300</td>
-<td>$32,000</td>
-</tr>
-<tr>
-<td>Web</td>
-<td>$22,400</td>
-<td>$21,100</td>
-<td>$25,000</td>
-</tr>
-<tr>
-<td>Mobile backend</td>
-<td>$18,000</td>
-<td>$17,300</td>
-<td>$20,000</td>
-</tr>
-<tr>
-<td>Internal tools</td>
-<td>$9,100</td>
-<td>$8,000</td>
-<td>$10,000</td>
-</tr>
-</tbody>
-</table>
-<h3 id="why-the-two-teams-went-over">Why the two teams went over</h3>
-<ul>
-<li><strong>Data platform:</strong> the new Spark cluster for the event pipeline has run 24/7 since July 3, on on-demand instances.</li>
-<li><strong>ML:</strong> three GPU training runs for the ranking model in August (<code>rank-v4</code>, <code>rank-v4b</code>, <code>rank-v5</code>).</li>
-</ul>
-<h3 id="next">Next</h3>
-<ol type="1">
-<li>Data platform moves Spark to autoscaling spot instances: estimated <strong>−$6,000</strong> per quarter.</li>
-<li>ML asks finance to raise its Q4 budget to <strong>$36,000</strong>.</li>
-</ol>
-<h3 id="open">Open</h3>
-<ul>
-<li>Whether the Q4 budget for Data platform changes; finance meets on Nov 18.</li>
-</ul>
-</div></div></div>
-    <div class="ex-glow" aria-hidden="true"></div>
+    <div class="ex-shell" aria-hidden="true"><div class="ex-glow"></div><div class="ex-card-bg"></div></div>
     <figure class="ex-card">
       <div class="ex-tools">
         <div class="seg" role="group" aria-label="Panel width"><button type="button" aria-pressed="true" data-w="wide">Wide</button><button type="button" aria-pressed="false" data-w="narrow">Narrow</button></div>
@@ -675,7 +540,7 @@
     <p class="caption">glance picked causes with counts: one bar per cause, its status right after its name and every resource listed under it.</p>
   </div>
   <div class="ex-stage">
-    <div class="ex-main"><div class="orig ex-main-in"><p class="orig-h">Claude's answer · 111 words</p><p class="ask">what&#x27;s still running in AWS that nobody uses, and what does it cost?</p>
+    <div class="ex-sheet"><div class="orig ex-sheet-in"><p class="orig-h">Claude's answer · 111 words</p><p class="ask">what&#x27;s still running in AWS that nobody uses, and what does it cost?</p>
 <div class="said"><h2 id="whats-still-running-that-nobody-uses">What's still running that nobody uses</h2>
 <p><strong>Short version:</strong> <strong>11</strong> resources cost <strong>$1,240/month</strong> and do nothing. Six of them are left over from the September load test and can be deleted today.</p>
 <table>
@@ -720,51 +585,7 @@
 </ul>
 </div></div></div>
     <div class="ex-frame">
-    <div class="ex-back" aria-hidden="true"><div class="ex-back-in"><p class="ask">what&#x27;s still running in AWS that nobody uses, and what does it cost?</p>
-<div class="said"><h2 id="whats-still-running-that-nobody-uses">What's still running that nobody uses</h2>
-<p><strong>Short version:</strong> <strong>11</strong> resources cost <strong>$1,240/month</strong> and do nothing. Six of them are left over from the September load test and can be deleted today.</p>
-<table>
-<thead>
-<tr>
-<th>Cause</th>
-<th>Resources</th>
-<th>Count</th>
-<th>Monthly cost</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Left over from the Sept load test</td>
-<td><code>lt-runner-1</code>, <code>lt-runner-2</code>, <code>lt-runner-3</code>, <code>lt-runner-4</code>, <code>lt-db</code>, <code>lt-cache</code></td>
-<td>6</td>
-<td>$820</td>
-</tr>
-<tr>
-<td>Unattached EBS volumes</td>
-<td><code>vol-0a1f</code>, <code>vol-0b77</code>, <code>vol-0c3e</code></td>
-<td>3</td>
-<td>$210</td>
-</tr>
-<tr>
-<td>NAT Gateways in the retired VPC</td>
-<td><code>nat-0f3a</code>, <code>nat-0f3b</code></td>
-<td>2</td>
-<td>$210</td>
-</tr>
-</tbody>
-</table>
-<h3 id="status">Status</h3>
-<ul>
-<li>Load test leftovers: safe to delete; the test owner confirmed on Nov 9.</li>
-<li>EBS volumes: snapshot first, then delete.</li>
-<li>NAT Gateways: waiting on the networking team to retire <code>vpc-legacy</code>.</li>
-</ul>
-<h3 id="not-checked">Not checked</h3>
-<ul>
-<li>Elastic IPs and old AMIs weren't part of this sweep.</li>
-</ul>
-</div></div></div>
-    <div class="ex-glow" aria-hidden="true"></div>
+    <div class="ex-shell" aria-hidden="true"><div class="ex-glow"></div><div class="ex-card-bg"></div></div>
     <figure class="ex-card">
       <div class="ex-tools">
         <div class="seg" role="group" aria-label="Panel width"><button type="button" aria-pressed="true" data-w="wide">Wide</button><button type="button" aria-pressed="false" data-w="narrow">Narrow</button></div>
@@ -847,7 +668,7 @@
     <p class="caption">glance picked headline numbers and a status grid you can filter, failures sorted to the top and the one real bug flagged.</p>
   </div>
   <div class="ex-stage">
-    <div class="ex-main"><div class="orig ex-main-in"><p class="orig-h">Claude's answer · 479 words</p><p class="ask">the nightly e2e run is red again, what&#x27;s actually failing and does any of it block thursday&#x27;s release? results are in e2e/nightly-2291.txt</p>
+    <div class="ex-sheet"><div class="orig ex-sheet-in"><p class="orig-h">Claude's answer · 479 words</p><p class="ask">the nightly e2e run is red again, what&#x27;s actually failing and does any of it block thursday&#x27;s release? results are in e2e/nightly-2291.txt</p>
 <div class="said"><h2 id="nightly-e2e-run-2291-main--4f1a9c2-whats-failing">Nightly e2e run #2291 (<code>main</code> @ <code>4f1a9c2</code>): what's failing</h2>
 <p><strong>Short version:</strong> 5 of 96 runs fail, and they're all in two browsers: Safari has 3 failures and Firefox has 2. Chrome and Edge only have one flaky spec between them. Four of the five failures are test problems. One, <code>checkout/address</code> on Safari, is a real bug that Safari customers would hit, so I'd fix it before Thursday.</p>
 <h3 id="every-spec-by-browser">Every spec, by browser</h3>
@@ -1058,217 +879,7 @@
 <p><strong>Not checked:</strong> whether <code>checkout/address</code> also breaks on iPad Safari. The nightly run only covers desktop WebKit.</p>
 </div></div></div>
     <div class="ex-frame">
-    <div class="ex-back" aria-hidden="true"><div class="ex-back-in"><p class="ask">the nightly e2e run is red again, what&#x27;s actually failing and does any of it block thursday&#x27;s release? results are in e2e/nightly-2291.txt</p>
-<div class="said"><h2 id="nightly-e2e-run-2291-main--4f1a9c2-whats-failing">Nightly e2e run #2291 (<code>main</code> @ <code>4f1a9c2</code>): what's failing</h2>
-<p><strong>Short version:</strong> 5 of 96 runs fail, and they're all in two browsers: Safari has 3 failures and Firefox has 2. Chrome and Edge only have one flaky spec between them. Four of the five failures are test problems. One, <code>checkout/address</code> on Safari, is a real bug that Safari customers would hit, so I'd fix it before Thursday.</p>
-<h3 id="every-spec-by-browser">Every spec, by browser</h3>
-<table>
-<thead>
-<tr>
-<th>Spec</th>
-<th>Chrome</th>
-<th>Firefox</th>
-<th>Safari</th>
-<th>Edge</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>auth/login</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>auth/signup</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>auth/password-reset</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>auth/sso-google</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>cart/add-item</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>cart/update-qty</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>cart/promo-code</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>checkout/address</td>
-<td>pass</td>
-<td>pass</td>
-<td>fail</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>checkout/shipping-rates</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>checkout/card-payment</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>checkout/apple-pay</td>
-<td>skip</td>
-<td>skip</td>
-<td>pass</td>
-<td>skip</td>
-</tr>
-<tr>
-<td>checkout/confirmation-email</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>orders/history</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>orders/invoice-pdf</td>
-<td>pass</td>
-<td>fail</td>
-<td>pass</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>orders/return-request</td>
-<td>pass</td>
-<td>pass</td>
-<td>fail</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>account/profile</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>account/avatar-upload</td>
-<td>pass</td>
-<td>fail</td>
-<td>pass</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>account/addresses</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>search/autocomplete</td>
-<td>pass</td>
-<td>flaky</td>
-<td>pass</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>search/filters</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>product/gallery</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>product/reviews</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-<td>pass</td>
-</tr>
-<tr>
-<td>notifications/live-updates</td>
-<td>flaky</td>
-<td>pass</td>
-<td>pass</td>
-<td>flaky</td>
-</tr>
-<tr>
-<td>booking/date-picker</td>
-<td>pass</td>
-<td>pass</td>
-<td>fail</td>
-<td>pass</td>
-</tr>
-</tbody>
-</table>
-<p>Totals: <strong>85</strong> pass, <strong>5</strong> fail, <strong>3</strong> flaky (passed on retry), <strong>3</strong> skipped (<code>checkout/apple-pay</code> only runs on Safari).</p>
-<h3 id="safari-3-failures">Safari: 3 failures</h3>
-<ul>
-<li><strong><code>booking/date-picker</code></strong> and <strong><code>orders/return-request</code></strong> wait for <code>#checkin</code> and <code>#return-date</code>, which don't exist on WebKit: <code>DatePicker.tsx</code> renders a text input there instead, with the id <code>…-text</code> and <code>data-testid="date-text"</code>. This is a test problem: target <code>data-testid="date-text"</code> on WebKit.</li>
-<li><strong><code>checkout/address</code></strong> is a <strong>real bug</strong>. <code>AddressSuggestions.tsx:42</code> calls <code>requestIdleCallback</code>, which Safari doesn't have, so the page throws and the suggestions never appear. Safari customers can't pick an address. Fix: fall back to <code>setTimeout</code> when <code>requestIdleCallback</code> is missing.</li>
-</ul>
-<h3 id="firefox-2-failures">Firefox: 2 failures</h3>
-<ul>
-<li><strong><code>account/avatar-upload</code></strong>: <code>AvatarButton.tsx</code> opens the file picker from a 300 ms <code>setTimeout</code>, and Firefox blocks it ("picker was blocked due to lack of user activation"). Real users on Firefox hit this too, but there's a workaround (they can click again), so it can wait. For the test, use <code>setInputFiles()</code> on the hidden input.</li>
-<li><strong><code>orders/invoice-pdf</code></strong> waits for a download, but Firefox opens PDFs in its built-in viewer. Set <code>pdfjs.disabled</code> in the Firefox project's <code>firefoxUserPrefs</code> (<code>playwright.config.ts</code> doesn't set it).</li>
-</ul>
-<h3 id="flaky-passed-on-retry">Flaky (passed on retry)</h3>
-<ul>
-<li><code>notifications/live-updates</code> on Chrome and Edge timed out after 2 s waiting for "Order shipped", then passed on retry.</li>
-<li><code>search/autocomplete</code> on Firefox waits a fixed 250 ms, but <code>SearchBox.tsx</code> debounces for 300 ms, so it only passes when the timing happens to work out.</li>
-</ul>
-<h3 id="what-id-do">What I'd do</h3>
-<ol type="1">
-<li>Fix <code>requestIdleCallback</code> in <code>AddressSuggestions.tsx</code> before Thursday's release.</li>
-<li>Point the two date tests at <code>data-testid="date-text"</code> on WebKit.</li>
-<li>Firefox: <code>setInputFiles()</code> for the avatar test, <code>pdfjs.disabled</code> for the invoice.</li>
-<li>In <code>autocomplete</code>, wait for the suggestions request instead of a fixed 250 ms. Give <code>live-updates</code> a longer timeout.</li>
-</ol>
-<p><strong>Not checked:</strong> whether <code>checkout/address</code> also breaks on iPad Safari. The nightly run only covers desktop WebKit.</p>
-</div></div></div>
-    <div class="ex-glow" aria-hidden="true"></div>
+    <div class="ex-shell" aria-hidden="true"><div class="ex-glow"></div><div class="ex-card-bg"></div></div>
     <figure class="ex-card">
       <div class="ex-tools">
         <div class="seg" role="group" aria-label="Panel width"><button type="button" aria-pressed="true" data-w="wide">Wide</button><button type="button" aria-pressed="false" data-w="narrow">Narrow</button></div>
@@ -1554,7 +1165,7 @@
     <p class="caption">glance picked a table you can sort, filter and search, with a bar for each endpoint against the 300 ms target.</p>
   </div>
   <div class="ex-stage">
-    <div class="ex-main"><div class="orig ex-main-in"><p class="orig-h">Claude's answer · 367 words</p><p class="ask">compare p95 for every endpoint before and after the Go 1.23 upgrade</p>
+    <div class="ex-sheet"><div class="orig ex-sheet-in"><p class="orig-h">Claude's answer · 367 words</p><p class="ask">compare p95 for every endpoint before and after the Go 1.23 upgrade</p>
 <div class="said"><h2 id="p95-latency-for-all-40-endpoints-after-the-go-123-upgrade">p95 latency for all 40 endpoints after the Go 1.23 upgrade</h2>
 <p><strong>Short version:</strong> <strong>19</strong> of 40 endpoints got faster, <strong>19</strong> got slower and <strong>2</strong> didn't change. <strong>9</strong> now miss the <strong>300 ms</strong> p95 target: <code>/search</code>, <code>/search/suggest</code>, <code>/products/:id</code>, <code>/reports/export</code>, <code>/notifications</code>, <code>/notifications/read</code>, <code>/addresses</code>, <code>/health</code>, <code>/feature-flags</code>.</p>
 <p>Measured with k6 on staging: 200 virtual users, 10 minutes per run, same data snapshot (Nov 9).</p>
@@ -1817,269 +1428,7 @@
 </ul>
 </div></div></div>
     <div class="ex-frame">
-    <div class="ex-back" aria-hidden="true"><div class="ex-back-in"><p class="ask">compare p95 for every endpoint before and after the Go 1.23 upgrade</p>
-<div class="said"><h2 id="p95-latency-for-all-40-endpoints-after-the-go-123-upgrade">p95 latency for all 40 endpoints after the Go 1.23 upgrade</h2>
-<p><strong>Short version:</strong> <strong>19</strong> of 40 endpoints got faster, <strong>19</strong> got slower and <strong>2</strong> didn't change. <strong>9</strong> now miss the <strong>300 ms</strong> p95 target: <code>/search</code>, <code>/search/suggest</code>, <code>/products/:id</code>, <code>/reports/export</code>, <code>/notifications</code>, <code>/notifications/read</code>, <code>/addresses</code>, <code>/health</code>, <code>/feature-flags</code>.</p>
-<p>Measured with k6 on staging: 200 virtual users, 10 minutes per run, same data snapshot (Nov 9).</p>
-<table>
-<thead>
-<tr>
-<th>Endpoint</th>
-<th>Before (p95)</th>
-<th>After (p95)</th>
-<th>Change</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>/login</td>
-<td>190 ms</td>
-<td>180 ms</td>
-<td>−10 ms</td>
-</tr>
-<tr>
-<td>/logout</td>
-<td>105 ms</td>
-<td>165 ms</td>
-<td>+60 ms</td>
-</tr>
-<tr>
-<td>/signup</td>
-<td>290 ms</td>
-<td>295 ms</td>
-<td>+5 ms</td>
-</tr>
-<tr>
-<td>/me</td>
-<td>135 ms</td>
-<td>95 ms</td>
-<td>−40 ms</td>
-</tr>
-<tr>
-<td>/me/settings</td>
-<td>80 ms</td>
-<td>20 ms</td>
-<td>−60 ms</td>
-</tr>
-<tr>
-<td>/search</td>
-<td>295 ms</td>
-<td>305 ms</td>
-<td>+10 ms</td>
-</tr>
-<tr>
-<td>/search/suggest</td>
-<td>225 ms</td>
-<td>315 ms</td>
-<td>+90 ms</td>
-</tr>
-<tr>
-<td>/products</td>
-<td>75 ms</td>
-<td>60 ms</td>
-<td>−15 ms</td>
-</tr>
-<tr>
-<td>/products/:id</td>
-<td>370 ms</td>
-<td>380 ms</td>
-<td>+10 ms</td>
-</tr>
-<tr>
-<td>/products/:id/reviews</td>
-<td>270 ms</td>
-<td>260 ms</td>
-<td>−10 ms</td>
-</tr>
-<tr>
-<td>/cart</td>
-<td>150 ms</td>
-<td>290 ms</td>
-<td>+140 ms</td>
-</tr>
-<tr>
-<td>/cart/items</td>
-<td>105 ms</td>
-<td>95 ms</td>
-<td>−10 ms</td>
-</tr>
-<tr>
-<td>/checkout</td>
-<td>175 ms</td>
-<td>115 ms</td>
-<td>−60 ms</td>
-</tr>
-<tr>
-<td>/checkout/confirm</td>
-<td>205 ms</td>
-<td>295 ms</td>
-<td>+90 ms</td>
-</tr>
-<tr>
-<td>/orders</td>
-<td>210 ms</td>
-<td>195 ms</td>
-<td>−15 ms</td>
-</tr>
-<tr>
-<td>/orders/:id</td>
-<td>145 ms</td>
-<td>135 ms</td>
-<td>−10 ms</td>
-</tr>
-<tr>
-<td>/orders/:id/invoice</td>
-<td>225 ms</td>
-<td>260 ms</td>
-<td>+35 ms</td>
-</tr>
-<tr>
-<td>/payments</td>
-<td>275 ms</td>
-<td>235 ms</td>
-<td>−40 ms</td>
-</tr>
-<tr>
-<td>/payments/refund</td>
-<td>255 ms</td>
-<td>290 ms</td>
-<td>+35 ms</td>
-</tr>
-<tr>
-<td>/shipping/rates</td>
-<td>285 ms</td>
-<td>295 ms</td>
-<td>+10 ms</td>
-</tr>
-<tr>
-<td>/inventory</td>
-<td>195 ms</td>
-<td>170 ms</td>
-<td>−25 ms</td>
-</tr>
-<tr>
-<td>/inventory/:sku</td>
-<td>195 ms</td>
-<td>200 ms</td>
-<td>+5 ms</td>
-</tr>
-<tr>
-<td>/reports/daily</td>
-<td>215 ms</td>
-<td>175 ms</td>
-<td>−40 ms</td>
-</tr>
-<tr>
-<td>/reports/export</td>
-<td>390 ms</td>
-<td>530 ms</td>
-<td>+140 ms</td>
-</tr>
-<tr>
-<td>/admin/users</td>
-<td>230 ms</td>
-<td>170 ms</td>
-<td>−60 ms</td>
-</tr>
-<tr>
-<td>/admin/audit</td>
-<td>225 ms</td>
-<td>245 ms</td>
-<td>+20 ms</td>
-</tr>
-<tr>
-<td>/notifications</td>
-<td>235 ms</td>
-<td>375 ms</td>
-<td>+140 ms</td>
-</tr>
-<tr>
-<td>/notifications/read</td>
-<td>365 ms</td>
-<td>350 ms</td>
-<td>−15 ms</td>
-</tr>
-<tr>
-<td>/wishlist</td>
-<td>300 ms</td>
-<td>300 ms</td>
-<td>+0 ms</td>
-</tr>
-<tr>
-<td>/wishlist/items</td>
-<td>220 ms</td>
-<td>220 ms</td>
-<td>+0 ms</td>
-</tr>
-<tr>
-<td>/recommendations</td>
-<td>325 ms</td>
-<td>300 ms</td>
-<td>−25 ms</td>
-</tr>
-<tr>
-<td>/coupons/apply</td>
-<td>185 ms</td>
-<td>175 ms</td>
-<td>−10 ms</td>
-</tr>
-<tr>
-<td>/addresses</td>
-<td>205 ms</td>
-<td>345 ms</td>
-<td>+140 ms</td>
-</tr>
-<tr>
-<td>/addresses/:id</td>
-<td>65 ms</td>
-<td>25 ms</td>
-<td>−40 ms</td>
-</tr>
-<tr>
-<td>/reviews</td>
-<td>65 ms</td>
-<td>70 ms</td>
-<td>+5 ms</td>
-</tr>
-<tr>
-<td>/uploads</td>
-<td>215 ms</td>
-<td>225 ms</td>
-<td>+10 ms</td>
-</tr>
-<tr>
-<td>/health</td>
-<td>380 ms</td>
-<td>415 ms</td>
-<td>+35 ms</td>
-</tr>
-<tr>
-<td>/feature-flags</td>
-<td>340 ms</td>
-<td>400 ms</td>
-<td>+60 ms</td>
-</tr>
-<tr>
-<td>/webhooks/stripe</td>
-<td>255 ms</td>
-<td>230 ms</td>
-<td>−25 ms</td>
-</tr>
-<tr>
-<td>/sitemap.xml</td>
-<td>165 ms</td>
-<td>125 ms</td>
-<td>−40 ms</td>
-</tr>
-</tbody>
-</table>
-<h3 id="caveats">Caveats</h3>
-<ul>
-<li>Each number is a single run; earlier run-to-run noise was about <strong>±10 ms</strong>.</li>
-<li>Staging has about <strong>1/10</strong> of production's data.</li>
-</ul>
-</div></div></div>
-    <div class="ex-glow" aria-hidden="true"></div>
+    <div class="ex-shell" aria-hidden="true"><div class="ex-glow"></div><div class="ex-card-bg"></div></div>
     <figure class="ex-card">
       <div class="ex-tools">
         <div class="seg" role="group" aria-label="Panel width"><button type="button" aria-pressed="true" data-w="wide">Wide</button><button type="button" aria-pressed="false" data-w="narrow">Narrow</button></div>
@@ -2427,7 +1776,7 @@
     <p class="caption">glance picked a split bar of what it's made of, then the fixes as bars, biggest win first.</p>
   </div>
   <div class="ex-stage">
-    <div class="ex-main"><div class="orig ex-main-in"><p class="orig-h">Claude's answer · 183 words</p><p class="ask">why is main.js so big now?</p>
+    <div class="ex-sheet"><div class="orig ex-sheet-in"><p class="orig-h">Claude's answer · 183 words</p><p class="ask">why is main.js so big now?</p>
 <div class="said"><h2 id="why-the-dashboard-bundle-is-184-mb">Why the dashboard bundle is 1.84 MB</h2>
 <p><strong>Short version:</strong> Almost half of the main bundle is the charting library, and it loads on every page even though only the Reports page uses it. Loading it only there would cut <code>main.js</code> by about <strong>860 KB</strong>.</p>
 <h3 id="whats-in-mainjs-184-mb-minified-512-kb-gzipped">What's in <code>main.js</code> (1.84 MB minified, 512 KB gzipped)</h3>
@@ -2487,66 +1836,7 @@
 </ul>
 </div></div></div>
     <div class="ex-frame">
-    <div class="ex-back" aria-hidden="true"><div class="ex-back-in"><p class="ask">why is main.js so big now?</p>
-<div class="said"><h2 id="why-the-dashboard-bundle-is-184-mb">Why the dashboard bundle is 1.84 MB</h2>
-<p><strong>Short version:</strong> Almost half of the main bundle is the charting library, and it loads on every page even though only the Reports page uses it. Loading it only there would cut <code>main.js</code> by about <strong>860 KB</strong>.</p>
-<h3 id="whats-in-mainjs-184-mb-minified-512-kb-gzipped">What's in <code>main.js</code> (1.84 MB minified, 512 KB gzipped)</h3>
-<table>
-<thead>
-<tr>
-<th>Part</th>
-<th>Size (minified)</th>
-<th>Share</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>echarts</td>
-<td>860 KB</td>
-<td>47 %</td>
-</tr>
-<tr>
-<td>Our code</td>
-<td>410 KB</td>
-<td>22 %</td>
-</tr>
-<tr>
-<td>react + react-dom</td>
-<td>140 KB</td>
-<td>8 %</td>
-</tr>
-<tr>
-<td>lodash</td>
-<td>72 KB</td>
-<td>4 %</td>
-</tr>
-<tr>
-<td>moment + locales</td>
-<td>290 KB</td>
-<td>16 %</td>
-</tr>
-<tr>
-<td>Everything else (31 packages)</td>
-<td>68 KB</td>
-<td>4 %</td>
-</tr>
-</tbody>
-</table>
-<p>From <code>npx vite-bundle-visualizer</code> on commit <code>a41c9e2</code>.</p>
-<h3 id="what-to-do-biggest-win-first">What to do, biggest win first</h3>
-<ol type="1">
-<li>Load <code>echarts</code> with <code>React.lazy</code> in <code>pages/Reports.tsx</code> only: −860 KB from <code>main.js</code> (it moves to a <code>reports</code> chunk).</li>
-<li>Replace <code>moment</code> with <code>date-fns</code> and drop the unused locales: about −250 KB.</li>
-<li>Change <code>import _ from 'lodash'</code> to per-function imports (<code>lodash/debounce</code>): about −60 KB.</li>
-</ol>
-<h3 id="watch-out">Watch out</h3>
-<ul>
-<li>The Reports page will be about <strong>300 ms</strong> slower on a first visit, while the chart chunk downloads.</li>
-<li><code>react-datepicker</code> also uses <code>moment</code>; check it still works after step 2.</li>
-<li>I haven't measured the gzipped size after these changes.</li>
-</ul>
-</div></div></div>
-    <div class="ex-glow" aria-hidden="true"></div>
+    <div class="ex-shell" aria-hidden="true"><div class="ex-glow"></div><div class="ex-card-bg"></div></div>
     <figure class="ex-card">
       <div class="ex-tools">
         <div class="seg" role="group" aria-label="Panel width"><button type="button" aria-pressed="true" data-w="wide">Wide</button><button type="button" aria-pressed="false" data-w="narrow">Narrow</button></div>
@@ -2654,7 +1944,7 @@
     <p class="caption">Recapped with <code>/glance everything we did today</code>. glance picked before → after rows in three steps, start, midway and now, each against its budget.</p>
   </div>
   <div class="ex-stage">
-    <div class="ex-main"><div class="orig ex-main-in"><p class="orig-h">Claude's answer · 526 words</p><p class="ask">checkout feels slow on mobile. can you measure it against our perf budget? lighthouse results are in perf/lighthouse-checkout.json</p>
+    <div class="ex-sheet"><div class="orig ex-sheet-in"><p class="orig-h">Claude's answer · 526 words</p><p class="ask">checkout feels slow on mobile. can you measure it against our perf budget? lighthouse results are in perf/lighthouse-checkout.json</p>
 <div class="said"><h2 id="checkout-on-mobile-against-the-performance-budget">Checkout on mobile, against the performance budget</h2>
 <p><strong>Short version:</strong> All five metrics are over budget. The page takes <strong>4.8 s</strong> to show its main image, and the three biggest problems are an unoptimized hero image, a banner that pushes the page down after it loads, and <strong>612 KB</strong> of JavaScript.</p>
 <p>Median of 5 Lighthouse runs on a Moto G Power profile (slow CPU, Slow 4G):</p>
@@ -2799,151 +2089,7 @@
 </ul>
 </div></div></div>
     <div class="ex-frame">
-    <div class="ex-back" aria-hidden="true"><div class="ex-back-in"><p class="ask">checkout feels slow on mobile. can you measure it against our perf budget? lighthouse results are in perf/lighthouse-checkout.json</p>
-<div class="said"><h2 id="checkout-on-mobile-against-the-performance-budget">Checkout on mobile, against the performance budget</h2>
-<p><strong>Short version:</strong> All five metrics are over budget. The page takes <strong>4.8 s</strong> to show its main image, and the three biggest problems are an unoptimized hero image, a banner that pushes the page down after it loads, and <strong>612 KB</strong> of JavaScript.</p>
-<p>Median of 5 Lighthouse runs on a Moto G Power profile (slow CPU, Slow 4G):</p>
-<table>
-<thead>
-<tr>
-<th>Metric</th>
-<th>Now</th>
-<th>Budget</th>
-<th></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>LCP (main content visible)</td>
-<td>4.8 s</td>
-<td>2.5 s</td>
-<td>over</td>
-</tr>
-<tr>
-<td>INP (response to a tap)</td>
-<td>380 ms</td>
-<td>200 ms</td>
-<td>over</td>
-</tr>
-<tr>
-<td>CLS (layout shift)</td>
-<td>0.21</td>
-<td>0.1</td>
-<td>over</td>
-</tr>
-<tr>
-<td>JavaScript, gzipped</td>
-<td>612 KB</td>
-<td>300 KB</td>
-<td>over</td>
-</tr>
-<tr>
-<td>TTFB (server response)</td>
-<td>0.9 s</td>
-<td>0.8 s</td>
-<td>over</td>
-</tr>
-</tbody>
-</table>
-<h3 id="why">Why</h3>
-<ul>
-<li><strong>LCP:</strong> the hero is <code>checkout-hero.png</code>, a 1.4 MB PNG that isn't preloaded, so it starts downloading late.</li>
-<li><strong>CLS:</strong> <code>.promo-banner</code> is inserted about 1.9 s after load and pushes everything down (0.19 of the 0.21).</li>
-<li><strong>JavaScript:</strong> the Places SDK (180 KB) and the payments SDK (210 KB) load on every visit, before anyone reaches those steps. <code>moment</code> adds 72 KB to <code>main.js</code>.</li>
-<li><strong>INP:</strong> every keystroke in the coupon field runs <code>CouponField.onChange</code>, a 140 ms task.</li>
-<li><strong>TTFB:</strong> the page waits on <code>GET /api/cart</code> (610 ms), which is sent with <code>no-store</code>, so it's never cached.</li>
-</ul>
-<p>I'd start with the image and the banner: both are small changes and should fix two metrics.</p>
-</div>
-<p class="ask">converted the hero to avif with a preload and reserved space for the banner. new run is in perf/run-2.json</p>
-<div class="said"><p>Both changes worked. Median of 5 runs, same device profile:</p>
-<table>
-<thead>
-<tr>
-<th>Metric</th>
-<th>Before</th>
-<th>After</th>
-<th>Budget</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>LCP</td>
-<td>4.8 s</td>
-<td><strong>2.9 s</strong></td>
-<td>2.5 s</td>
-</tr>
-<tr>
-<td>CLS</td>
-<td>0.21</td>
-<td><strong>0.04</strong></td>
-<td>0.1</td>
-</tr>
-<tr>
-<td>INP</td>
-<td>380 ms</td>
-<td>370 ms</td>
-<td>200 ms</td>
-</tr>
-</tbody>
-</table>
-<ul>
-<li><strong>CLS is now well under budget.</strong> The reserved slot means nothing moves when the banner arrives.</li>
-<li><strong>LCP is better but still 0.4 s over.</strong> The image itself now loads in 310 ms, but the browser waits <strong>1,570 ms</strong> after that before painting it, because it's busy running JavaScript. That's the next fix: the 612 KB of scripts.</li>
-<li>INP and JavaScript didn't change, as expected.</li>
-</ul>
-</div>
-<p class="ask">lazy loaded the places and payments sdks and swapped moment for Intl. perf/run-3.json</p>
-<div class="said"><p>That did it for JavaScript and LCP. Median of 5 runs:</p>
-<table>
-<thead>
-<tr>
-<th>Metric</th>
-<th>Start of today</th>
-<th>Now</th>
-<th>Budget</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>JavaScript, gzipped</td>
-<td>612 KB</td>
-<td><strong>284 KB</strong></td>
-<td>300 KB</td>
-</tr>
-<tr>
-<td>LCP</td>
-<td>4.8 s</td>
-<td><strong>2.3 s</strong></td>
-<td>2.5 s</td>
-</tr>
-<tr>
-<td>INP</td>
-<td>380 ms</td>
-<td><strong>240 ms</strong></td>
-<td>200 ms</td>
-</tr>
-</tbody>
-</table>
-<ul>
-<li><strong>JavaScript and LCP are under budget.</strong> With less script to run, the hero paints sooner.</li>
-<li><strong>INP improved but is still 40 ms over.</strong> The main thread is less busy, but <code>CouponField.onChange</code> still runs a 140 ms task on every keystroke.</li>
-</ul>
-</div>
-<p class="ask">what&#x27;s left? we&#x27;ll ship what we have behind the checkout-v2 flag on monday and do INP next week</p>
-<div class="said"><h3 id="whats-left">What's left</h3>
-<ul>
-<li><strong>INP, 240 ms (budget 200 ms):</strong> the coupon field still validates on every keystroke. Debouncing it (250 ms) and moving the validation into a web worker should bring it under 200 ms, but that's an estimate until it's measured.</li>
-<li><strong>TTFB, 0.9 s (budget 0.8 s):</strong> unchanged all day. None of today's changes touched the server; the <code>/api/cart</code> response would need caching on the backend.</li>
-</ul>
-<h3 id="for-monday">For Monday</h3>
-<ul>
-<li>Roll out behind <code>checkout-v2</code> at 10% of traffic first, and go to 100% only if the checkout error rate stays flat.</li>
-<li>Add a Lighthouse CI check with the budget so LCP, CLS and JavaScript can't creep back over. INP can't be measured in a lab run, so use Total Blocking Time (200 ms) as a stand-in.</li>
-<li>INP is next week. TTFB needs the backend team.</li>
-</ul>
-</div></div></div>
-    <div class="ex-glow" aria-hidden="true"></div>
+    <div class="ex-shell" aria-hidden="true"><div class="ex-glow"></div><div class="ex-card-bg"></div></div>
     <figure class="ex-card">
       <div class="ex-tools">
         <div class="seg" role="group" aria-label="Panel width"><button type="button" aria-pressed="true" data-w="wide">Wide</button><button type="button" aria-pressed="false" data-w="narrow">Narrow</button></div>
