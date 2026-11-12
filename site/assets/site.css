@@ -132,7 +132,7 @@ h4{font-size:clamp(22px,1.9vw,28px);letter-spacing:-.02em;line-height:1.15}
 }
 
 /* ---------- sections ---------- */
-main>section,.examples>.group{padding-left:var(--m);padding-right:var(--m)}
+main>section{padding-left:var(--m);padding-right:var(--m)}
 .examples{padding-top:var(--gap)}
 .sec-head{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:20px clamp(24px,4vw,72px);align-items:end;margin-bottom:clamp(40px,6vw,88px)}
 .sec-head .groups{grid-column:2;margin:0;color:var(--ink-2);font-size:17px}
@@ -166,9 +166,22 @@ main>section,.examples>.group{padding-left:var(--m);padding-right:var(--m)}
 .ex-glow{position:absolute;inset:10% 5%;background:radial-gradient(50% 50% at 50% 50%,var(--glow),transparent 70%);filter:blur(20px);pointer-events:none}
 .ex-card{position:relative;margin:0;background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:22px 28px 28px;max-width:100%;transition:background-color .35s var(--ease)}
 /* the frame carries the card, its back sheet and its glow, so Wide/Narrow moves them as one */
-.ex-frame{position:relative;width:100%}
+.ex-stage{container:stage/inline-size}
+.ex-frame{position:relative;width:100%;margin-left:auto}
 .ex-frame.narrow{width:400px;max-width:100%}
-.ex-flip .ex-frame{margin-left:auto}
+/* narrow is the side panel: Claude's own answer comes into view beside it, the way the app shows the
+   main conversation next to a /btw panel */
+.ex-main{position:absolute;left:0;top:0;bottom:0;width:calc(100% - 424px);background:var(--card);border-radius:22px;box-shadow:var(--shadow-lo);
+  overflow:hidden;visibility:hidden;opacity:0;transform:translateX(-14px);
+  transition:opacity .35s var(--ease),transform .35s var(--ease),visibility 0s .35s}
+.is-narrow .ex-main{visibility:visible;opacity:1;transform:none;transition:opacity .5s var(--ease) .2s,transform .5s var(--ease) .2s,visibility 0s}
+.ex-main-in{position:relative;height:100%;overflow:auto;padding:0 24px 28px;-webkit-mask-image:none;mask-image:none;overscroll-behavior:contain}
+.ex-main-in>.orig-h{position:sticky;top:0;z-index:1;margin:0 -24px 10px;padding:18px 24px 10px;background:var(--card);color:var(--ink-2);font-weight:500}
+.ex-main .src-lit,.ex-main tr.src-lit>*{background:color-mix(in srgb,var(--blue) 16%,transparent)}
+.ex-main .src-lit{border-radius:4px;box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 16%,transparent);transition:background-color .2s}
+.ex-back{transition:opacity .35s var(--ease)}
+.is-narrow .ex-back{opacity:0}
+@container stage (max-width:640px){.ex-main{display:none}}
 .ex-tools{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin:0 0 18px;font-size:13px;color:var(--ink-3)}
 .seg{display:inline-flex;background:var(--card-2);border-radius:999px;padding:3px}
 .seg button{border:0;background:transparent;color:var(--ink-2);font:500 13px var(--font-sans);padding:5px 12px;border-radius:999px;cursor:pointer;transition:background-color .2s,color .2s}

@@ -217,6 +217,7 @@
       resizing && resizing.kill();
       const w0 = frame.getBoundingClientRect().width;
       frame.style.width = ''; frame.classList.toggle('narrow', narrow);
+      $('.ex-stage', ex).classList.toggle('is-narrow', narrow);   // brings Claude's own answer in beside it
       const w1 = frame.getBoundingClientRect().width;
       const done = () => { frame.style.width = ''; resizing = null; window.ScrollTrigger && ScrollTrigger.refresh(); queueSweep(); };
       if (G() && !REDUCED && Math.abs(w1 - w0) > 1) resizing = gsap.fromTo(frame, { width: w0 }, { width: w1, duration: .6, ease: 'power3.inOut', onComplete: done });
@@ -240,9 +241,11 @@
   const TOK = /[+\-−]?\$?\d[\d,.]*(?:\s?(?:%|ms|s|kb|mb|gb|tb|×|x)\b)?/gi;
   const ownText = el => [...el.childNodes].filter(n => !(n.nodeType === 1 && n.matches('.gl-q, .gl-note, .gl-flag, .gl-tech, .why'))).map(n => n.textContent).join('');
   function initSources(ex) {
-    const blocks = $$('.cmp-before .said :is(p, li, tr, h1, h2, h3)', ex).map(b => { const t = lineText(b); return { t, n: norm(t) }; }).filter(b => b.n);
+    // each line also knows its twin in the side panel's copy of the answer, to light it up in narrow mode
+    const LINES = '.said :is(p, li, tr, h1, h2, h3)', mainLines = $$('.ex-main ' + LINES, ex), mainRows = $$('.ex-main .said tr', ex);
+    const blocks = $$('.cmp-before ' + LINES, ex).map((b, i) => { const t = lineText(b); return { t, n: norm(t), main: mainLines[i] }; }).filter(b => b.n);
     // table cells: found by their row's name, then by the cell's own text in that row of the original
-    const srcRows = $$('.cmp-before .said tr', ex).map(tr => $$('th,td', tr).map(c => c.textContent.trim()));
+    const srcRows = $$('.cmp-before .said tr', ex).map((tr, i) => Object.assign($$('th,td', tr).map(c => c.textContent.trim()), { main: mainRows[i] }));
     const label = c => norm(c.firstChild ? c.firstChild.textContent : c.textContent);
     for (const tr of $$('.cmp-after .gl-dt tbody tr', ex)) {
       const row = srcRows.find(r => norm(r[0]) === label(tr.cells[0])); if (!row) continue;
@@ -250,7 +253,7 @@
         if (td.classList.contains('bbc')) return;
         const t = i === 0 ? label(td) : norm(td.textContent);
         const j = norm(row[i] || '') === t ? i : row.findIndex(c => norm(c) === t); if (j < 0) return;
-        td.classList.add('has-src'); td._src = { rows: [{ cells: row, mark: j }] };
+        td.classList.add('has-src'); td._src = { rows: [{ cells: row, mark: j }], mains: [row.main] };
       });
     }
     // anything else with a number in it: the line, or two, of the original that hold its numbers
@@ -273,12 +276,12 @@
         }
       }
       if (!lines.length) continue;
-      el.classList.add('has-src'); el._src = { lines: lines.map(b => b.t), toks };
+      el.classList.add('has-src'); el._src = { lines: lines.map(b => b.t), toks, mains: lines.map(b => b.main) };
     }
     ex.addEventListener('pointerover', e => { const el = e.target.closest('.has-src'); if (el && ex.contains(el)) showTip(el); });
     ex.addEventListener('pointerout', e => { const el = e.target.closest('.has-src'); if (el && !el.contains(e.relatedTarget)) hideTip(el); });
   }
-  let tipFor = null;
+  let tipFor = null, litMain = [];
   function showTip(el) {
     tipFor && tipFor.classList.remove('lit'); tipFor = el; el.classList.add('lit');
     const src = el._src;
@@ -293,12 +296,26 @@
       return h;
     }).join('<br><br>');
     tipLine.innerHTML = html; tip.hidden = false;
+    // in narrow mode Claude's answer sits beside the glance: light the same line there and bring it into view
+    const stage = el.closest('.ex-stage'), panel = stage && $('.ex-main-in', stage);
+    if (panel && stage.classList.contains('is-narrow') && getComputedStyle(panel.parentElement).display !== 'none') {
+      litMain = (src.mains || []).filter(Boolean);
+      litMain.forEach(m => m.classList.add('src-lit'));
+      if (litMain[0]) {
+        const top = litMain[0].getBoundingClientRect().top - panel.getBoundingClientRect().top + panel.scrollTop;
+        panel.scrollTo({ top: Math.max(0, top - panel.clientHeight / 3), behavior: REDUCED ? 'auto' : 'smooth' });
+      }
+    }
     const r = el.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
     let x = Math.min(Math.max(12, r.left + r.width / 2 - tw / 2), innerWidth - tw - 12), y = r.top - th - 10;
     if (y < 70) y = r.bottom + 10;
     tip.style.left = x + 'px'; tip.style.top = y + 'px';
   }
-  function hideTip(el) { if (tipFor === el) { el.classList.remove('lit'); tip.hidden = true; tipFor = null; } }
+  function hideTip(el) {
+    if (tipFor !== el) return;
+    el.classList.remove('lit'); tip.hidden = true; tipFor = null;
+    litMain.forEach(m => m.classList.remove('src-lit')); litMain = [];
+  }
   addEventListener('scroll', () => tipFor && hideTip(tipFor), { passive: true });
 
   // The build: the sentence, then the picture assembles itself, red settles last.
