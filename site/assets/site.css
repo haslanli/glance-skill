@@ -189,6 +189,13 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
 .morph-layer{position:absolute;left:0;top:0;width:0;height:0;z-index:5;pointer-events:none}
 /* a clamped teaser mid-morph: its window and its bottom fade travel with it (same look as the mask) */
 .pic.clamp{position:relative}
+/* Show all / Show fewer mid-way: the same fade as the mask, riding the moving bottom edge */
+.pic.clamp.fading{-webkit-mask-image:none;mask-image:none}
+.pic.clamp.fading::after{content:"";position:absolute;left:0;right:0;bottom:0;height:155px;pointer-events:none;z-index:2;opacity:var(--fo,1);
+  background:linear-gradient(color-mix(in srgb,var(--card) 0%,transparent),var(--card))}
+.lbl{display:inline-block;white-space:nowrap}
+.lbl-old{position:absolute;white-space:nowrap;pointer-events:none}
+.more{position:relative;white-space:nowrap;overflow:hidden;text-align:left}
 .pic.clamp.clip-morph{-webkit-mask-image:none;mask-image:none}
 .pic.clamp.clip-morph::after{content:"";position:absolute;left:var(--fx);top:var(--fy);width:var(--fw);height:var(--fh);pointer-events:none;z-index:2;
   background:linear-gradient(color-mix(in srgb,var(--card) 0%,transparent),var(--card))}

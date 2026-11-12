@@ -348,7 +348,7 @@
       switchTo(narrow);
     }));
     function switchTo(narrow) {
-      ex._build && ex._build.progress(1);
+      ex._build && ex._build.progress(1); ex._moreTween && ex._moreTween.progress(1);
       // the one-time peek hint stops for good: the switch decides where the compare layer goes now
       ex.dataset.touched = '1';
       if (ex._peekTl) { const mid = ex._peekTl.isActive(); ex._peekTl.kill(); ex._peekTl = null; if (mid) ex._cmpReset(); }   // a hint caught mid-way isn't the reader's position
@@ -422,15 +422,60 @@
         }
       });
     }
-    const more = $('.more', ex);
-    if (more) {
-      const label = more.textContent, pic = $('.pic', ex);
-      more.addEventListener('click', () => {
-        const open = pic.classList.toggle('open');
-        more.setAttribute('aria-expanded', open); more.textContent = open ? 'Show fewer' : label;
-        window.ScrollTrigger && ScrollTrigger.refresh(); queueSweep();
-      });
-    }
+  }
+
+  const refresh = () => { window.ScrollTrigger && ScrollTrigger.refresh(); queueSweep(); };
+
+  // A button's label changes in place: the old words slide up and out, the new ones slide in from below,
+  // and the button's width travels between the two.
+  function relabel(btn, text) {
+    let lbl = $('.lbl', btn);
+    if (!lbl) { lbl = d.createElement('span'); lbl.className = 'lbl'; lbl.textContent = btn.textContent; btn.textContent = ''; btn.append(lbl); }
+    $$('.lbl-old', btn).forEach(n => n.remove());
+    if (!G() || REDUCED) { lbl.textContent = text; return; }
+    gsap.killTweensOf([btn, lbl]);
+    // the new words are in the button at once (for readers and assistive tech); a copy of the old ones leaves
+    const w0 = btn.getBoundingClientRect().width, ghost = lbl.cloneNode(true);
+    ghost.className = 'lbl-old'; ghost.setAttribute('aria-hidden', 'true');
+    Object.assign(ghost.style, { left: lbl.offsetLeft + 'px', top: lbl.offsetTop + 'px' });
+    btn.style.width = ''; lbl.textContent = text; const w1 = btn.getBoundingClientRect().width;
+    btn.append(ghost); btn.style.width = w0 + 'px'; gsap.set(lbl, { opacity: 0, y: 8 });
+    gsap.to(btn, { width: w1, duration: .32, ease: 'power2.inOut', clearProps: 'width' });
+    gsap.to(ghost, { opacity: 0, y: -8, duration: .18, ease: 'power1.in', onComplete: () => ghost.remove() });
+    gsap.to(lbl, { opacity: 1, y: 0, duration: .24, delay: .1, ease: 'power2.out', clearProps: 'transform,opacity' });
+  }
+
+  /* Show all / Show fewer. What moves where: the teaser's height travels to the table's full height, so
+     the rows below are uncovered as it grows, and its bottom fade rides the moving edge, leaving only as
+     it reaches the end. Collapsing reverses it while the page stays anchored to the button, so the table
+     folds up toward the pointer instead of throwing the button out of view. The label changes in place. */
+  function initMore(ex) {
+    const more = $('.more', ex); if (!more) return;
+    const pic = $('.pic', ex), label = more.textContent.trim(), CLAMP = 860;
+    more.addEventListener('click', () => {
+      ex._moreTween && ex._moreTween.progress(1);
+      const open = !pic.classList.contains('open');
+      more.setAttribute('aria-expanded', open); relabel(more, open ? 'Show fewer' : label);
+      if (!G() || REDUCED) { pic.classList.toggle('open', open); refresh(); return; }
+      const h0 = pic.offsetHeight, root = d.documentElement;
+      pic.classList.add('fading'); pic.style.setProperty('--fo', open ? 1 : 0);
+      Object.assign(pic.style, { overflow: 'hidden', maxHeight: 'none', height: h0 + 'px' });
+      pic.classList.toggle('open', open);
+      const h1 = open ? pic.scrollHeight : Math.min(CLAMP, pic.scrollHeight);
+      const anchor = open ? null : more.getBoundingClientRect().top;
+      root.style.overflowAnchor = 'none';   // this tween keeps the button in place itself
+      const o = { v: 0 };
+      ex._moreTween = gsap.to(o, { v: 1, duration: Math.min(.9, .35 + Math.abs(h1 - h0) / 2500), ease: 'power2.inOut',
+        onUpdate: () => {
+          pic.style.height = lerp(h0, h1, o.v) + 'px';
+          pic.style.setProperty('--fo', open ? 1 - clamp01((o.v - .7) / .3) : clamp01(o.v / .3));
+          if (anchor !== null) { const dy = more.getBoundingClientRect().top - anchor; if (Math.abs(dy) > .5) scrollBy({ top: dy, behavior: 'instant' }); }
+        },
+        onComplete: () => {
+          Object.assign(pic.style, { overflow: '', maxHeight: '', height: '' }); pic.style.removeProperty('--fo');
+          pic.classList.remove('fading'); root.style.overflowAnchor = ''; ex._moreTween = null; refresh();
+        } });
+    });
   }
 
   // Every number in the picture that appears in the original answer gets a tooltip with that line.
@@ -599,7 +644,7 @@
 
   function initExamples() {
     for (const ex of $$('[data-ex]')) {
-      initCompare(ex); initWidth(ex); initSources(ex);
+      initCompare(ex); initWidth(ex); initMore(ex); initSources(ex);
       if (G() && FINE && !REDUCED) {   // the glow behind the card leans toward the pointer
         const glowEl = $('.ex-glow', ex), stage = $('.ex-stage', ex);
         const gx = gsap.quickTo(glowEl, 'x', { duration: 1.2, ease: 'power3' }), gy = gsap.quickTo(glowEl, 'y', { duration: 1.2, ease: 'power3' });
