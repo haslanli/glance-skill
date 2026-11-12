@@ -165,8 +165,10 @@ main>section,.examples>.group{padding-left:var(--m);padding-right:var(--m)}
 .ex-back-in h2,.ex-back-in h3{font-size:13px;margin:8px 0 4px}.ex-back-in table{border-collapse:collapse}.ex-back-in td,.ex-back-in th{padding:2px 12px 2px 0}
 .ex-glow{position:absolute;inset:10% 5%;background:radial-gradient(50% 50% at 50% 50%,var(--glow),transparent 70%);filter:blur(20px);pointer-events:none}
 .ex-card{position:relative;margin:0;background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:22px 28px 28px;max-width:100%;transition:background-color .35s var(--ease)}
-.ex-card.narrow{max-width:400px}
-.ex-flip .ex-card.narrow{margin-left:auto}
+/* the frame carries the card, its back sheet and its glow, so Wide/Narrow moves them as one */
+.ex-frame{position:relative;width:100%}
+.ex-frame.narrow{width:400px;max-width:100%}
+.ex-flip .ex-frame{margin-left:auto}
 .ex-tools{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin:0 0 18px;font-size:13px;color:var(--ink-3)}
 .seg{display:inline-flex;background:var(--card-2);border-radius:999px;padding:3px}
 .seg button{border:0;background:transparent;color:var(--ink-2);font:500 13px var(--font-sans);padding:5px 12px;border-radius:999px;cursor:pointer;transition:background-color .2s,color .2s}
@@ -213,6 +215,13 @@ main>section,.examples>.group{padding-left:var(--m);padding-right:var(--m)}
 .src-h{margin:0 0 4px;font-size:12px;opacity:.7}
 .src-line{margin:0}
 .src-line mark{background:var(--blue);color:#fff;border-radius:3px;padding:0 2px}
+
+/* What the script brings in is hidden from the first paint, so nothing shows, vanishes and fades back.
+   If the script never takes over, it all appears after 3 s anyway. */
+.js:not(.rv-ready) :is(.sec-head > *, .group > h3, .ex-text > *, .install-in > *, .cmd-text > *, .cmd-table tr, .dataviz > h2,
+  .statement, .dv-list li, .dv-end, .rd-text > *, .rd-fig, .credits h2, .cr-grid p, .foot-mark, [data-ex] .cmp-after){opacity:0;animation:rv-fallback .4s 3s forwards}
+@keyframes rv-fallback{to{opacity:1}}
+.flyer .fl-to{position:absolute;left:2px;top:0;opacity:0;white-space:nowrap}
 
 /* scroll-build states, set only by the script */
 .gl td.pending,.gl .pending{transition:background-color .5s var(--ease),color .5s var(--ease)}

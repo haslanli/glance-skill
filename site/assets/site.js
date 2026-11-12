@@ -50,9 +50,12 @@
         nd.data = s;
       }
     };
+    // hold the box at its final width while the digits change, so the row around it never reflows
+    const finalW = el.getBoundingClientRect().width;
     const o = { p: 0 };
-    tl.add(() => render(0), Math.max(0, at - .001));
-    tl.to(o, { p: 1, duration: .9, ease: 'power2.out', onUpdate: () => render(o.p), onComplete: () => nodes.forEach(nd => nd.data = orig.get(nd)) }, at);
+    tl.add(() => { el.style.minWidth = finalW + 'px'; render(0); }, Math.max(0, at - .001));
+    tl.to(o, { p: 1, duration: .9, ease: 'power2.out', onUpdate: () => render(o.p),
+      onComplete: () => { nodes.forEach(nd => nd.data = orig.get(nd)); el.style.minWidth = ''; } }, at);
   }
 
   /* ---------------- hero ---------------- */
@@ -122,30 +125,48 @@
       const fl = [];
       for (const dst of targets) {
         const k = dst.dataset.k, src = $(`.fact[data-k="${route[k] || k}"]`, answer); if (!src) continue;
-        const a = src.getBoundingClientRect(), b = dst.getBoundingClientRect();
-        const f = d.createElement('span'); f.className = 'flyer'; f.textContent = src.textContent;
-        const cs = getComputedStyle(src); f.style.font = cs.font; layer.append(f);
-        fl.push({ f, dst, k, x0: a.left - L.left, y0: a.top - L.top, x1: b.left - L.left, y1: b.top - L.top,
-          s: parseFloat(getComputedStyle(dst).fontSize) / parseFloat(cs.fontSize), color: getComputedStyle(dst).color });
+        // aim at where the text itself sits (a right-aligned value is not at its cell's left edge)
+        const textRects = el => { const r = d.createRange(); r.selectNodeContents(el); return r.getClientRects(); };
+        const a = textRects(src)[0] || src.getBoundingClientRect();
+        const dr = textRects(dst), b = dr[0] || dst.getBoundingClientRect(), wraps = dr.length > 1;
+        const cs = getComputedStyle(src), ds = getComputedStyle(dst);
+        const s = parseFloat(ds.fontSize) / parseFloat(cs.fontSize);
+        // Two layers: the answer's type, crossfading into the glance's type drawn at 1/s so that,
+        // scaled by s on landing, it matches the target exactly and the hand-over is invisible.
+        const f = d.createElement('span'); f.className = 'flyer'; f.dataset.wraps = wraps ? '1' : '';
+        f.style.cssText = `font-family:${cs.fontFamily};font-size:${cs.fontSize};line-height:${b.height / s}px`;
+        const from = d.createElement('span'); from.textContent = src.textContent;
+        from.style.cssText = `font-weight:${cs.fontWeight};letter-spacing:${cs.letterSpacing};font-variant-numeric:${cs.fontVariantNumeric}`;
+        const to = d.createElement('span'); to.className = 'fl-to'; to.textContent = dst.textContent;
+        const ls = parseFloat(ds.letterSpacing);
+        to.style.cssText = `font-family:${ds.fontFamily};font-weight:${ds.fontWeight};font-variant-numeric:${ds.fontVariantNumeric};letter-spacing:${isNaN(ls) ? 'normal' : ls / s + 'px'}`;
+        f.append(from, to); layer.append(f);
+        fl.push({ f, from, to, dst, k, x0: a.left - L.left, y0: a.top - L.top, x1: b.left - L.left, y1: b.top - L.top, s, color: ds.color });
       }
       fl.sort((p, q) => ORDER.indexOf(p.k) - ORDER.indexOf(q.k));
       facts.forEach(f => f.classList.add('gone'));
+      const now = tl.time();
       fl.forEach((p, i) => {
-        gsap.set(p.f, { x: p.x0, y: p.y0 });
+        gsap.set(p.f, { x: p.x0, y: p.y0, force3D: true });
         const lift = 46 + (i % 5) * 15, mx = p.x0 + (p.x1 - p.x0) * .45, my = Math.min(p.y0, p.y1) - lift;
-        const ft = gsap.timeline({ delay: i * .075 });
-        ft.to(p.f, { x: mx, y: my, scale: 1.2, duration: .5, ease: 'power2.out' })
+        const ft = gsap.timeline();
+        ft.to(p.f, { x: mx, y: my, scale: (1 + p.s) / 2 + .1, duration: .5, ease: 'power2.out' })
           .to(p.f, { x: p.x1, y: p.y1, scale: p.s, duration: .55, ease: 'power3.inOut' })
-          .to(p.f, { backgroundColor: 'rgba(0,0,0,0)', boxShadow: 'none', color: p.color, duration: .2 }, '-=.18')
-          .add(() => { gsap.set(p.dst, { autoAlpha: 1 }); p.f.remove(); });
+          .to(p.from, { opacity: 0, duration: .45, ease: 'power1.inOut' }, .35)
+          .to(p.to, { opacity: 1, duration: .45, ease: 'power1.inOut' }, .35)
+          .to(p.f, { backgroundColor: 'rgba(0,0,0,0)', boxShadow: 'none', color: p.color, duration: .25 }, '-=.25');
+        if (p.f.dataset.wraps)   // the target breaks over two lines: crossfade rather than swap
+          ft.to(p.dst, { autoAlpha: 1, duration: .3 }).to(p.f, { opacity: 0, duration: .3 }, '<').add(() => p.f.remove());
+        else ft.add(() => { gsap.set(p.dst, { autoAlpha: 1 }); p.f.remove(); });
+        tl.add(ft, now + i * .075);   // nested, so Replay stops every flight with the rest
       });
     }, 1.0);
     tl.to(back, { opacity: .42, duration: 1.4, ease: 'power2.inOut' }, 1.25);
-    tl.to(words, { autoAlpha: 1, duration: .3, stagger: .022, ease: 'none' }, 1.45);
+    tl.to(words, { autoAlpha: 1, duration: .6, stagger: .028, ease: 'power1.out' }, 1.4);
     tl.to([cap, ...rows], { autoAlpha: 1, duration: .4, stagger: .025 }, 2.05);
     tl.to(bars, { scaleX: 1, duration: .75, stagger: .08, ease: 'power3.out' }, 2.25);
     tl.to(notes, { autoAlpha: 1, duration: .4, stagger: .03 }, 2.7);
-    tl.to(bul, { autoAlpha: 1, y: 0, duration: .45, stagger: .045, ease: 'power2.out' }, 3.05);
+    tl.to(bul, { autoAlpha: 1, y: 0, duration: .5, stagger: .045, ease: 'power2.out', force3D: false }, 3.05);
   }
 
   function initHero() {
@@ -186,14 +207,20 @@
   }
 
   function initWidth(ex) {
-    const card = $('.ex-card', ex);
+    // Both directions tween the frame between two pixel widths; the class only sets where it ends.
+    const frame = $('.ex-frame', ex);
+    let resizing = null;
     $$('.seg button', ex).forEach(b => b.addEventListener('click', () => {
       const narrow = b.dataset.w === 'narrow';
-      if (narrow === card.classList.contains('narrow')) return;
+      if (narrow === frame.classList.contains('narrow')) return;
       $$('.seg button', ex).forEach(o => o.setAttribute('aria-pressed', o === b));
-      const w0 = card.offsetWidth; card.classList.toggle('narrow', narrow); const w1 = card.offsetWidth;
-      if (G() && !REDUCED) gsap.fromTo(card, { width: w0 }, { width: w1, duration: .55, ease: 'power3.inOut', clearProps: 'width', onComplete: () => window.ScrollTrigger && ScrollTrigger.refresh() });
-      else window.ScrollTrigger && ScrollTrigger.refresh();
+      resizing && resizing.kill();
+      const w0 = frame.getBoundingClientRect().width;
+      frame.style.width = ''; frame.classList.toggle('narrow', narrow);
+      const w1 = frame.getBoundingClientRect().width;
+      const done = () => { frame.style.width = ''; resizing = null; window.ScrollTrigger && ScrollTrigger.refresh(); queueSweep(); };
+      if (G() && !REDUCED && Math.abs(w1 - w0) > 1) resizing = gsap.fromTo(frame, { width: w0 }, { width: w1, duration: .6, ease: 'power3.inOut', onComplete: done });
+      else done();
     }));
     const more = $('.more', ex);
     if (more) {
@@ -201,7 +228,7 @@
       more.addEventListener('click', () => {
         const open = pic.classList.toggle('open');
         more.setAttribute('aria-expanded', open); more.textContent = open ? 'Show fewer' : label;
-        window.ScrollTrigger && ScrollTrigger.refresh();
+        window.ScrollTrigger && ScrollTrigger.refresh(); queueSweep();
       });
     }
   }
@@ -276,7 +303,7 @@
 
   // The build: the sentence, then the picture assembles itself, red settles last.
   function prepBuild(ex) {
-    const after = $('.cmp-after', ex), tl = gsap.timeline({ paused: true });
+    const after = $('.cmp-after', ex), tl = gsap.timeline({ paused: true, defaults: { force3D: false } });
     const sent = $('.g-sent', after), secs = $$('.gl > .gl-sec', after);
     tl.from(sent, { autoAlpha: 0, y: 14, duration: .55, ease: 'power2.out' }, 0);
     let t = .25;
@@ -367,24 +394,55 @@
         stage.addEventListener('pointermove', e => { const r = stage.getBoundingClientRect(), px = (e.clientX - r.left) / r.width - .5, py = (e.clientY - r.top) / r.height - .5; bx(-px * 18); by(-py * 14); gx(px * 30); gy(py * 24); });
         stage.addEventListener('pointerleave', () => { bx(0); by(0); gx(0); gy(0); });
       }
-      if (G() && window.ScrollTrigger && !REDUCED) {
-        const tl = prepBuild(ex);
-        ScrollTrigger.create({ trigger: $('.ex-card', ex), start: 'top 78%', once: true, onEnter: () => tl.play() });
-      }
+      if (G() && !REDUCED) builds.push({ card: $('.ex-card', ex), tl: prepBuild(ex) });
     }
+  }
+
+  /* ---------------- reveals ----------------
+     One check, run on every scroll, load, resize and anchor jump: whatever is now above the fold
+     appears at once, whatever is coming into view animates in. Nothing waits on a scroll event
+     that a jump can skip, so no text or picture is ever left hidden. */
+  const texts = [], builds = [];
+  // 2D moves only (force3D off), so text stays crisp the whole way instead of blurring and snapping
+  const show = (els, animate) => gsap.to(els, { autoAlpha: 1, y: 0, duration: animate ? .7 : 0, stagger: animate ? .07 : 0,
+    ease: 'power3.out', overwrite: true, force3D: false });
+  function sweep() {
+    const vh = innerHeight, past = [], now = [];
+    for (let i = 0; i < texts.length;) {
+      const r = texts[i].getBoundingClientRect();
+      if (r.bottom < 0) past.push(texts.splice(i, 1)[0]);
+      else if (r.top < vh * .9) now.push(texts.splice(i, 1)[0]);
+      else i++;
+    }
+    if (past.length) show(past, false);
+    if (now.length) show(now, true);
+    for (let i = 0; i < builds.length;) {
+      const b = builds[i], r = b.card.getBoundingClientRect();
+      if (r.bottom < 0) { b.tl.progress(1); builds.splice(i, 1); }
+      else if (r.top < vh * .78) { b.tl.play(); builds.splice(i, 1); }
+      else i++;
+    }
+  }
+  let sweepRaf = 0;
+  const queueSweep = () => { if (!sweepRaf) sweepRaf = requestAnimationFrame(() => { sweepRaf = 0; sweep(); }); };
+  function initReveals() {
+    if (!texts.length && !builds.length) return;
+    sweep();
+    addEventListener('scroll', queueSweep, { passive: true });
+    for (const ev of ['resize', 'load', 'hashchange']) addEventListener(ev, () => setTimeout(sweep, 0));
   }
 
   /* ---------------- section entrances ---------------- */
   function initEntrances() {
-    if (!G() || !window.ScrollTrigger || REDUCED) return;
+    if (!G() || REDUCED) return;
     const groups = [['.sec-head > *'], ['.group > h3'], ['.ex-text > *'], ['.install-in > *'], ['.cmd-text > *', '.cmd-table tr'], ['.dataviz > h2', '.statement', '.dv-list li', '.dv-end'],
       ['.rd-text > *', '.rd-fig'], ['.credits h2', '.cr-grid p'], ['.foot-mark']];
     for (const sels of groups) {
       const els = sels.flatMap(s => $$(s)); if (!els.length) continue;
-      gsap.set(els, { autoAlpha: 0, y: 24 });
-      ScrollTrigger.batch(els, { start: 'top 88%', once: true, onEnter: b => gsap.to(b, { autoAlpha: 1, y: 0, duration: .7, stagger: .075, ease: 'power3.out', overwrite: true }) });
+      gsap.set(els, { autoAlpha: 0, y: 18, force3D: false });
+      texts.push(...els);
     }
-    gsap.from('.foot-mark', { yPercent: 18, ease: 'none', scrollTrigger: { trigger: '.foot', start: 'top bottom', end: 'bottom bottom', scrub: .5 } });
+    if (window.ScrollTrigger) gsap.from('.foot-mark', { yPercent: 18, ease: 'none', scrollTrigger: { trigger: '.foot', start: 'top bottom', end: 'bottom bottom', scrub: .5 } });
   }
 
   /* ---------------- small controls ---------------- */
@@ -404,7 +462,9 @@
 
   function start() {
     if (G() && window.ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
-    initHero(); initExamples(); initEntrances(); initControls();
+    initHero(); initExamples(); initEntrances(); initControls(); initReveals();
+    root.classList.add('rv-ready');   // every start state is set; lift the first-paint hiding in the same frame
+    window.glanceSweep = sweep;       // lets a test drive the reveal check without scrolling
     if (G() && window.ScrollTrigger && d.fonts) d.fonts.ready.then(() => ScrollTrigger.refresh());
   }
   if (d.readyState === 'loading') d.addEventListener('DOMContentLoaded', start); else start();
