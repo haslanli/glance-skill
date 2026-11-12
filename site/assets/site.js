@@ -179,7 +179,10 @@
       const ls = parseFloat(ds.letterSpacing);
       to.style.cssText = `font-family:${ds.fontFamily};font-weight:${ds.fontWeight};font-variant-numeric:${ds.fontVariantNumeric};letter-spacing:${isNaN(ls) ? 'normal' : ls / s + 'px'}`;
       f.append(from, to); layer.append(f);
-      fl.push({ f, from, to, dst, k, wraps, x0: a.left - L.left, y0: a.top - L.top, x1: b.left - L.left, y1: b.top - L.top, s, color: ds.color });
+      // the card is tilted in 3D, so its text is drawn narrower than its font size says: land on the target's
+      // drawn width (and on the 2px the landing copy sits in from the flyer's edge), or a big figure jumps at hand-over
+      const tw = to.getBoundingClientRect().width, sl = !wraps && tw ? b.width / tw : s;
+      fl.push({ f, from, to, dst, k, wraps, x0: a.left - L.left, y0: a.top - L.top, x1: b.left - L.left - 2 * sl, y1: b.top - L.top, s: sl, color: ds.color });
     }
     fl.sort((p, q) => ORDER.indexOf(p.k) - ORDER.indexOf(q.k));
 
@@ -207,7 +210,7 @@
         .to(p.from, { opacity: 0, duration: .45, ease: EASE }, .35)
         .to(p.to, { opacity: 1, duration: .45, ease: EASE }, .35)
         .to(p.f, { backgroundColor: 'rgba(0,0,0,0)', boxShadow: 'none', color: p.color, duration: .25 }, '-=.25');
-      if (p.wraps)   // the target breaks over two lines: crossfade rather than swap
+      if (p.wraps || p.s > 1.5)   // a target over two lines, or a big figure whose glyphs never match a scaled copy exactly: crossfade, never swap
         ft.to(p.dst, { autoAlpha: 1, duration: .3 }).to(p.f, { autoAlpha: 0, duration: .3 }, '<');
       else ft.set(p.dst, { autoAlpha: 1 }).set(p.f, { autoAlpha: 0 });
       tl.add(ft, 1.0 + i * .075);
@@ -267,10 +270,24 @@
       if (ex._peekTl) { ex._peekTl.kill(); ex._peekTl = null; }   // the reader has the slider now; the hint is over
       p = Math.max(0, Math.min(100, p)); cmp.style.setProperty('--pos', p + '%'); cmp.classList.toggle('on', p > .5); input.value = p; ex.dataset.touched = '1';
     };
-    const fromX = x => { const r = cmp.getBoundingClientRect(); set((x - r.left) / r.width * 100); };
-    knob.addEventListener('pointerdown', e => { dragging = true; cmp.classList.add('drag'); knob.setPointerCapture(e.pointerId); e.preventDefault(); });
+    // Dragging: the handle stays exactly under the pointer from the first frame. The grab offset is kept (no jump
+    // to the pointer's x), transitions are off while dragging (no lag), and where the line can't follow (left of
+    // the start) the handle alone follows the pointer, then eases back to its rest on release.
+    let grab = 0, ckGap = 0;
+    const lineX = () => { const r = cmp.getBoundingClientRect(); return r.left + r.width * ex._cmpPos() / 100; };
+    const fromX = x => {
+      const r = cmp.getBoundingClientRect(), want = x - grab;   // where the handle's centre should be
+      set((want - r.left) / r.width * 100);
+      knob.style.translate = Math.min(0, want - lineX()) + 'px 0';
+    };
+    knob.addEventListener('pointerdown', e => {
+      if (ex._cmpCloseTw) return;
+      const k = knob.getBoundingClientRect(); grab = e.clientX - (k.left + k.width / 2);
+      dragging = true; cmp.classList.add('drag'); knob.setPointerCapture(e.pointerId); e.preventDefault();
+      fromX(e.clientX);
+    });
     knob.addEventListener('pointermove', e => dragging && fromX(e.clientX));
-    const end = () => { dragging = false; cmp.classList.remove('drag'); };
+    const end = () => { if (!dragging) return; dragging = false; cmp.classList.remove('drag'); knob.style.translate = ''; };
     knob.addEventListener('pointerup', end); knob.addEventListener('pointercancel', end);
     knob.addEventListener('click', () => input.focus({ preventScroll: true }));
     input.addEventListener('input', () => set(+input.value));
@@ -398,7 +415,8 @@
         if (n.radius) n.el.style.borderRadius = n.radius.map(r => r / kx + 'px').join(' ') + ' / ' + n.radius.map(r => r / ky + 'px').join(' ');
         if (n.shadow) { const s = n.shadow; n.el.style.boxShadow = `${s.color} ${s.x / kx}px ${s.y / ky}px ${s.blur / kx}px ${s.spread / kx}px inset`; }
       }
-      const out = 1 - clamp01(v / .45), inn = clamp01((v - .5) / .5);
+      // leaving and arriving pieces overlap a little, so a filter never leaves the table blank for a moment
+      const out = 1 - clamp01(v / .4), inn = clamp01((v - .2) / .45);
       for (const g of ghosts) { g.style.opacity = out; g.style.transform = `scale(${.96 + .04 * out})`; }
       for (const e of enter) e.style.opacity = inn;
       for (const f of fadeUp) f.el.style.opacity = lerp(f.o, 1, clamp01(v / .5));
