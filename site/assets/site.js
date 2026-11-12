@@ -208,20 +208,27 @@
 
   function initWidth(ex) {
     // Both directions tween the frame between two pixel widths; the class only sets where it ends.
-    const frame = $('.ex-frame', ex);
-    let resizing = null;
-    $$('.seg button', ex).forEach(b => b.addEventListener('click', () => {
-      const narrow = b.dataset.w === 'narrow';
-      if (narrow === frame.classList.contains('narrow')) return;
-      $$('.seg button', ex).forEach(o => o.setAttribute('aria-pressed', o === b));
-      resizing && resizing.kill();
+    const frame = $('.ex-frame', ex), stage = $('.ex-stage', ex), main = $('.ex-main', ex);
+    let resizing = null, leaving = null;
+    const resize = narrow => {
       const w0 = frame.getBoundingClientRect().width;
       frame.style.width = ''; frame.classList.toggle('narrow', narrow);
-      $('.ex-stage', ex).classList.toggle('is-narrow', narrow);   // brings Claude's own answer in beside it
+      stage.classList.toggle('is-narrow', narrow);   // narrow brings Claude's own answer in beside it
+      gsap.set(main, { clearProps: 'opacity' });
       const w1 = frame.getBoundingClientRect().width;
       const done = () => { frame.style.width = ''; resizing = null; window.ScrollTrigger && ScrollTrigger.refresh(); queueSweep(); };
       if (G() && !REDUCED && Math.abs(w1 - w0) > 1) resizing = gsap.fromTo(frame, { width: w0 }, { width: w1, duration: .6, ease: 'power3.inOut', onComplete: done });
       else done();
+    };
+    $$('.seg button', ex).forEach(b => b.addEventListener('click', () => {
+      const narrow = b.dataset.w === 'narrow';
+      if (narrow === frame.classList.contains('narrow')) return;
+      $$('.seg button', ex).forEach(o => o.setAttribute('aria-pressed', o === b));
+      resizing && resizing.kill(); leaving && leaving.kill(); leaving = null;
+      // going wide, let the answer fade out before the glance grows over its place
+      if (!narrow && G() && !REDUCED && getComputedStyle(main).display !== 'none')
+        leaving = gsap.to(main, { opacity: 0, duration: .18, ease: 'power1.in', onComplete: () => { leaving = null; resize(false); } });
+      else resize(narrow);
     }));
     const more = $('.more', ex);
     if (more) {
@@ -296,15 +303,11 @@
       return h;
     }).join('<br><br>');
     tipLine.innerHTML = html; tip.hidden = false;
-    // in narrow mode Claude's answer sits beside the glance: light the same line there and bring it into view
-    const stage = el.closest('.ex-stage'), panel = stage && $('.ex-main-in', stage);
-    if (panel && stage.classList.contains('is-narrow') && getComputedStyle(panel.parentElement).display !== 'none') {
+    // in narrow mode Claude's answer sits beside the glance, in full: light the same line there
+    const stage = el.closest('.ex-stage'), panel = stage && $('.ex-main', stage);
+    if (panel && stage.classList.contains('is-narrow') && getComputedStyle(panel).display !== 'none') {
       litMain = (src.mains || []).filter(Boolean);
       litMain.forEach(m => m.classList.add('src-lit'));
-      if (litMain[0]) {
-        const top = litMain[0].getBoundingClientRect().top - panel.getBoundingClientRect().top + panel.scrollTop;
-        panel.scrollTo({ top: Math.max(0, top - panel.clientHeight / 3), behavior: REDUCED ? 'auto' : 'smooth' });
-      }
     }
     const r = el.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
     let x = Math.min(Math.max(12, r.left + r.width / 2 - tw / 2), innerWidth - tw - 12), y = r.top - th - 10;
