@@ -505,13 +505,15 @@
     $$('.lbl-old', btn).forEach(n => n.remove());
     if (!G() || REDUCED) { lbl.textContent = text; return; }
     gsap.killTweensOf([btn, lbl]);
-    // the new words are in the button at once (for readers and assistive tech); a copy of the old ones leaves
-    const w0 = btn.getBoundingClientRect().width, ghost = lbl.cloneNode(true);
+    // the new words are in the button at once (for readers and assistive tech); a copy of the old ones leaves.
+    // Sizes are layout sizes, so a button caught mid-press (scaled) doesn't skew them.
+    const size = () => { const cs = getComputedStyle(btn); return [parseFloat(cs.width), parseFloat(cs.height)]; };
+    const [w0, h0] = size(), ghost = lbl.cloneNode(true);
     ghost.className = 'lbl-old'; ghost.setAttribute('aria-hidden', 'true');
-    Object.assign(ghost.style, { left: lbl.offsetLeft + 'px', top: lbl.offsetTop + 'px' });
-    btn.style.width = ''; lbl.textContent = text; const w1 = btn.getBoundingClientRect().width;
-    btn.append(ghost); btn.style.width = w0 + 'px'; gsap.set(lbl, { opacity: 0, y: 8 });
-    gsap.to(btn, { width: w1, duration: .32, ease: 'power2.inOut', clearProps: 'width' });
+    Object.assign(ghost.style, { left: lbl.offsetLeft + 'px', top: lbl.offsetTop + 'px', width: lbl.offsetWidth + 'px' });
+    btn.style.width = btn.style.height = ''; lbl.textContent = text; const [w1, h1] = size();
+    btn.append(ghost); btn.style.width = w0 + 'px'; btn.style.height = h0 + 'px'; gsap.set(lbl, { opacity: 0, y: 8 });
+    gsap.to(btn, { width: w1, height: h1, duration: .32, ease: 'power2.inOut', clearProps: 'width,height' });
     gsap.to(ghost, { opacity: 0, y: -8, duration: .18, ease: 'power1.in', onComplete: () => ghost.remove() });
     gsap.to(lbl, { opacity: 1, y: 0, duration: .24, delay: .1, ease: 'power2.out', clearProps: 'transform,opacity' });
   }
@@ -583,6 +585,32 @@
         },
         onComplete: () => { t.style.cssText = ''; } });
     };
+    // the sort arrow: one piece per table (the kit's drawn arrow is hidden on the site) that travels from the
+    // old sorted header to the new one and turns over when the direction flips
+    const arrows = new Map();
+    for (const v of views) if ($('.gl-dt thead th button', v)) {
+      const ar = d.createElement('span'); ar.className = 'sort-ar'; ar.setAttribute('aria-hidden', 'true'); ar.innerHTML = ' <i>↓</i>';
+      v.classList.add('has-sortar'); arrows.set(v, ar);
+    }
+    const glide = (v, animate) => {
+      const ar = arrows.get(v); if (!ar) return;
+      const th = $('.gl-dt thead th[aria-sort]', v), btn = th && $('button', th);
+      if (!btn) { ar.remove(); return; }
+      const i = $('i', ar), from = ar.isConnected && ar.parentElement !== btn ? ar.getBoundingClientRect() : null, fresh = !ar.isConnected;
+      gsap.killTweensOf(ar._o || {}); ar.style.transform = ''; ar.style.opacity = '';
+      if (ar.parentElement !== btn) btn.append(ar);
+      i.style.transform = th.getAttribute('aria-sort') === 'ascending' ? 'rotate(180deg)' : '';
+      if (!animate || !G() || REDUCED) return;
+      const off = ar.getBoundingClientRect(), b0 = btn.getBoundingClientRect(), dx = off.left - b0.left, dy = off.top - b0.top, o = ar._o = { v: 0 };
+      gsap.to(o, { v: 1, duration: .55, ease: 'power2.inOut',
+        onUpdate: () => {   // the header button may itself be moving: aim at where the arrow sits in it now
+          const b = btn.getBoundingClientRect(), nx = b.left + dx, ny = b.top + dy;
+          if (from) ar.style.transform = `translate(${lerp(from.left, nx, o.v) - nx}px,${lerp(from.top, ny, o.v) - ny}px)`;
+          else if (fresh) { ar.style.opacity = o.v; ar.style.transform = `translateX(${-6 * (1 - o.v)}px)`; }
+        },
+        onComplete: () => { ar.style.transform = ''; ar.style.opacity = ''; } });
+    };
+    for (const v of arrows.keys()) glide(v, false);
     let pass = false;
     const run = (view, target, event, duration) => {
       ex._widthTween && ex._widthTween.progress(1); ex._moreTween && ex._moreTween.progress(1); ex._build && ex._build.progress(1);
@@ -596,6 +624,7 @@
         if (cnt) { final = cnt.textContent; k1 = parseInt(final, 10); }
         stage.style.height = ''; h1 = stage.offsetHeight; H1 = card.offsetHeight; stage.style.height = h0 + 'px';
         if (seg) slide(seg);
+        glide(view, true);
       }, { duration, skip: '.gl-count, .gl-chip',
         extra: v => {
           stage.style.height = lerp(h0, h1, v) + 'px';
@@ -622,7 +651,7 @@
         e.stopPropagation(); run(v, e.target, () => new Event('input', { bubbles: true }), .4);
       }, true);
       // without motion the kit acts alone; the teaser's fade and button still follow what's left
-      const settle = () => { if (still()) { ex._fits && ex._fits(); for (const seg of thumbs.keys()) { const on = $('.gl-chip[aria-pressed=true]', seg); on && on.append(thumbs.get(seg)); } refresh(); } };
+      const settle = () => { if (still()) { ex._fits && ex._fits(); for (const seg of thumbs.keys()) { const on = $('.gl-chip[aria-pressed=true]', seg); on && on.append(thumbs.get(seg)); } glide(v, false); refresh(); } };
       v.addEventListener('click', settle); v.addEventListener('input', settle);
     }
   }
@@ -674,8 +703,17 @@
     ex.addEventListener('pointerover', e => { const el = e.target.closest('.has-src'); if (el && ex.contains(el)) showTip(el); });
     ex.addEventListener('pointerout', e => { const el = e.target.closest('.has-src'); if (el && !el.contains(e.relatedTarget)) hideTip(el); });
   }
-  let tipFor = null, litMain = [];
+  /* The tooltip grows out of the value it describes and shrinks back into it. Moving to a neighbouring value,
+     the old tooltip shrinks into its value (from wherever it was) while the new one grows from the next. */
+  let tipFor = null, litMain = [], tipHide = 0;
   function showTip(el) {
+    const cs = getComputedStyle(tip), op = tip.hidden ? 0 : +cs.opacity;
+    if (op > .02) {
+      const g = tip.cloneNode(true); g.removeAttribute('id'); g.removeAttribute('role'); g.setAttribute('aria-hidden', 'true');
+      g.classList.remove('on'); g.style.transition = 'none'; tip.before(g);   // behind the new one
+      g.animate([{ opacity: op, transform: cs.transform }, { opacity: 0, transform: 'scale(.86)' }], { duration: 60 + 160 * op, easing: 'ease-in', fill: 'forwards' }).onfinish = () => g.remove();
+    }
+    clearTimeout(tipHide);
     tipFor && tipFor.classList.remove('lit'); tipFor = el; el.classList.add('lit');
     const src = el._src;
     let html;
@@ -697,12 +735,16 @@
     }
     const r = el.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
     let x = Math.min(Math.max(12, r.left + r.width / 2 - tw / 2), innerWidth - tw - 12), y = r.top - th - 10;
-    if (y < 70) y = r.bottom + 10;
+    const below = y < 70; if (below) y = r.bottom + 10;
     tip.style.left = x + 'px'; tip.style.top = y + 'px';
+    // grow from the point of the value it describes
+    tip.style.setProperty('--ox', r.left + r.width / 2 - x + 'px'); tip.style.setProperty('--oy', below ? '-10px' : th + 10 + 'px');
+    tip.style.transition = 'none'; tip.classList.remove('on'); void tip.offsetWidth; tip.style.transition = ''; tip.classList.add('on');
   }
   function hideTip(el) {
     if (tipFor !== el) return;
-    el.classList.remove('lit'); tip.hidden = true; tipFor = null;
+    el.classList.remove('lit'); tip.classList.remove('on'); tipFor = null;
+    clearTimeout(tipHide); tipHide = setTimeout(() => { if (!tip.classList.contains('on')) tip.hidden = true; }, 260);
     litMain.forEach(m => m.classList.remove('src-lit')); litMain = [];
   }
   addEventListener('scroll', () => tipFor && hideTip(tipFor), { passive: true });
@@ -852,17 +894,28 @@
   }
 
   /* ---------------- small controls ---------------- */
+  /* Copy and the colour-vision toggle: their labels change in place (relabel). The colour-blindness view
+     doesn't snap on: its filter starts as no change at all and its colour matrix eases to the deutan one
+     (and back, before the filter is taken off). */
   function initControls() {
     $$('[data-copy]').forEach(b => b.addEventListener('click', async () => {
       const text = $('#' + b.dataset.copy).textContent;
-      try { await navigator.clipboard.writeText(text); b.textContent = 'Copied'; } catch (e) { b.textContent = 'Press ⌘C'; getSelection().selectAllChildren($('#' + b.dataset.copy)); }
-      setTimeout(() => b.textContent = 'Copy', 1800);
+      try { await navigator.clipboard.writeText(text); relabel(b, 'Copied'); } catch (e) { relabel(b, 'Press ⌘C'); getSelection().selectAllChildren($('#' + b.dataset.copy)); }
+      clearTimeout(b._t); b._t = setTimeout(() => relabel(b, 'Copy'), 1800);
     }));
-    const cvd = $('.cvd-toggle'), fig = $('.rd-fig');
+    const cvd = $('.cvd-toggle'), fig = $('.rd-fig'), mat = $('#deutan feColorMatrix');
+    const DEUT = mat && mat.getAttribute('values'), SAME = '1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0';
+    let on = false;
     cvd && cvd.addEventListener('click', () => {
-      const on = fig.classList.toggle('cvd');
+      on = !on;
       cvd.setAttribute('aria-pressed', on);
-      cvd.textContent = on ? 'Back to full color vision' : 'See it with red-green color blindness';
+      relabel(cvd, on ? 'Back to full color vision' : 'See it with red-green color blindness');
+      if (!mat || !G() || REDUCED) { fig.classList.toggle('cvd', on); return; }
+      gsap.killTweensOf(mat);
+      if (on) {
+        if (!fig.classList.contains('cvd')) { mat.setAttribute('values', SAME); fig.classList.add('cvd'); }
+        gsap.to(mat, { attr: { values: DEUT }, duration: .8, ease: 'power2.inOut' });
+      } else gsap.to(mat, { attr: { values: SAME }, duration: .8, ease: 'power2.inOut', onComplete: () => { fig.classList.remove('cvd'); mat.setAttribute('values', DEUT); } });
     });
   }
 

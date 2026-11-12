@@ -85,7 +85,7 @@ h4{font-size:clamp(22px,1.9vw,28px);letter-spacing:-.02em;line-height:1.15}
 .btn.ghost:hover{background:var(--ground-2)}
 
 /* ---------- hero ---------- */
-.hero{padding:clamp(28px,6vh,72px) var(--m) 0;position:relative}
+.hero{padding:clamp(28px,6vh,72px) var(--m) 0;position:relative;overflow-x:clip}   /* its glow bleeds off the edge and its flyers rest there hidden: neither may widen a phone's page */
 .hero-copy{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(24px,4vw,72px);align-items:end;margin-bottom:clamp(28px,5vh,56px)}
 .hero h1{font-size:clamp(54px,7.6vw,128px);line-height:.93;letter-spacing:-.05em;font-weight:650}
 .hero .lede{margin-bottom:26px;max-width:28em}
@@ -203,8 +203,8 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
 .pic.clamp.fading{-webkit-mask-image:none;mask-image:none}
 .pic.clamp.fading::after{content:"";position:absolute;left:0;right:0;bottom:0;height:155px;pointer-events:none;z-index:2;opacity:var(--fo,1);
   background:linear-gradient(color-mix(in srgb,var(--card) 0%,transparent),var(--card))}
-.lbl{display:inline-block;white-space:nowrap}
-.lbl-old{position:absolute;white-space:nowrap;pointer-events:none}
+.lbl{display:inline-block}
+.lbl-old{position:absolute;pointer-events:none}
 .more{position:relative;white-space:nowrap;overflow:hidden;text-align:left}
 .pic.clamp.clip-morph{-webkit-mask-image:none;mask-image:none}
 .pic.clamp.clip-morph::after{content:"";position:absolute;left:var(--fx);top:var(--fy);width:var(--fw);height:var(--fh);pointer-events:none;z-index:2;opacity:var(--co,1);
@@ -271,6 +271,15 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
 .src-tip{position:fixed;z-index:60;max-width:min(420px,calc(100vw - 24px));background:var(--ink);color:var(--ground);border-radius:14px;padding:12px 14px;
   box-shadow:0 18px 40px -16px rgba(0,0,0,.5);font-size:14px;line-height:1.45;pointer-events:none}
 .src-tip[hidden]{display:none}
+/* it grows out of the value it describes (site.js sets the point) and shrinks back into it */
+.src-tip{transform-origin:var(--ox,50%) var(--oy,100%);transition:opacity .15s var(--ease),transform .2s var(--ease)}
+.src-tip:not(.on){opacity:0;transform:scale(.86)}
+/* the sort arrow is the site's own piece, so it can travel between headers; the kit's drawn one steps aside */
+.has-sortar .gl-dt th[aria-sort] button::after{content:none}
+.has-sortar .gl-dt th{transition:color .35s var(--ease)}
+.sort-ar{display:inline-block;white-space:pre}
+.sort-ar i{display:inline-block;font-style:normal;transition:transform .4s var(--ease)}
+.copy,.cvd-toggle{position:relative;overflow:hidden}
 .src-h{margin:0 0 4px;font-size:12px;opacity:.7}
 .src-line{margin:0}
 .src-line mark{background:var(--blue);color:#fff;border-radius:3px;padding:0 2px}
