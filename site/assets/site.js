@@ -156,34 +156,49 @@
     const words = $$('.gsent .mw', card), runs = $$('.pic .pw', card);
     const rows = runs.filter(e => !e.closest('small')), notes = runs.filter(e => e.closest('small'));
     const bars = $$('.pic .gl-ga > i, .pic .gl-bars .t > i, .pic .gl-col > i', card), bul = $$('.gbul > *, .gbul li', card), you = $('.you', card);
-    layer.innerHTML = '';
-    // measured in the finished layout, before anything is set to its start
-    const L = layer.getBoundingClientRect(), route = { sepv: 'sep', octv: 'oct' }, fl = [];
-    const textRects = el => { const r = d.createRange(); r.selectNodeContents(el); return r.getClientRects(); };
+    /* The flights happen inside the same 3D scene as the two planes, never on a flat copy of it. Each fact's
+       start and end are written as the exact transform its plane draws it with: the plane's own matrix (with its
+       origin) times the fact's flat place on that plane. A flyer drawn with the start matrix sits exactly on the
+       answer's fact; drawn with the end matrix it sits exactly on the glance's text, in the same font at the same
+       size, so the hand-over is the same pixels. In between, the matrices blend and the flyer arcs up toward the
+       reader. The pointer's tilt of the rig carries the flyers too. */
+    let fly = $('.fly3d', rig);
+    if (!fly) { fly = d.createElement('div'); fly.className = 'fly3d'; fly.setAttribute('aria-hidden', 'true'); rig.append(fly); }
+    fly.innerHTML = '';
+    const route = { sepv: 'sep', octv: 'oct' }, fl = [];
+    const textRect = el => { const r = d.createRange(); r.selectNodeContents(el); const rs = r.getClientRects(); return { r: rs[0] || el.getBoundingClientRect(), wraps: rs.length > 1 }; };
     facts.forEach(f => { f.classList.remove('gone'); f.dataset.gone = '0'; });
     gsap.set(card, { clearProps: 'transform' });
+    // a flat pass: the rig and both planes without their transforms, so every place is a plain layout place
+    const flat = [rig, back, front].map(el => [el, el.style.transform]);
+    flat.forEach(([el]) => { el.style.transform = 'none'; });
+    const R = rig.getBoundingClientRect(), PB = back.getBoundingClientRect(), PF = front.getBoundingClientRect();
+    const plane = (P, pr) => {   // the plane's matrix in the rig: its place, then its transform about its origin
+      const cs = getComputedStyle(P), [ox, oy] = cs.transformOrigin.split(' ').map(parseFloat);
+      const t = flat.find(([el]) => el === P)[1] || '';
+      P.style.transform = t; const m = getComputedStyle(P).transform; P.style.transform = 'none';
+      return new DOMMatrix().translate(pr.left - R.left + ox, pr.top - R.top + oy).multiply(new DOMMatrix(m === 'none' ? undefined : m)).translate(-ox, -oy);
+    };
+    const MB = plane(back, PB), MF = plane(front, PF);
     for (const dst of targets) {
       const k = dst.dataset.k, src = $(`.fact[data-k="${route[k] || k}"]`, answer); if (!src) continue;
-      // aim at where the text itself sits (a right-aligned value is not at its cell's left edge)
-      const a = textRects(src)[0] || src.getBoundingClientRect();
-      const dr = textRects(dst), b = dr[0] || dst.getBoundingClientRect(), wraps = dr.length > 1;
-      const cs = getComputedStyle(src), ds = getComputedStyle(dst);
-      const s = parseFloat(ds.fontSize) / parseFloat(cs.fontSize);
-      // Two layers: the answer's type, crossfading into the glance's type drawn at 1/s so that,
-      // scaled by s on landing, it matches the target exactly and the hand-over is invisible.
+      const { r: a } = textRect(src), { r: b, wraps } = textRect(dst);
+      const cs = getComputedStyle(src), ds = getComputedStyle(dst), k0 = parseFloat(cs.fontSize) / parseFloat(ds.fontSize);
+      // drawn at the glance's size; the answer's words at the start are this, scaled by k0
       const f = d.createElement('span'); f.className = 'flyer';
-      f.style.cssText = `font-family:${cs.fontFamily};font-size:${cs.fontSize};line-height:${b.height / s}px`;
+      f.style.cssText = `font-family:${ds.fontFamily};font-size:${ds.fontSize};line-height:normal`;
       const from = d.createElement('span'); from.textContent = src.textContent;
-      from.style.cssText = `font-weight:${cs.fontWeight};letter-spacing:${cs.letterSpacing};font-variant-numeric:${cs.fontVariantNumeric}`;
+      from.style.cssText = `font-family:${cs.fontFamily};font-weight:${cs.fontWeight};letter-spacing:${parseFloat(cs.letterSpacing) / k0 || 0}px;font-variant-numeric:${cs.fontVariantNumeric}`;
       const to = d.createElement('span'); to.className = 'fl-to'; to.textContent = dst.textContent;
-      const ls = parseFloat(ds.letterSpacing);
-      to.style.cssText = `font-family:${ds.fontFamily};font-weight:${ds.fontWeight};font-variant-numeric:${ds.fontVariantNumeric};letter-spacing:${isNaN(ls) ? 'normal' : ls / s + 'px'}`;
-      f.append(from, to); layer.append(f);
-      // the card is tilted in 3D, so its text is drawn narrower than its font size says: land on the target's
-      // drawn width (and on the 2px the landing copy sits in from the flyer's edge), or a big figure jumps at hand-over
-      const tw = to.getBoundingClientRect().width, sl = !wraps && tw ? b.width / tw : s;
-      fl.push({ f, from, to, dst, k, wraps, x0: a.left - L.left, y0: a.top - L.top, x1: b.left - L.left - 2 * sl, y1: b.top - L.top, s: sl, color: ds.color });
+      to.style.cssText = `font-weight:${ds.fontWeight};letter-spacing:${ds.letterSpacing};font-variant-numeric:${ds.fontVariantNumeric}`;
+      f.append(from, to); fly.append(f);
+      // where each text sits inside the flyer (it has padding), so the text lines up, not the box
+      const F = f.getBoundingClientRect(), FT = textRect(to).r, FF = textRect(from).r;
+      const end = MF.translate(b.left - PF.left - (FT.left - F.left), b.top - PF.top - (FT.top - F.top), 1);
+      const start = MB.translate(a.left - PB.left - (FF.left - F.left) * k0, a.top - PB.top - (FF.top - F.top) * k0, 1).scale(k0, k0, 1);
+      fl.push({ f, from, to, dst, k, wraps, start, end, color: ds.color });
     }
+    flat.forEach(([el, t]) => { el.style.transform = t; });
     fl.sort((p, q) => ORDER.indexOf(p.k) - ORDER.indexOf(q.k));
 
     // the start
@@ -191,7 +206,13 @@
     gsap.set([...words, ...rows, ...notes, ...bul, you, ...targets], { autoAlpha: 0 });
     gsap.set(bars, { scaleX: 0, transformOrigin: '0 50%' });
     gsap.set(bul, { y: 10 }); gsap.set(card, { y: 30, opacity: 0 }); gsap.set(glow, { opacity: 0 }); gsap.set(back, { opacity: 1 });
-    fl.forEach(p => gsap.set(p.f, { x: p.x0, y: p.y0, autoAlpha: 0, force3D: true }));
+    const at = (p, v) => {   // the flyer's transform at v: the two matrices blended, lifted toward the reader mid-way
+      const A = p.start.toFloat64Array(), B = p.end.toFloat64Array(), m = A.map((x, i) => x + (B[i] - x) * v), arc = Math.sin(Math.PI * v);
+      m[12] += 0; m[13] -= p.lift * arc; m[14] += 90 * arc;
+      p.f.style.transform = `matrix3d(${m.join(',')})`;
+    };
+    fl.forEach((p, i) => { p.lift = 40 + (i % 5) * 14; p.o = { v: 0 }; at(p, 0); gsap.set(p.f, { autoAlpha: 0 });
+      p.clear = getComputedStyle(p.f).backgroundColor.replace(/rgba?\(([^,]+),([^,]+),([^,)]+).*$/, 'rgba($1,$2,$3,0)'); });   // its own blue, faded out (never through grey)
     hero.classList.add('ready');
 
     const tl = gsap.timeline({ delay, paused: !delay });
@@ -202,16 +223,14 @@
     // each fact lifts off the answer (leaving its outline behind) and flies to its place in the glance
     tl.set(facts, { attr: { 'data-gone': 1 } }, 1.0);
     fl.forEach((p, i) => {
-      const lift = 46 + (i % 5) * 15, mx = p.x0 + (p.x1 - p.x0) * .45, my = Math.min(p.y0, p.y1) - lift;
       const ft = gsap.timeline();
       ft.set(p.f, { autoAlpha: 1, immediateRender: false })
-        .to(p.f, { x: mx, y: my, scale: (1 + p.s) / 2 + .1, duration: .5, ease: EASE })
-        .to(p.f, { x: p.x1, y: p.y1, scale: p.s, duration: .55, ease: EASE })
+        .to(p.o, { v: 1, duration: 1.05, ease: EASE, onUpdate: () => at(p, p.o.v) })
         .to(p.from, { opacity: 0, duration: .45, ease: EASE }, .35)
         .to(p.to, { opacity: 1, duration: .45, ease: EASE }, .35)
-        .to(p.f, { backgroundColor: 'rgba(0,0,0,0)', boxShadow: 'none', color: p.color, duration: .25 }, '-=.25');
-      if (p.wraps || p.s > 1.5)   // a target over two lines, or a big figure whose glyphs never match a scaled copy exactly: crossfade, never swap
-        ft.to(p.dst, { autoAlpha: 1, duration: .3 }).to(p.f, { autoAlpha: 0, duration: .3 }, '<');
+        .to(p.f, { backgroundColor: p.clear, boxShadow: 'none', color: p.color, duration: .25 }, '-=.25');
+      // landed: the flyer is the target's own pixels, so it hands over in one frame (a two-line target crossfades)
+      if (p.wraps) ft.to(p.dst, { autoAlpha: 1, duration: .3 }).to(p.f, { autoAlpha: 0, duration: .3 }, '<');
       else ft.set(p.dst, { autoAlpha: 1 }).set(p.f, { autoAlpha: 0 });
       tl.add(ft, 1.0 + i * .075);
     });
@@ -263,65 +282,67 @@
 
   /* ---------------- examples ---------------- */
   let peeked = false;   // the drag-to-compare hint plays once on the page, on the first example the reader reaches
+  /* The compare slider is one piece: a line with its handle on it, always together. Its whole state is h, the
+     handle's x in px from the glance's left edge. At rest it sits out on the card's edge (h = --rest, a little
+     left of 0) with its line faded; past 0 the layer with Claude's answer opens up to the line. Every motion
+     (drag, release, the closing before a Wide/Narrow switch, the one-time hint) only moves h; the line fades in
+     and out with the distance from rest, so it never leaves the handle. */
   function initCompare(ex) {
     const cmp = $('.cmp', ex), input = $('.cmp-handle input', cmp), knob = $('.knob', cmp);   // its own range input, not the table's search box
-    let dragging = false;
-    const set = p => {
-      if (ex._peekTl) { ex._peekTl.kill(); ex._peekTl = null; }   // the reader has the slider now; the hint is over
-      p = Math.max(0, Math.min(100, p)); cmp.style.setProperty('--pos', p + '%'); cmp.classList.toggle('on', p > .5); input.value = p; ex.dataset.touched = '1';
+    const rest = () => parseFloat(getComputedStyle(cmp).getPropertyValue('--rest')) || -28;
+    let h = rest(), dragging = false, grab = 0, tw = null;
+    const W = () => cmp.getBoundingClientRect().width || 1;
+    const draw = v => {
+      h = v; const w = W(), r = rest();
+      cmp.style.setProperty('--pos', Math.max(0, Math.min(w, h)) / w * 100 + '%');
+      cmp.style.setProperty('--hx', Math.min(0, h) + 'px');
+      cmp.style.setProperty('--lo', clamp01((h - r) / 14));
+      cmp.classList.toggle('on', h > .5);
+      input.value = Math.max(0, h) / w * 100;
     };
-    // Dragging: the handle stays exactly under the pointer from the first frame. The grab offset is kept (no jump
-    // to the pointer's x), transitions are off while dragging (no lag), and where the line can't follow (left of
-    // the start) the handle alone follows the pointer, then eases back to its rest on release.
-    let grab = 0, ckGap = 0;
-    const lineX = () => { const r = cmp.getBoundingClientRect(); return r.left + r.width * ex._cmpPos() / 100; };
-    const fromX = x => {
-      const r = cmp.getBoundingClientRect(), want = x - grab;   // where the handle's centre should be
-      set((want - r.left) / r.width * 100);
-      knob.style.translate = Math.min(0, want - lineX()) + 'px 0';
+    const stop = () => { if (tw) { tw.kill(); tw = null; } if (ex._peekTl) { ex._peekTl.kill(); ex._peekTl = null; } };
+    // glide to x with the settle (a little past, then back), on the site's clock; done() once it has settled
+    const glide = (x, done) => {
+      stop();
+      if (!G() || REDUCED) { draw(x); done && done(); return null; }
+      const o = { h };
+      return (tw = gsap.to(o, { h: x, duration: T.move, ease: SETTLE, onUpdate: () => draw(o.h), onComplete: () => { tw = null; draw(x); done && done(); } }));
     };
+    draw(h);
     knob.addEventListener('pointerdown', e => {
-      if (ex._cmpCloseTw) return;
+      if (ex._closing) return;
+      stop(); ex.dataset.touched = '1';
       const k = knob.getBoundingClientRect(); grab = e.clientX - (k.left + k.width / 2);
       dragging = true; cmp.classList.add('drag'); knob.setPointerCapture(e.pointerId); e.preventDefault();
-      fromX(e.clientX);
     });
-    knob.addEventListener('pointermove', e => dragging && fromX(e.clientX));
-    const end = () => { if (!dragging) return; dragging = false; cmp.classList.remove('drag'); knob.style.translate = ''; };
+    knob.addEventListener('pointermove', e => {
+      if (!dragging) return;
+      const r = cmp.getBoundingClientRect();
+      draw(Math.max(rest(), Math.min(r.width, e.clientX - grab - r.left)));
+    });
+    const end = () => {
+      if (!dragging) return; dragging = false; cmp.classList.remove('drag');
+      if (h < 0) glide(rest());   // let go before the glance's edge: it settles back to rest, line and all
+    };
     knob.addEventListener('pointerup', end); knob.addEventListener('pointercancel', end);
     knob.addEventListener('click', () => input.focus({ preventScroll: true }));
-    input.addEventListener('input', () => set(+input.value));
-    ex._cmpPos = () => parseFloat(cmp.style.getPropertyValue('--pos')) || 0;
-    ex._cmpReset = () => { cmp.style.setProperty('--pos', '0%'); cmp.classList.remove('on'); input.value = 0; };
-    /* Before a Wide/Narrow switch the slider closes first: the line and its handle glide back to the start, run a
-       little past it and settle, the handle tucking out to its resting place on the card's edge as it goes and the
-       line fading over the last stretch. done() runs once it is fully closed (at once if it already was). */
+    input.addEventListener('input', () => { stop(); ex.dataset.touched = '1'; const v = +input.value; draw(v > 0 ? v / 100 * W() : rest()); });
+    new ResizeObserver(() => { if (h > 0 && !dragging) draw(h); }).observe(cmp);
+    ex._cmpPos = () => Math.max(0, h) / W() * 100;
+    ex._cmpReset = () => { stop(); draw(rest()); };
+    // before a Wide/Narrow switch: close (the settle included), then done(); at once if it's closed or not shown
     ex._cmpClose = done => {
-      if (ex._peekTl) { ex._peekTl.kill(); ex._peekTl = null; }
+      if (ex._peekTl) ex._peekTl.progress(1);
       ex.dataset.touched = '1';
-      const p0 = ex._cmpPos();
-      if (p0 <= 0 || !G() || REDUCED || !knob.offsetParent) { ex._cmpReset(); done(); return null; }   // closed already, no motion, or not shown (beside the panel)
-      // the handle's resting offset, read with its transition off so nothing moves
-      cmp.classList.add('closing'); cmp.classList.remove('on'); const rest = parseFloat(getComputedStyle(knob).translate) || 0; cmp.classList.add('on');
-      const o = { p: p0 };
-      const tw = gsap.to(o, { p: 0, duration: T.move, ease: SETTLE,
-        onUpdate: () => {
-          const k = 1 - o.p / p0;   // 0 at the start, 1 closed (a little over 1 in the overshoot)
-          cmp.style.setProperty('--pos', o.p + '%'); input.value = Math.max(0, o.p);
-          knob.style.translate = rest * k + 'px 0';
-          cmp.style.setProperty('--lo', 1 - clamp01((tw.progress() - .7) / .3));
-        },
-        onComplete: () => {
-          cmp.classList.remove('on'); knob.style.translate = ''; cmp.style.removeProperty('--lo'); cmp.classList.remove('closing');
-          ex._cmpReset(); ex._cmpCloseTw = null; done();
-        } });
-      return (ex._cmpCloseTw = tw);
+      if (h <= rest() + .5 || !knob.offsetParent) { ex._cmpReset(); done(); return null; }
+      ex._closing = true; cmp.classList.add('closing');
+      return glide(rest(), () => { ex._closing = false; cmp.classList.remove('closing'); done(); });
     };
     ex._peek = () => {
       if (!G() || REDUCED || peeked || ex.dataset.touched || $('.ex-stage', ex).classList.contains('is-narrow')) return;
       peeked = true;
-      const o = { p: 0 }, onUpdate = () => { if (!ex.dataset.touched) { cmp.style.setProperty('--pos', o.p + '%'); cmp.classList.toggle('on', o.p > .5); } };
-      ex._peekTl = gsap.timeline().to(o, { p: 16, duration: T.move, ease: EASE, onUpdate }).to(o, { p: 0, duration: T.move, delay: .3, ease: EASE, onUpdate });
+      const o = { h }, r0 = h, onUpdate = () => { if (!ex.dataset.touched) draw(o.h); };
+      ex._peekTl = gsap.timeline().to(o, { h: .16 * W(), duration: T.move, ease: EASE, onUpdate }).to(o, { h: r0, duration: T.move, delay: .3, ease: SETTLE, onUpdate });
     };
   }
 
@@ -681,7 +702,7 @@
         stage.style.height = ''; h1 = stage.offsetHeight; H1 = card.offsetHeight; stage.style.height = h0 + 'px';
         if (seg) slide(seg);
         glide(view, true);
-      }, { duration, skip: '.gl-count, .gl-chip, .gl-more',
+      }, { duration, skip: '.gl-count',
         extra: v => {
           stage.style.height = lerp(h0, h1, v) + 'px';
           const H = lerp(H0, H1, v);

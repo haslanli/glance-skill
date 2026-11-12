@@ -129,8 +129,9 @@ header.hero{padding:clamp(28px,6vh,72px) var(--m) 0;position:relative;overflow-x
 .gbul p{margin:12px 0 2px}.gbul ul{margin:0;padding-left:18px}.gbul li{margin:3px 0}
 .gbul code{font-size:13px}
 .layer{position:absolute;inset:0;pointer-events:none;z-index:20}
-.flyer{position:absolute;left:0;top:0;white-space:nowrap;pointer-events:none;will-change:transform;transform-origin:0 0;
-  border-radius:4px;background:var(--bg-accent);color:var(--text-accent);padding:0 2px;margin:0 -2px;box-shadow:0 6px 18px -8px rgba(24,95,165,.5)}
+.fly3d{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d;pointer-events:none;z-index:20}
+.flyer{position:absolute;left:0;top:0;transform-style:flat;white-space:nowrap;pointer-events:none;will-change:transform;transform-origin:0 0;
+  border-radius:4px;background:var(--bg-accent);color:var(--text-accent);padding:0 2px;margin:0;box-shadow:0 6px 18px -8px rgba(24,95,165,.5)}
 .hero-foot{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;margin-top:clamp(20px,3vh,32px);color:var(--ink-2);font-size:16px}
 .hero-foot b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
 .tally{margin:0}
@@ -231,7 +232,7 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
 .g-sent code{font-size:15px}
 
 /* before / after compare */
-.cmp{position:relative;--pos:0%}
+.cmp{position:relative;--pos:0%;--hx:0px;--lo:0;--rest:-28px}
 .cmp-before{position:absolute;inset:-6px -10px;background:var(--card);clip-path:inset(0 calc(100% - var(--pos)) 0 0);pointer-events:none;overflow:hidden;z-index:3}
 .orig{padding:6px 10px;font-size:13.5px;line-height:1.55;color:var(--text-primary);height:100%;-webkit-mask-image:linear-gradient(#000 80%,transparent);mask-image:linear-gradient(#000 80%,transparent)}
 .orig-h{margin:0 0 10px;font-size:13px;color:var(--ink-3)}
@@ -242,18 +243,16 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
 .orig th,.orig td{text-align:left;padding:3px 14px 3px 0;border-bottom:.5px solid var(--border)}
 .orig code{font-size:12px;background:var(--ground-2);padding:1px 4px;border-radius:4px}
 .orig .said+.ask{margin-top:18px}
-.cmp-handle{position:absolute;top:-6px;bottom:-6px;left:var(--pos);width:0;z-index:4}
-.cmp-handle::before{content:"";position:absolute;top:0;bottom:0;left:-1px;width:2px;background:var(--blue);opacity:0;transition:opacity var(--t-quick) var(--ease)}
-.cmp.on .cmp-handle::before{opacity:1}
+.cmp-handle{position:absolute;top:-6px;bottom:-6px;left:calc(var(--pos) + var(--hx));width:0;z-index:4}
+.cmp-handle::before{content:"";position:absolute;top:0;bottom:0;left:-1px;width:2px;background:var(--blue);opacity:var(--lo)}
 /* closing before a Wide/Narrow switch: the handle and line are driven frame by frame (site.js), no transition lag */
-.cmp.closing .knob{transition:none;pointer-events:none}.cmp.closing .cmp-handle::before{opacity:var(--lo,1);transition:none}
+.cmp.closing .knob{pointer-events:none}
 .knob{position:absolute;top:min(180px,40%);left:-17px;width:34px;height:52px;border-radius:999px;background:var(--blue);box-shadow:0 6px 20px -6px rgba(24,95,165,.7);
-  display:flex;align-items:center;justify-content:center;gap:4px;cursor:ew-resize;transition:transform var(--t-quick) var(--ease),translate var(--t-ui) var(--ease)}
+  display:flex;align-items:center;justify-content:center;gap:4px;cursor:ew-resize;transition:transform var(--t-quick) var(--ease)}
 .knob i{display:block;width:2px;height:16px;border-radius:1px;background:#fff;opacity:.9}
 .cmp-handle:hover .knob,.cmp.drag .knob{transform:scale(1.08)}
 /* closed, the handle rests out on the card's edge; opening slides it onto the line (no jump) */
-.cmp:not(.on) .knob{translate:-28px 0}
-@media (max-width:640px){.cmp:not(.on) .knob{translate:-16px 0}}
+@media (max-width:640px){.cmp{--rest:-16px}}
 .cmp-handle input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
 .cmp-handle input:focus-visible+.knob,.cmp-handle:focus-within .knob{outline:2px solid var(--blue-ink);outline-offset:3px}
 .pic.clamp{max-height:860px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 82%,transparent);mask-image:linear-gradient(#000 82%,transparent)}
@@ -300,6 +299,7 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
   .statement, .dv-list li, .dv-end, .rd-text > *, .rd-fig, .credits h2, .cr-grid p, .foot-in, [data-ex] .cmp-after){opacity:0;animation:rv-fallback .4s 3s forwards}
 @keyframes rv-fallback{to{opacity:1}}
 .flyer .fl-to{position:absolute;left:2px;top:0;opacity:0;white-space:nowrap}
+.flyer>span{line-height:normal}
 
 /* scroll-build states, set only by the script */
 .gl .pending{transition:background-color var(--t-move) var(--ease),color var(--t-move) var(--ease)}
@@ -413,3 +413,6 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
 .tmorph .morph-layer{z-index:0}.tmorph .gl-tb>*{z-index:1}
 /* while dragging, the handle follows the pointer with no transition lag */
 .cmp.drag .knob{transition:none}
+/* a morph sets each piece's transform every frame; a transform transition would make it trail behind (buttons
+   drifting up and down mid-move), so nothing inside a moving example transitions its transform */
+:is(.tmorph,.morphing) .ex-card *{transition-property:background-color,color,box-shadow,opacity!important}
