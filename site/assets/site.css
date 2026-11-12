@@ -222,11 +222,12 @@ main>section{padding-left:var(--m);padding-right:var(--m)}
 .cmp-handle::before{content:"";position:absolute;top:0;bottom:0;left:-1px;width:2px;background:var(--blue);opacity:0;transition:opacity .2s}
 .cmp.on .cmp-handle::before{opacity:1}
 .knob{position:absolute;top:min(180px,40%);left:-17px;width:34px;height:52px;border-radius:999px;background:var(--blue);box-shadow:0 6px 20px -6px rgba(24,95,165,.7);
-  display:flex;align-items:center;justify-content:center;gap:4px;cursor:ew-resize;transition:transform .2s var(--ease)}
+  display:flex;align-items:center;justify-content:center;gap:4px;cursor:ew-resize;transition:transform .2s var(--ease),translate .35s var(--ease)}
 .knob i{display:block;width:2px;height:16px;border-radius:1px;background:#fff;opacity:.9}
 .cmp-handle:hover .knob,.cmp.drag .knob{transform:scale(1.08)}
-.cmp:not(.on) .knob{left:-45px}
-@media (max-width:640px){.cmp:not(.on) .knob{left:-33px}}
+/* closed, the handle rests out on the card's edge; opening slides it onto the line (no jump) */
+.cmp:not(.on) .knob{translate:-28px 0}
+@media (max-width:640px){.cmp:not(.on) .knob{translate:-16px 0}}
 .cmp-handle input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
 .cmp-handle input:focus-visible+.knob,.cmp-handle:focus-within .knob{outline:2px solid var(--blue-ink);outline-offset:3px}
 .pic.clamp{max-height:860px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 82%,transparent);mask-image:linear-gradient(#000 82%,transparent)}
